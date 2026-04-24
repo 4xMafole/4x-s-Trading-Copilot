@@ -18,3 +18,23 @@ View your app in AI Studio: https://ai.studio/apps/9f7fd03f-10f6-4860-86f0-c9356
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Flutter Conversion
+
+The Flutter conversion is implemented in `flutter_app/` in this same repository.
+
+### Run Flutter app
+
+1. Ensure Flutter SDK is installed and available in PATH.
+2. Open a terminal in `flutter_app/`.
+3. Install packages:
+   `flutter pub get`
+4. Run on a connected device:
+   `flutter run`
+
+This Flutter app mirrors the React trading logic:
+- Dashboard metrics
+- Checklist auto/manual gates
+- Lot-size and target calculator
+- Journal with trade lock rules
+- Settings reset/import/export (JSON via clipboard)

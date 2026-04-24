@@ -1,0 +1,2431 @@
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../data/models.dart';
+import '../logic/trading_controller.dart';
+import 'app_theme.dart';
+
+// ═══════════════════════════════════════════════════════════════════════
+//  INTELLIGENCE ENGINE — smart insights derived from live state
+// ═══════════════════════════════════════════════════════════════════════
+
+class _Insight {
+  const _Insight(this.icon, this.text, this.tone);
+  final IconData icon;
+  final String text;
+  final Color tone;
+}
+
+List<_Insight> _computeInsights(TradingController c) {
+  final insights = <_Insight>[];
+  final session = c.getSessionInfo();
+  final today = c.getTodayPnl();
+  final trades = c.getTodayTrades();
+  final autoGates = c.computeAutoGates();
+  final passedCount = kGates.where((g) {
+    if (g.auto) return autoGates[g.id] ?? false;
+    return c.state.checks[g.id] ?? false;
+  }).length;
+
+  // Session intelligence
+  if (!session.ok) {
+    insights.add(_Insight(
+      Icons.block,
+      'No-trade zone active. ${session.detail}',
+      AppTheme.red,
+    ));
+  } else {
+    insights.add(_Insight(
+      Icons.check_circle_outline,
+      '${session.label} — execution window open.',
+      AppTheme.green,
+    ));
+  }
+
+  // Risk intelligence
+  if (today < -100) {
+    insights.add(_Insight(
+      Icons.warning_amber_rounded,
+      'Down ${today.abs().toStringAsFixed(0)} USD today. Protect remaining capital.',
+      AppTheme.red,
+    ));
+  } else if (today > 200) {
+    insights.add(_Insight(
+      Icons.trending_up,
+      'Strong day at +${today.toStringAsFixed(0)} USD. Consider locking profit.',
+      AppTheme.green,
+    ));
+  }
+
+  // Trade count intelligence
+  if (trades.length >= 2) {
+    insights.add(_Insight(
+      Icons.do_not_disturb,
+      'Max daily trades reached. Review journal and stop.',
+      AppTheme.amber,
+    ));
+  } else if (trades.length == 1 && trades.first.pnl < 0) {
+    insights.add(_Insight(
+      Icons.psychology,
+      'First trade was a loss. Stay disciplined on the second.',
+      AppTheme.amber,
+    ));
+  }
+
+  // Checklist readiness
+  if (passedCount < kGates.length && session.ok) {
+    final remaining = kGates.length - passedCount;
+    insights.add(_Insight(
+      Icons.checklist,
+      '$remaining gate${remaining == 1 ? '' : 's'} still pending before entry.',
+      AppTheme.accent,
+    ));
+  } else if (passedCount == kGates.length && session.ok && trades.length < 2) {
+    insights.add(_Insight(
+      Icons.rocket_launch_outlined,
+      'All gates passed. You are cleared to execute.',
+      AppTheme.green,
+    ));
+  }
+
+  // Lock intelligence
+  if (c.state.lock) {
+    insights.add(_Insight(
+      Icons.lock_outline,
+      'Account locked after consecutive losses. Rest and reset.',
+      AppTheme.red,
+    ));
+  }
+
+  return insights;
+}
+
+int _readinessScore(TradingController c) {
+  int score = 0;
+  final session = c.getSessionInfo();
+  final auto = c.computeAutoGates();
+  final total = kGates.length;
+  final passed = kGates.where((g) {
+    if (g.auto) return auto[g.id] ?? false;
+    return c.state.checks[g.id] ?? false;
+  }).length;
+
+  if (session.ok) score += 30;
+  score += ((passed / total) * 50).round();
+  if (!c.state.lock) score += 10;
+  if (c.getTodayTrades().length < 2) score += 10;
+  return score.clamp(0, 100);
+}
+
+Color _scoreColor(int score) {
+  if (score >= 80) return AppTheme.green;
+  if (score >= 50) return AppTheme.amber;
+  return AppTheme.red;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  MAIN SCREEN
+// ═══════════════════════════════════════════════════════════════════════
+
+class TradingScreen extends StatefulWidget {
+  const TradingScreen({super.key, required this.controller});
+  final TradingController controller;
+
+  @override
+  State<TradingScreen> createState() => _TradingScreenState();
+}
+
+class _TradingScreenState extends State<TradingScreen> {
+  static const _walkthroughKey = 'walkthrough_v2';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _autoWalkthrough());
+  }
+
+  Future<void> _autoWalkthrough() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool(_walkthroughKey) ?? false) && mounted) {
+      await _showWalkthrough(markSeen: true);
+    }
+  }
+
+  // ── Interactive walkthrough ──────────────────────────────────────────
+  Future<void> _showWalkthrough({bool markSeen = false}) async {
+    final steps = <_WalkthroughStep>[
+      _WalkthroughStep(
+        icon: Icons.dashboard_outlined,
+        title: 'Dashboard',
+        body:
+            'Your command center. The readiness score tells you instantly if conditions are right. '
+            'Smart insights update in real-time based on session, risk, and trade count.',
+        action: () => widget.controller.setActiveTab(0),
+        actionLabel: 'Go to Dashboard',
+      ),
+      _WalkthroughStep(
+        icon: Icons.calculate_outlined,
+        title: 'Trade Flow',
+        body: 'Plan → Size → Execute in order. The checklist blocks you from '
+            'entering trades until every gate passes. The calculator sizes '
+            'your lots automatically.',
+        action: () => widget.controller.setActiveTab(1),
+        actionLabel: 'Open Trade Flow',
+      ),
+      _WalkthroughStep(
+        icon: Icons.edit_note,
+        title: 'Journal',
+        body:
+            'Log every trade immediately after execution. Violations are tracked '
+            'to build your discipline score over time.',
+        action: () => widget.controller.setActiveTab(2),
+        actionLabel: 'Open Journal',
+      ),
+      _WalkthroughStep(
+        icon: Icons.insights_outlined,
+        title: 'Edge Map',
+        body:
+            'Your personal performance data. Shows which instruments, sessions, '
+            'and patterns actually make you money.',
+        action: () => widget.controller.setActiveTab(3),
+        actionLabel: 'View Edge',
+      ),
+      _WalkthroughStep(
+        icon: Icons.tune,
+        title: 'Settings',
+        body: 'Configure your challenge parameters, export/import data, '
+            'and reset state when needed.',
+        action: () => widget.controller.setActiveTab(4),
+        actionLabel: 'Open Settings',
+      ),
+    ];
+
+    var current = 0;
+    final pageCtrl = PageController();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setS) {
+          final step = steps[current];
+          final isLast = current == steps.length - 1;
+          return SafeArea(
+            child: Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppTheme.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppTheme.border),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child:
+                            Icon(step.icon, color: AppTheme.accent, size: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(step.title,
+                            style: Theme.of(context).textTheme.titleLarge),
+                      ),
+                      Text(
+                        '${current + 1}/${steps.length}',
+                        style: const TextStyle(
+                            color: AppTheme.textTertiary, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Body
+                  SizedBox(
+                    height: 100,
+                    child: PageView.builder(
+                      controller: pageCtrl,
+                      itemCount: steps.length,
+                      onPageChanged: (i) => setS(() => current = i),
+                      itemBuilder: (_, i) => Text(
+                        steps[i].body,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Progress dots
+                  Row(
+                    children: List.generate(steps.length, (i) {
+                      final active = i == current;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.only(right: 6),
+                        width: active ? 24 : 8,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: active
+                              ? AppTheme.accent
+                              : AppTheme.accent.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 20),
+                  // Action + nav buttons
+                  if (step.action != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            step.action!();
+                            setS(() {});
+                          },
+                          icon: const Icon(Icons.open_in_new, size: 16),
+                          label: Text(step.actionLabel ?? 'Try it'),
+                        ),
+                      ),
+                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Skip'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () async {
+                            if (!isLast) {
+                              await pageCtrl.nextPage(
+                                duration: const Duration(milliseconds: 250),
+                                curve: Curves.easeOut,
+                              );
+                            } else {
+                              if (markSeen) {
+                                final p = await SharedPreferences.getInstance();
+                                await p.setBool(_walkthroughKey, true);
+                              }
+                              if (ctx.mounted) Navigator.pop(ctx);
+                            }
+                          },
+                          child: Text(isLast ? 'Done' : 'Next'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: widget.controller,
+      builder: (context, _) {
+        final c = widget.controller;
+        final pages = <Widget>[
+          _DashboardTab(controller: c, onWalkthrough: _showWalkthrough),
+          _TradeFlowTab(controller: c),
+          _JournalTab(controller: c),
+          _EdgeTab(controller: c),
+          _SettingsTab(controller: c),
+        ];
+        final tab = c.activeTab < pages.length ? c.activeTab : 0;
+
+        return Scaffold(
+          backgroundColor: AppTheme.bg,
+          body: SafeArea(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: KeyedSubtree(key: ValueKey(tab), child: pages[tab]),
+            ),
+          ),
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: tab,
+            onDestinationSelected: c.setActiveTab,
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.space_dashboard_outlined),
+                selectedIcon: Icon(Icons.space_dashboard),
+                label: 'Home',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.route_outlined),
+                selectedIcon: Icon(Icons.route),
+                label: 'Trade',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.edit_note_outlined),
+                selectedIcon: Icon(Icons.edit_note),
+                label: 'Journal',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.insights_outlined),
+                selectedIcon: Icon(Icons.insights),
+                label: 'Edge',
+              ),
+              NavigationDestination(
+                icon: Icon(Icons.tune_outlined),
+                selectedIcon: Icon(Icons.tune),
+                label: 'Setup',
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _WalkthroughStep {
+  const _WalkthroughStep({
+    required this.icon,
+    required this.title,
+    required this.body,
+    this.action,
+    this.actionLabel,
+  });
+  final IconData icon;
+  final String title;
+  final String body;
+  final VoidCallback? action;
+  final String? actionLabel;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  TAB 0: DASHBOARD — the intelligent home screen
+// ═══════════════════════════════════════════════════════════════════════
+
+class _DashboardTab extends StatelessWidget {
+  const _DashboardTab({required this.controller, required this.onWalkthrough});
+  final TradingController controller;
+  final Future<void> Function({bool markSeen}) onWalkthrough;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = controller;
+    final session = c.getSessionInfo();
+    final score = _readinessScore(c);
+    final insights = _computeInsights(c);
+    final challenge = c.getChallengePnl();
+    final today = c.getTodayPnl();
+    final balance = c.state.balance + challenge;
+    final progress = (challenge / 1250).clamp(0.0, 1.0);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      children: [
+        // ── Header row ──
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('4x Trading Copilot',
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium
+                          ?.copyWith(fontSize: 24)),
+                  const SizedBox(height: 4),
+                  Text(
+                    _eatTime(c.nowEAT),
+                    style: const TextStyle(
+                        color: AppTheme.textTertiary, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: () => onWalkthrough(),
+              icon: const Icon(Icons.help_outline,
+                  color: AppTheme.textTertiary, size: 22),
+              tooltip: 'Walkthrough',
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // ── Readiness Score ──
+        _Card(
+          child: Row(
+            children: [
+              SizedBox(
+                width: 64,
+                height: 64,
+                child: CustomPaint(
+                  painter: _ScoreRingPainter(score, _scoreColor(score)),
+                  child: Center(
+                    child: Text(
+                      '$score',
+                      style: TextStyle(
+                        color: _scoreColor(score),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Readiness Score',
+                        style: TextStyle(
+                            color: AppTheme.text,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15)),
+                    const SizedBox(height: 4),
+                    Text(
+                      score >= 80
+                          ? 'Conditions are favorable. Execute with discipline.'
+                          : score >= 50
+                              ? 'Partial readiness. Complete remaining gates.'
+                              : 'Not ready. Wait for better conditions.',
+                      style: const TextStyle(
+                          color: AppTheme.textSecondary, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // ── Key metrics row ──
+        Row(
+          children: [
+            Expanded(
+              child: _MetricTile(
+                label: 'Balance',
+                value: _compact(balance),
+                tone: AppTheme.text,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _MetricTile(
+                label: 'Today',
+                value: _signed(today),
+                tone: today >= 0 ? AppTheme.green : AppTheme.red,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _MetricTile(
+                label: 'Target',
+                value: '${(progress * 100).toStringAsFixed(0)}%',
+                tone: AppTheme.accent,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        // ── Session status ──
+        _Card(
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: _sessionTone(session.type),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(session.label,
+                        style: TextStyle(
+                          color: _sessionTone(session.type),
+                          fontWeight: FontWeight.w600,
+                        )),
+                    const SizedBox(height: 2),
+                    Text(
+                        'Day ${c.getDayNumber()} · ${c.getTodayTrades().length}/2 trades',
+                        style: const TextStyle(
+                            color: AppTheme.textSecondary, fontSize: 13)),
+                  ],
+                ),
+              ),
+              _Pill(
+                label:
+                    c.state.lock ? 'Locked' : (session.ok ? 'Open' : 'Closed'),
+                tone: c.state.lock
+                    ? AppTheme.red
+                    : (session.ok ? AppTheme.green : AppTheme.textTertiary),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // ── Smart insights ──
+        const Text('INSIGHTS',
+            style: TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.2)),
+        const SizedBox(height: 10),
+        ...insights.map((ins) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _Card(
+                child: Row(
+                  children: [
+                    Icon(ins.icon, color: ins.tone, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(ins.text,
+                          style: const TextStyle(
+                              color: AppTheme.text, fontSize: 13)),
+                    ),
+                  ],
+                ),
+              ),
+            )),
+
+        const SizedBox(height: 16),
+
+        // ── Quick action ──
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () => controller.setActiveTab(1),
+            child: const Text('Start Trade Flow →'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  TAB 1: TRADE FLOW — Plan → Size → Execute
+// ═══════════════════════════════════════════════════════════════════════
+
+class _TradeFlowTab extends StatefulWidget {
+  const _TradeFlowTab({required this.controller});
+  final TradingController controller;
+
+  @override
+  State<_TradeFlowTab> createState() => _TradeFlowTabState();
+}
+
+class _TradeFlowTabState extends State<_TradeFlowTab> {
+  int step = 0;
+  String instrument = 'XAUUSD';
+  final slCtrl = TextEditingController(text: '7');
+  final entriesCtrl = TextEditingController(text: '1');
+
+  @override
+  void dispose() {
+    slCtrl.dispose();
+    entriesCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.controller;
+    final autoChecks = c.computeAutoGates();
+    final passedCount = kGates.where((g) {
+      if (g.auto) return autoChecks[g.id] ?? false;
+      return c.state.checks[g.id] ?? false;
+    }).length;
+
+    final stopLoss = double.tryParse(slCtrl.text) ?? 0;
+    final entries = int.tryParse(entriesCtrl.text) ?? 1;
+    final meta = kInstruments[instrument]!;
+    var lot = 0.0;
+    if (stopLoss > 0 && meta.pipVal > 0 && entries > 0) {
+      lot = (125 / entries) / (stopLoss * meta.pipVal * 10);
+    }
+    final risk =
+        (lot * entries * stopLoss * meta.pipVal * 10).clamp(0, 125).toDouble();
+
+    final stepLabels = ['Plan', 'Size', 'Execute'];
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      children: [
+        // ── Title ──
+        Text('Trade Flow',
+            style: Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(fontSize: 24)),
+        const SizedBox(height: 4),
+        Text('Step ${step + 1} of 3 — ${stepLabels[step]}',
+            style:
+                const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+
+        const SizedBox(height: 20),
+
+        // ── Step indicator ──
+        Row(
+          children: List.generate(3, (i) {
+            final done = i < step;
+            final active = i == step;
+            final tone = done
+                ? AppTheme.green
+                : (active ? AppTheme.accent : AppTheme.textTertiary);
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => step = i),
+                child: Column(
+                  children: [
+                    Container(
+                      height: 3,
+                      margin: EdgeInsets.only(right: i < 2 ? 6 : 0),
+                      decoration: BoxDecoration(
+                        color: done || active ? tone : AppTheme.border,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(stepLabels[i],
+                        style: TextStyle(
+                          color: tone,
+                          fontSize: 12,
+                          fontWeight:
+                              active ? FontWeight.w600 : FontWeight.w400,
+                        )),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ),
+
+        const SizedBox(height: 20),
+
+        // ── Step content ──
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: switch (step) {
+            0 => _PlanStep(
+                key: const ValueKey('plan'),
+                controller: c,
+                autoChecks: autoChecks,
+                passedCount: passedCount,
+              ),
+            1 => _SizeStep(
+                key: const ValueKey('size'),
+                instrument: instrument,
+                slCtrl: slCtrl,
+                entriesCtrl: entriesCtrl,
+                lot: lot,
+                risk: risk,
+                onInstrumentChange: (v) => setState(() => instrument = v),
+                onInputChange: () => setState(() {}),
+              ),
+            _ => _ExecuteStep(
+                key: const ValueKey('exec'),
+                controller: c,
+                lot: lot,
+                risk: risk,
+              ),
+          },
+        ),
+
+        const SizedBox(height: 20),
+
+        // ── Navigation ──
+        Row(
+          children: [
+            if (step > 0)
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => setState(() => step--),
+                  child: const Text('Back'),
+                ),
+              ),
+            if (step > 0) const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                onPressed: () {
+                  if (step < 2) {
+                    setState(() => step++);
+                  } else {
+                    c.setActiveTab(2);
+                  }
+                },
+                child: Text(step < 2 ? 'Continue' : 'Log Trade →'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _PlanStep extends StatelessWidget {
+  const _PlanStep({
+    super.key,
+    required this.controller,
+    required this.autoChecks,
+    required this.passedCount,
+  });
+  final TradingController controller;
+  final Map<String, bool> autoChecks;
+  final int passedCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Progress
+        Row(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  minHeight: 4,
+                  value: passedCount / kGates.length,
+                  backgroundColor: AppTheme.border,
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(AppTheme.green),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text('$passedCount/${kGates.length}',
+                style: const TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 13)),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Gates list
+        ...kGates.map((gate) {
+          final passed = gate.auto
+              ? (autoChecks[gate.id] ?? false)
+              : (controller.state.checks[gate.id] ?? false);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: _Card(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: gate.auto
+                        ? Icon(
+                            passed ? Icons.check_circle : Icons.cancel_outlined,
+                            size: 20,
+                            color: passed ? AppTheme.green : AppTheme.red,
+                          )
+                        : Checkbox(
+                            value: passed,
+                            onChanged: (_) => controller.toggleCheck(gate.id),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(gate.label,
+                            style: TextStyle(
+                              color: passed
+                                  ? AppTheme.text
+                                  : AppTheme.textSecondary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            )),
+                        Text(gate.sub,
+                            style: const TextStyle(
+                                color: AppTheme.textTertiary, fontSize: 11)),
+                      ],
+                    ),
+                  ),
+                  if (gate.auto)
+                    _Pill(
+                      label: passed ? 'Auto ✓' : 'Blocked',
+                      tone: passed ? AppTheme.green : AppTheme.red,
+                    ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+class _SizeStep extends StatelessWidget {
+  const _SizeStep({
+    super.key,
+    required this.instrument,
+    required this.slCtrl,
+    required this.entriesCtrl,
+    required this.lot,
+    required this.risk,
+    required this.onInstrumentChange,
+    required this.onInputChange,
+  });
+  final String instrument;
+  final TextEditingController slCtrl;
+  final TextEditingController entriesCtrl;
+  final double lot;
+  final double risk;
+  final ValueChanged<String> onInstrumentChange;
+  final VoidCallback onInputChange;
+
+  @override
+  Widget build(BuildContext context) {
+    final meta = kInstruments[instrument]!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Metrics
+        Row(
+          children: [
+            Expanded(
+                child: _MetricTile(
+                    label: 'Lot/entry',
+                    value: lot.toStringAsFixed(2),
+                    tone: AppTheme.accent)),
+            const SizedBox(width: 8),
+            Expanded(
+                child: _MetricTile(
+                    label: 'Risk',
+                    value: '\$${risk.toStringAsFixed(0)}',
+                    tone: risk <= 125 ? AppTheme.green : AppTheme.red)),
+            const SizedBox(width: 8),
+            Expanded(
+                child: _MetricTile(
+                    label: 'Min TP',
+                    value: ((double.tryParse(slCtrl.text) ?? 0) * 2)
+                        .toStringAsFixed(1),
+                    tone: AppTheme.amber)),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Instrument chips
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: kInstruments.keys.map((k) {
+            return ChoiceChip(
+              label: Text(k == 'NQ' ? 'NQ100' : k),
+              selected: instrument == k,
+              onSelected: (_) => onInstrumentChange(k),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 16),
+
+        TextField(
+          controller: slCtrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: 'Stop loss (${meta.unit})',
+            helperText: meta.desc,
+          ),
+          onChanged: (_) => onInputChange(),
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: entriesCtrl,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(labelText: 'Stacked entries'),
+          onChanged: (_) => onInputChange(),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExecuteStep extends StatelessWidget {
+  const _ExecuteStep({
+    super.key,
+    required this.controller,
+    required this.lot,
+    required this.risk,
+  });
+  final TradingController controller;
+  final double lot;
+  final double risk;
+
+  @override
+  Widget build(BuildContext context) {
+    final trades = controller.getTodayTrades().length;
+    final locked = controller.state.lock || trades >= 2;
+    final session = controller.getSessionInfo();
+
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Execution Check',
+              style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 16),
+          _StatusRow('Session', session.ok ? 'Open' : 'Closed',
+              session.ok ? AppTheme.green : AppTheme.red),
+          _StatusRow('Trades', '$trades / 2',
+              trades < 2 ? AppTheme.green : AppTheme.amber),
+          _StatusRow(
+              'Lot size', '${lot.toStringAsFixed(2)} lots', AppTheme.accent),
+          _StatusRow('Risk', '\$${risk.toStringAsFixed(0)}',
+              risk <= 125 ? AppTheme.green : AppTheme.red),
+          _StatusRow('System', locked ? 'Locked' : 'Ready',
+              locked ? AppTheme.red : AppTheme.green),
+          const SizedBox(height: 12),
+          Text(
+            locked
+                ? 'Execution blocked. Review journal and wait for next window.'
+                : 'Ready to execute. Log the trade in Journal immediately after entry.',
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  TAB 2: JOURNAL
+// ═══════════════════════════════════════════════════════════════════════
+
+class _JournalTab extends StatefulWidget {
+  const _JournalTab({required this.controller});
+  final TradingController controller;
+
+  @override
+  State<_JournalTab> createState() => _JournalTabState();
+}
+
+class _JournalTabState extends State<_JournalTab> {
+  final lotsCtrl = TextEditingController();
+  final pnlCtrl = TextEditingController();
+  final noteCtrl = TextEditingController();
+  String sym = 'XAUUSD';
+  String dir = 'buy';
+  final Set<String> violations = {};
+
+  static const _vList = [
+    {'id': 'stacking', 'label': 'Stacking'},
+    {'id': 'session', 'label': 'Session'},
+    {'id': 'risk', 'label': 'Risk'},
+    {'id': 'instrument', 'label': 'Instrument'},
+    {'id': 'rr', 'label': 'R:R'},
+  ];
+
+  @override
+  void dispose() {
+    lotsCtrl.dispose();
+    pnlCtrl.dispose();
+    noteCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.controller;
+    final trades = c.getTodayTrades();
+    final locked = c.state.lock || trades.length >= 2;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      children: [
+        Text('Journal',
+            style: Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(fontSize: 24)),
+        const SizedBox(height: 4),
+        Text('${trades.length} trade${trades.length == 1 ? '' : 's'} today',
+            style:
+                const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+
+        const SizedBox(height: 20),
+
+        // ── Log form ──
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Log trade', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 14),
+              DropdownButtonFormField<String>(
+                value: sym,
+                items: const [
+                  DropdownMenuItem(value: 'XAUUSD', child: Text('XAUUSD')),
+                  DropdownMenuItem(value: 'NQ', child: Text('NQ100')),
+                  DropdownMenuItem(value: 'EURUSD', child: Text('EURUSD')),
+                ],
+                onChanged: (v) => setState(() => sym = v ?? 'XAUUSD'),
+                decoration: const InputDecoration(labelText: 'Instrument'),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: dir,
+                      items: const [
+                        DropdownMenuItem(value: 'buy', child: Text('Buy')),
+                        DropdownMenuItem(value: 'sell', child: Text('Sell')),
+                      ],
+                      onChanged: (v) => setState(() => dir = v ?? 'buy'),
+                      decoration: const InputDecoration(labelText: 'Direction'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextField(
+                      controller: lotsCtrl,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(labelText: 'Lots'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: pnlCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'P&L (USD)'),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: _vList.map((item) {
+                  final id = item['id']!;
+                  return FilterChip(
+                    label: Text(item['label']!),
+                    selected: violations.contains(id),
+                    onSelected: (on) => setState(() {
+                      on ? violations.add(id) : violations.remove(id);
+                    }),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: noteCtrl,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'Notes'),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    if (locked) {
+                      _snack(context, 'Session closed.');
+                      return;
+                    }
+                    final pnl = double.tryParse(pnlCtrl.text);
+                    if (pnl == null) {
+                      _snack(context, 'Enter valid P&L.');
+                      return;
+                    }
+                    await c.addTrade(
+                      sym: sym,
+                      dir: dir,
+                      lots: double.tryParse(lotsCtrl.text) ?? 0,
+                      pnl: pnl,
+                      note: noteCtrl.text,
+                      violations: violations.toList(),
+                    );
+                    lotsCtrl.clear();
+                    pnlCtrl.clear();
+                    noteCtrl.clear();
+                    violations.clear();
+                    if (context.mounted) setState(() {});
+                    if (context.mounted) _snack(context, 'Trade logged.');
+                  },
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // ── Trade list ──
+        if (trades.isEmpty)
+          _Card(
+            child: Column(
+              children: [
+                const Icon(Icons.inbox_outlined,
+                    size: 32, color: AppTheme.textTertiary),
+                const SizedBox(height: 8),
+                const Text('No trades today',
+                    style: TextStyle(color: AppTheme.textSecondary)),
+              ],
+            ),
+          )
+        else
+          ...trades.map((t) {
+            final tone = t.pnl >= 0 ? AppTheme.green : AppTheme.red;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _Card(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: tone,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${t.sym} ${t.dir.toUpperCase()}',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w600, fontSize: 14)),
+                          Text('${t.time} · ${t.lots.toStringAsFixed(2)} lots',
+                              style: const TextStyle(
+                                  color: AppTheme.textTertiary, fontSize: 12)),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      _signed(t.pnl),
+                      style: TextStyle(
+                          color: tone,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () => c.deleteTrade(t.id),
+                      icon: const Icon(Icons.close,
+                          size: 16, color: AppTheme.textTertiary),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  void _snack(BuildContext ctx, String msg) {
+    ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text(msg)));
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  TAB 3: EDGE MAP
+// ═══════════════════════════════════════════════════════════════════════
+
+class _EdgeTab extends StatelessWidget {
+  const _EdgeTab({required this.controller});
+  final TradingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final trades = controller.state.allTrades;
+    final live = _LiveStats.compute(trades);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      children: [
+        Text('Edge Map',
+            style: Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(fontSize: 24)),
+        const SizedBox(height: 4),
+        const Text('What actually makes you money',
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+
+        // ── Section 1: Personal Account Overview ──────────────────
+        const SizedBox(height: 24),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                  'Personal account overview — 572 trades · Jul 2025 – Mar 2026',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 14),
+              _statGrid(const [
+                _StatBox(
+                    label: 'Total trades', value: '572', tone: AppTheme.accent),
+                _StatBox(
+                    label: 'Net P&L', value: '+\$301.06', tone: AppTheme.green),
+                _StatBox(
+                    label: 'Overall win rate',
+                    value: '32.4%',
+                    tone: AppTheme.amber),
+                _StatBox(
+                    label: 'Avg R:R achieved',
+                    value: '2.71',
+                    tone: AppTheme.green),
+                _StatBox(
+                    label: 'Avg win', value: '+\$38.48', tone: AppTheme.green),
+                _StatBox(
+                    label: 'Avg loss', value: '-\$14.19', tone: AppTheme.red),
+              ]),
+              const SizedBox(height: 14),
+              _AlertBox(
+                tone: AppTheme.accent,
+                title: 'THE PARADOX',
+                body:
+                    '32.4% win rate but still net profitable. Your average win (\$38.48) is 2.71× your average loss (\$14.19). The system has positive expectancy — it only needs discipline applied on top.',
+              ),
+            ],
+          ),
+        ),
+
+        // ── Section 1b: Live Challenge Stats ──────────────────────
+        if (trades.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Live challenge — ${live.total} trades',
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 14),
+                _statGrid([
+                  _StatBox(
+                      label: 'Trades',
+                      value: '${live.total}',
+                      tone: AppTheme.accent),
+                  _StatBox(
+                    label: 'Net P&L',
+                    value: _signed(live.netPnl),
+                    tone: live.netPnl >= 0 ? AppTheme.green : AppTheme.red,
+                  ),
+                  _StatBox(
+                    label: 'Win rate',
+                    value: '${live.winRate.toStringAsFixed(1)}%',
+                    tone: live.winRate >= 40 ? AppTheme.green : AppTheme.amber,
+                  ),
+                  _StatBox(
+                    label: 'Avg win',
+                    value: live.avgWin > 0
+                        ? '+\$${live.avgWin.toStringAsFixed(2)}'
+                        : '—',
+                    tone: AppTheme.green,
+                  ),
+                  _StatBox(
+                    label: 'Avg loss',
+                    value: live.avgLoss < 0
+                        ? '\$${live.avgLoss.toStringAsFixed(2)}'
+                        : '—',
+                    tone: AppTheme.red,
+                  ),
+                ]),
+                if (live.total >= 5) ...[
+                  const SizedBox(height: 14),
+                  // Per-symbol breakdown
+                  ...live.bySymbol.entries.map((e) {
+                    final s = e.value;
+                    return _EdgeRow(
+                      label: e.key,
+                      sub: '${s.total} trades',
+                      val: '${s.winRate.toStringAsFixed(1)}% WR',
+                      valSub: _signed(s.netPnl),
+                      valColor: s.netPnl >= 0 ? AppTheme.green : AppTheme.red,
+                      percent: s.winRate,
+                    );
+                  }),
+                ],
+              ],
+            ),
+          ),
+        ],
+
+        // ── Section 2: Symbol Performance ─────────────────────────
+        const SizedBox(height: 12),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Symbol performance — where your edge lives',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 16),
+              _sectionLabel('Your top instruments'),
+              const _EdgeRow(
+                label: 'XAUUSD',
+                sub: '19 trades · Primary instrument',
+                val: '47% WR',
+                valSub: '+\$406.90',
+                valColor: AppTheme.green,
+                percent: 47,
+              ),
+              const _EdgeRow(
+                label: 'NQ100',
+                sub: '16 trades · Secondary instrument',
+                val: '44% WR',
+                valSub: '+\$49.10',
+                valColor: AppTheme.green,
+                percent: 44,
+              ),
+              const _EdgeRow(
+                label: 'EURUSD',
+                sub: '40 trades · Conditional only',
+                val: '25% WR',
+                valSub: '+\$50.70',
+                valColor: AppTheme.amber,
+                percent: 25,
+              ),
+              const SizedBox(height: 20),
+              _sectionLabel('Avoid completely'),
+              const _EdgeRow(
+                label: 'XAGUSD',
+                sub: '3 trades',
+                val: '0% WR',
+                valSub: '-\$179.05',
+                valColor: AppTheme.red,
+                percent: 0,
+              ),
+              const _EdgeRow(
+                label: 'BTCUSD / ETHUSD',
+                sub: '11 trades combined',
+                val: '18% WR',
+                valSub: '-\$55.56',
+                valColor: AppTheme.red,
+                percent: 18,
+              ),
+              const _EdgeRow(
+                label: 'GBPUSD',
+                sub: '15 trades',
+                val: '33% WR',
+                valSub: '-\$60.22',
+                valColor: AppTheme.red,
+                percent: 33,
+              ),
+            ],
+          ),
+        ),
+
+        // ── Section 3: Session Timing ─────────────────────────────
+        const SizedBox(height: 12),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Session timing — your confirmed windows (EAT)',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 16),
+              const _EdgeRow(
+                label: '09:00–10:30 EAT — dead zone',
+                labelColor: AppTheme.red,
+                sub: 'EURUSD: 24 trades, 23 straight losses',
+                val: '4.2% WR',
+                valSub: '-\$71.17',
+                valColor: AppTheme.red,
+                active: true,
+              ),
+              const _EdgeRow(
+                label: '10:30–13:00 EAT — mid London',
+                sub: 'EU sells valid. Small sample but promising',
+                val: '66.7% WR',
+                valSub: '+\$15.27',
+                valColor: AppTheme.green,
+              ),
+              const _EdgeRow(
+                label: '13:00–15:00 EAT — late London',
+                sub: 'All three instruments. Best EU + XAUUSD zone',
+                val: 'Prime window',
+                valColor: AppTheme.green,
+              ),
+              const _EdgeRow(
+                label: '15:00–16:30 EAT — blackout',
+                labelColor: AppTheme.red,
+                sub: 'XAUUSD: identical WR inside and outside — coin flip',
+                val: '45.5% WR',
+                valSub: 'No edge',
+                valColor: AppTheme.red,
+                active: true,
+              ),
+              const _EdgeRow(
+                label: '16:30–18:30 EAT — NY open',
+                sub: 'NQ primary. XAUUSD continuation',
+                val: 'Prime window',
+                valColor: AppTheme.green,
+              ),
+              const _EdgeRow(
+                label: '20:00+ EAT — NY late',
+                labelColor: AppTheme.red,
+                sub: 'Thin liquidity, asymmetric losses',
+                val: '50% WR',
+                valSub: '-\$29.60',
+                valColor: AppTheme.red,
+                active: true,
+              ),
+            ],
+          ),
+        ),
+
+        // ── Section 4: EURUSD Deep Dive ──────────────────────────
+        const SizedBox(height: 12),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('EURUSD deep dive — direction bias confirmed',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _BiasCard(
+                      title: 'Buying EURUSD',
+                      tone: AppTheme.red,
+                      trades: '29 trades',
+                      wr: '13.8% WR',
+                      net: 'Net: -\$6.05',
+                      footnote: '25 of 29 buys hit SL',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _BiasCard(
+                      title: 'Selling EURUSD',
+                      tone: AppTheme.green,
+                      trades: '11 trades',
+                      wr: '54.5% WR',
+                      net: 'Net: +\$56.75',
+                      footnote: 'Your real EU edge',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              _sectionLabel('EU day-of-week breakdown'),
+              const _EdgeRow(
+                label: 'Thursday',
+                sub: '9 trades',
+                val: '44.4% WR · +\$72.07',
+                valColor: AppTheme.green,
+                percent: 44,
+              ),
+              const _EdgeRow(
+                label: 'Monday',
+                sub: '5 trades',
+                val: '20% WR · +\$41.22',
+                valColor: AppTheme.green,
+                percent: 20,
+              ),
+              const _EdgeRow(
+                label: 'Tuesday',
+                sub: '19 trades',
+                val: '26.3% WR · +\$20.61',
+                valColor: AppTheme.amber,
+                percent: 26,
+              ),
+              const _EdgeRow(
+                label: 'Wednesday',
+                labelColor: AppTheme.red,
+                sub: '5 trades',
+                val: '0% WR · -\$44.30',
+                valColor: AppTheme.red,
+                percent: 0,
+                active: true,
+              ),
+              const _EdgeRow(
+                label: 'Friday',
+                labelColor: AppTheme.red,
+                sub: '2 trades',
+                val: '0% WR · -\$38.90',
+                valColor: AppTheme.red,
+                percent: 0,
+                active: true,
+              ),
+              const SizedBox(height: 14),
+              const _AlertBox(
+                tone: AppTheme.amber,
+                title: 'EU ENTRY RULE — ALL 4 REQUIRED',
+                body:
+                    'Thursday or Monday · 13:00–16:30 EAT · HTF bearish (sell only) · Single entry only. Missing even one condition = no trade.',
+              ),
+            ],
+          ),
+        ),
+
+        // ── Section 5: Stacking vs Single Entry ──────────────────
+        const SizedBox(height: 12),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Stacking vs single entry — the definitive case',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: _BiasCard(
+                      title: 'Single entry days',
+                      tone: AppTheme.green,
+                      trades: '',
+                      wr: '50% WR',
+                      net: '+\$103.61 · 16 days',
+                      footnote: 'One entry with conviction — the math works',
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _BiasCard(
+                      title: 'Stacked days',
+                      tone: AppTheme.red,
+                      trades: '',
+                      wr: '8.3% WR',
+                      net: '-\$52.91 · 6 days',
+                      footnote:
+                          'Re-entering after loss — not finding new setups',
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // ── Section 6: Behavioural Flags ─────────────────────────
+        const SizedBox(height: 12),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Behavioural flags — confirmed patterns',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 14),
+              const _AlertBox(
+                tone: AppTheme.red,
+                title: 'STACKING (CRITICAL)',
+                body:
+                    'Personal account: 3–56 trades per day. EU stacked days: 8.3% WR. Single entry days: 50% WR. After any losing trade, wait 60 minutes minimum before re-entry on same instrument.',
+              ),
+              const SizedBox(height: 10),
+              const _AlertBox(
+                tone: AppTheme.red,
+                title: 'EARLY LONDON EXECUTION',
+                body:
+                    '09:00–10:30 EAT: 23 consecutive EURUSD losses. 4.2% WR. Hard no-trade zone — treat it as a second blackout.',
+              ),
+              const SizedBox(height: 10),
+              const _AlertBox(
+                tone: AppTheme.amber,
+                title: 'EU BUY BIAS',
+                body:
+                    '29 buys → 13.8% WR · 11 sells → 54.5% WR. Default to sells until macro structure shifts bullish on H4/Daily.',
+              ),
+              const SizedBox(height: 10),
+              const _AlertBox(
+                tone: AppTheme.amber,
+                title: 'LOT SIZE INCONSISTENCY',
+                body:
+                    'Personal account: 0.01 to 1.8 lots with no formula. Use the Calculator tab before every trade — 30 seconds, no exceptions.',
+              ),
+            ],
+          ),
+        ),
+
+        // ── Section 7: XAUUSD Blackout Zone ──────────────────────
+        const SizedBox(height: 12),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('XAUUSD blackout zone — the confirmed verdict',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 14),
+              _statGrid(const [
+                _StatBox(
+                    label: 'WR inside blackout',
+                    value: '45.5%',
+                    tone: AppTheme.amber),
+                _StatBox(
+                    label: 'WR after blackout',
+                    value: '45.5%',
+                    tone: AppTheme.amber),
+                _StatBox(
+                    label: 'Net inside (raw)',
+                    value: '+\$259',
+                    tone: AppTheme.amber),
+                _StatBox(
+                    label: 'Net (remove outlier)',
+                    value: '-\$67.19',
+                    tone: AppTheme.red),
+              ]),
+              const SizedBox(height: 14),
+              const _AlertBox(
+                tone: AppTheme.red,
+                title: 'THE +\$192.60 OUTLIER',
+                body:
+                    'The entire positive P&L inside the blackout is carried by one trade on Jan 20. Remove it and the window returns -\$67 on 10 trades. That is not an edge — it is lottery trading. The blackout stands.',
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Edge tab helper widgets ──────────────────────────────────────────
+
+Widget _sectionLabel(String text) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 10),
+    child: Text(
+      text.toUpperCase(),
+      style: const TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.6,
+        color: AppTheme.textTertiary,
+      ),
+    ),
+  );
+}
+
+class _StatBox extends StatelessWidget {
+  const _StatBox(
+      {required this.label, required this.value, required this.tone});
+  final String label;
+  final String value;
+  final Color tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceRaised,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label.toUpperCase(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.4,
+                  color: AppTheme.textTertiary)),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value,
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'monospace',
+                    letterSpacing: -0.5,
+                    color: tone)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Arranges stat boxes in a uniform 2-column grid so they fit neatly.
+Widget _statGrid(List<Widget> items) {
+  const spacing = 8.0;
+  final rows = <Widget>[];
+  for (var i = 0; i < items.length; i += 2) {
+    final left = items[i];
+    final right = i + 1 < items.length ? items[i + 1] : const SizedBox.shrink();
+    rows.add(Padding(
+      padding: EdgeInsets.only(bottom: i + 2 < items.length ? spacing : 0),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: left),
+            const SizedBox(width: spacing),
+            Expanded(child: right),
+          ],
+        ),
+      ),
+    ));
+  }
+  return Column(children: rows);
+}
+
+class _EdgeRow extends StatelessWidget {
+  const _EdgeRow({
+    required this.label,
+    required this.sub,
+    required this.val,
+    required this.valColor,
+    this.valSub,
+    this.percent,
+    this.labelColor,
+    this.active = false,
+  });
+  final String label;
+  final String sub;
+  final String val;
+  final String? valSub;
+  final Color valColor;
+  final double? percent;
+  final Color? labelColor;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 12, horizontal: active ? 14 : 0),
+      decoration: active
+          ? BoxDecoration(
+              color: AppTheme.red.withValues(alpha: 0.06),
+              border: Border(left: BorderSide(color: AppTheme.red, width: 3)),
+              borderRadius: BorderRadius.circular(4),
+            )
+          : const BoxDecoration(
+              border: Border(
+                  bottom: BorderSide(color: AppTheme.border, width: 0.5)),
+            ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
+                      color: labelColor ?? AppTheme.text,
+                    )),
+                const SizedBox(height: 2),
+                Text(sub,
+                    style: const TextStyle(
+                        fontSize: 11, color: AppTheme.textTertiary)),
+              ],
+            ),
+          ),
+          if (percent != null) ...[
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 50,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(1),
+                    child: LinearProgressIndicator(
+                      value: (percent! / 100).clamp(0.0, 1.0),
+                      minHeight: 4,
+                      backgroundColor: AppTheme.border,
+                      color: valColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(val,
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: valColor,
+                  )),
+              if (valSub != null) ...[
+                const SizedBox(height: 2),
+                Text(valSub!,
+                    style: const TextStyle(
+                        fontSize: 10,
+                        fontFamily: 'monospace',
+                        color: AppTheme.textTertiary)),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BiasCard extends StatelessWidget {
+  const _BiasCard({
+    required this.title,
+    required this.tone,
+    required this.trades,
+    required this.wr,
+    required this.net,
+    required this.footnote,
+  });
+  final String title;
+  final Color tone;
+  final String trades;
+  final String wr;
+  final String net;
+  final String footnote;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: tone.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title.toUpperCase(),
+              style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.4,
+                  color: tone)),
+          if (trades.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(trades,
+                style: TextStyle(
+                    fontSize: 11,
+                    fontFamily: 'monospace',
+                    color: tone.withValues(alpha: 0.7))),
+          ],
+          const SizedBox(height: 4),
+          Text(wr,
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'monospace',
+                  letterSpacing: -0.5,
+                  color: tone)),
+          const SizedBox(height: 2),
+          Text(net,
+              style: TextStyle(
+                  fontSize: 11,
+                  fontFamily: 'monospace',
+                  color: tone.withValues(alpha: 0.7))),
+          Container(
+            margin: const EdgeInsets.only(top: 10),
+            padding: const EdgeInsets.only(top: 10),
+            decoration: BoxDecoration(
+              border:
+                  Border(top: BorderSide(color: tone.withValues(alpha: 0.2))),
+            ),
+            child: Text(footnote.toUpperCase(),
+                style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: tone.withValues(alpha: 0.5))),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AlertBox extends StatelessWidget {
+  const _AlertBox(
+      {required this.tone, required this.title, required this.body});
+  final Color tone;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: tone.withValues(alpha: 0.15)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.6,
+                  color: tone)),
+          const SizedBox(height: 6),
+          Text(body,
+              style: const TextStyle(
+                  fontSize: 12, height: 1.5, color: AppTheme.textSecondary)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Live stats computed from challenge trades.
+class _LiveStats {
+  final int total;
+  final int wins;
+  final double netPnl;
+  final double winRate;
+  final double avgWin;
+  final double avgLoss;
+  final Map<String, _SymbolStats> bySymbol;
+
+  _LiveStats({
+    required this.total,
+    required this.wins,
+    required this.netPnl,
+    required this.winRate,
+    required this.avgWin,
+    required this.avgLoss,
+    required this.bySymbol,
+  });
+
+  factory _LiveStats.compute(List<Trade> trades) {
+    if (trades.isEmpty) {
+      return _LiveStats(
+        total: 0,
+        wins: 0,
+        netPnl: 0,
+        winRate: 0,
+        avgWin: 0,
+        avgLoss: 0,
+        bySymbol: {},
+      );
+    }
+
+    final wins = trades.where((t) => t.pnl > 0).toList();
+    final losses = trades.where((t) => t.pnl < 0).toList();
+    final netPnl = trades.fold<double>(0, (s, t) => s + t.pnl);
+    final avgWin = wins.isEmpty
+        ? 0.0
+        : wins.fold<double>(0, (s, t) => s + t.pnl) / wins.length;
+    final avgLoss = losses.isEmpty
+        ? 0.0
+        : losses.fold<double>(0, (s, t) => s + t.pnl) / losses.length;
+
+    final Map<String, List<Trade>> grouped = {};
+    for (final t in trades) {
+      grouped.putIfAbsent(t.sym, () => []).add(t);
+    }
+    final bySymbol =
+        grouped.map((sym, list) => MapEntry(sym, _SymbolStats.compute(list)));
+
+    return _LiveStats(
+      total: trades.length,
+      wins: wins.length,
+      netPnl: netPnl,
+      winRate: (wins.length / trades.length) * 100,
+      avgWin: avgWin,
+      avgLoss: avgLoss,
+      bySymbol: bySymbol,
+    );
+  }
+}
+
+class _SymbolStats {
+  final int total;
+  final double winRate;
+  final double netPnl;
+
+  _SymbolStats(
+      {required this.total, required this.winRate, required this.netPnl});
+
+  factory _SymbolStats.compute(List<Trade> trades) {
+    final wins = trades.where((t) => t.pnl > 0).length;
+    final net = trades.fold<double>(0, (s, t) => s + t.pnl);
+    return _SymbolStats(
+      total: trades.length,
+      winRate: trades.isEmpty ? 0 : (wins / trades.length) * 100,
+      netPnl: net,
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  TAB 4: SETTINGS
+// ═══════════════════════════════════════════════════════════════════════
+
+class _SettingsTab extends StatefulWidget {
+  const _SettingsTab({required this.controller});
+  final TradingController controller;
+
+  @override
+  State<_SettingsTab> createState() => _SettingsTabState();
+}
+
+class _SettingsTabState extends State<_SettingsTab> {
+  late final balanceCtrl = TextEditingController(
+      text: widget.controller.state.balance.toStringAsFixed(2));
+  late final startCtrl =
+      TextEditingController(text: widget.controller.state.startDate);
+  late final priorCtrl = TextEditingController(
+      text: widget.controller.state.priorPnl.toStringAsFixed(2));
+
+  @override
+  void dispose() {
+    balanceCtrl.dispose();
+    startCtrl.dispose();
+    priorCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.controller;
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      children: [
+        Text('Settings',
+            style: Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(fontSize: 24)),
+        const SizedBox(height: 4),
+        const Text('Challenge configuration & data',
+            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+        const SizedBox(height: 20),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Challenge', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 14),
+              TextField(
+                controller: balanceCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration:
+                    const InputDecoration(labelText: 'Starting balance'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: startCtrl,
+                decoration:
+                    const InputDecoration(labelText: 'Start date (YYYY-MM-DD)'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: priorCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'Prior P&L (USD)'),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => c.updateState(
+                    balance:
+                        double.tryParse(balanceCtrl.text) ?? c.state.balance,
+                    startDate: startCtrl.text.trim().isEmpty
+                        ? c.state.startDate
+                        : startCtrl.text.trim(),
+                    priorPnl:
+                        double.tryParse(priorCtrl.text) ?? c.state.priorPnl,
+                  ),
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Data', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton(
+                    onPressed: c.resetToday,
+                    child: const Text('Reset today'),
+                  ),
+                  OutlinedButton(
+                    onPressed: c.resetAll,
+                    child: const Text('Full reset'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () async {
+                      await Clipboard.setData(
+                          ClipboardData(text: c.exportData()));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('JSON copied.')),
+                        );
+                      }
+                    },
+                    child: const Text('Export'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () async {
+                      final ok = await _importDialog(context, c);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text(ok ? 'Imported.' : 'Import failed.')),
+                        );
+                      }
+                    },
+                    child: const Text('Import'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<bool> _importDialog(BuildContext context, TradingController c) async {
+    final ctrl = TextEditingController();
+    bool ok = false;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surface,
+        title: const Text('Import JSON'),
+        content: TextField(
+          controller: ctrl,
+          maxLines: 10,
+          decoration: const InputDecoration(hintText: 'Paste JSON'),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () async {
+              ok = await c.importData(ctrl.text);
+              if (ctx.mounted) Navigator.pop(ctx);
+            },
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+    ctrl.dispose();
+    return ok;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SHARED PRIMITIVES — minimal, reusable components
+// ═══════════════════════════════════════════════════════════════════════
+
+class _Card extends StatelessWidget {
+  const _Card({required this.child, this.padding = const EdgeInsets.all(16)});
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile(
+      {required this.label, required this.value, required this.tone});
+  final String label;
+  final String value;
+  final Color tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style:
+                  const TextStyle(color: AppTheme.textTertiary, fontSize: 11)),
+          const SizedBox(height: 6),
+          Text(value,
+              style: TextStyle(
+                  color: tone, fontWeight: FontWeight.w700, fontSize: 18)),
+        ],
+      ),
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  const _Pill({required this.label, required this.tone});
+  final String label;
+  final Color tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(label,
+          style: TextStyle(
+              color: tone, fontSize: 11, fontWeight: FontWeight.w600)),
+    );
+  }
+}
+
+class _StatusRow extends StatelessWidget {
+  const _StatusRow(this.label, this.value, this.tone);
+  final String label;
+  final String value;
+  final Color tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Text(label,
+              style:
+                  const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+          const Spacer(),
+          Text(value,
+              style: TextStyle(
+                  color: tone, fontWeight: FontWeight.w600, fontSize: 13)),
+        ],
+      ),
+    );
+  }
+}
+
+/// Radial score ring painted around the readiness number.
+class _ScoreRingPainter extends CustomPainter {
+  _ScoreRingPainter(this.score, this.color);
+  final int score;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final bg = Paint()
+      ..color = AppTheme.border
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4;
+    final fg = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(rect.deflate(2), -math.pi / 2, 2 * math.pi, false, bg);
+    canvas.drawArc(
+        rect.deflate(2), -math.pi / 2, 2 * math.pi * (score / 100), false, fg);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScoreRingPainter old) =>
+      old.score != score || old.color != color;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════════════════════════════
+
+Color _sessionTone(String type) {
+  switch (type) {
+    case 'green':
+      return AppTheme.green;
+    case 'red':
+      return AppTheme.red;
+    case 'amber':
+      return AppTheme.amber;
+    default:
+      return AppTheme.textTertiary;
+  }
+}
+
+String _eatTime(DateTime dt) {
+  return '${dt.toUtc().hour.toString().padLeft(2, '0')}:'
+      '${dt.toUtc().minute.toString().padLeft(2, '0')}:'
+      '${dt.toUtc().second.toString().padLeft(2, '0')} EAT';
+}
+
+String _compact(double v) {
+  if (v.abs() >= 1000) return '\$${(v / 1000).toStringAsFixed(1)}k';
+  return '\$${v.toStringAsFixed(0)}';
+}
+
+String _signed(double v) {
+  final s = v >= 0 ? '+' : '';
+  return '$s\$${v.toStringAsFixed(0)}';
+}

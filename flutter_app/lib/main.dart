@@ -18,13 +18,17 @@ class CopilotApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: '4x Trading Copilot',
-      theme: AppTheme.dark(),
-      darkTheme: AppTheme.dark(),
-      themeMode: ThemeMode.dark,
-      home: TradingScreen(controller: controller),
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: '4x Trades',
+        theme: AppTheme.light(),
+        darkTheme: AppTheme.dark(),
+        themeMode: controller.themeMode,
+        themeAnimationDuration: Duration.zero,
+        home: TradingScreen(controller: controller),
+      ),
     );
   }
 }

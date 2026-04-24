@@ -219,9 +219,9 @@ class _TradingScreenState extends State<TradingScreen> {
               margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppTheme.surface,
+                color: context.c.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.border),
+                border: Border.all(color: context.c.border),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -246,8 +246,8 @@ class _TradingScreenState extends State<TradingScreen> {
                       ),
                       Text(
                         '${current + 1}/${steps.length}',
-                        style: const TextStyle(
-                            color: AppTheme.textTertiary, fontSize: 13),
+                        style: TextStyle(
+                            color: context.c.textTertiary, fontSize: 13),
                       ),
                     ],
                   ),
@@ -356,7 +356,7 @@ class _TradingScreenState extends State<TradingScreen> {
         final tab = c.activeTab < pages.length ? c.activeTab : 0;
 
         return Scaffold(
-          backgroundColor: AppTheme.bg,
+          backgroundColor: context.c.bg,
           body: SafeArea(
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
@@ -445,26 +445,49 @@ class _DashboardTab extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('4x Trading Copilot',
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
-                          ?.copyWith(fontSize: 24)),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text('4x Trades',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(fontSize: 24)),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFFD740), Color(0xFFFFA000)],
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('PREMIUM',
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.2)),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     _eatTime(c.nowEAT),
-                    style: const TextStyle(
-                        color: AppTheme.textTertiary, fontSize: 13),
+                    style:
+                        TextStyle(color: context.c.textTertiary, fontSize: 13),
                   ),
                 ],
               ),
             ),
             IconButton(
               onPressed: () => onWalkthrough(),
-              icon: const Icon(Icons.help_outline,
-                  color: AppTheme.textTertiary, size: 22),
+              icon: Icon(Icons.help_outline,
+                  color: context.c.textTertiary, size: 22),
               tooltip: 'Walkthrough',
             ),
+            _ThemeToggleButton(controller: c),
           ],
         ),
 
@@ -478,7 +501,8 @@ class _DashboardTab extends StatelessWidget {
                 width: 64,
                 height: 64,
                 child: CustomPaint(
-                  painter: _ScoreRingPainter(score, _scoreColor(score)),
+                  painter: _ScoreRingPainter(
+                      score, _scoreColor(score), context.c.border),
                   child: Center(
                     child: Text(
                       '$score',
@@ -496,9 +520,9 @@ class _DashboardTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Readiness Score',
+                    Text('Readiness Score',
                         style: TextStyle(
-                            color: AppTheme.text,
+                            color: context.c.text,
                             fontWeight: FontWeight.w600,
                             fontSize: 15)),
                     const SizedBox(height: 4),
@@ -508,8 +532,8 @@ class _DashboardTab extends StatelessWidget {
                           : score >= 50
                               ? 'Partial readiness. Complete remaining gates.'
                               : 'Not ready. Wait for better conditions.',
-                      style: const TextStyle(
-                          color: AppTheme.textSecondary, fontSize: 13),
+                      style: TextStyle(
+                          color: context.c.textSecondary, fontSize: 13),
                     ),
                   ],
                 ),
@@ -527,7 +551,7 @@ class _DashboardTab extends StatelessWidget {
               child: _MetricTile(
                 label: 'Balance',
                 value: _compact(balance),
-                tone: AppTheme.text,
+                tone: context.c.text,
               ),
             ),
             const SizedBox(width: 8),
@@ -559,7 +583,7 @@ class _DashboardTab extends StatelessWidget {
                 width: 8,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: _sessionTone(session.type),
+                  color: _sessionTone(context, session.type),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -570,14 +594,14 @@ class _DashboardTab extends StatelessWidget {
                   children: [
                     Text(session.label,
                         style: TextStyle(
-                          color: _sessionTone(session.type),
+                          color: _sessionTone(context, session.type),
                           fontWeight: FontWeight.w600,
                         )),
                     const SizedBox(height: 2),
                     Text(
                         'Day ${c.getDayNumber()} · ${c.getTodayTrades().length}/2 trades',
-                        style: const TextStyle(
-                            color: AppTheme.textSecondary, fontSize: 13)),
+                        style: TextStyle(
+                            color: context.c.textSecondary, fontSize: 13)),
                   ],
                 ),
               ),
@@ -586,7 +610,7 @@ class _DashboardTab extends StatelessWidget {
                     c.state.lock ? 'Locked' : (session.ok ? 'Open' : 'Closed'),
                 tone: c.state.lock
                     ? AppTheme.red
-                    : (session.ok ? AppTheme.green : AppTheme.textTertiary),
+                    : (session.ok ? AppTheme.green : context.c.textTertiary),
               ),
             ],
           ),
@@ -595,9 +619,9 @@ class _DashboardTab extends StatelessWidget {
         const SizedBox(height: 20),
 
         // ── Smart insights ──
-        const Text('INSIGHTS',
+        Text('INSIGHTS',
             style: TextStyle(
-                color: AppTheme.textTertiary,
+                color: context.c.textTertiary,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.2)),
@@ -611,8 +635,8 @@ class _DashboardTab extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(ins.text,
-                          style: const TextStyle(
-                              color: AppTheme.text, fontSize: 13)),
+                          style:
+                              TextStyle(color: context.c.text, fontSize: 13)),
                     ),
                   ],
                 ),
@@ -691,8 +715,7 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
                 ?.copyWith(fontSize: 24)),
         const SizedBox(height: 4),
         Text('Step ${step + 1} of 3 — ${stepLabels[step]}',
-            style:
-                const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+            style: TextStyle(color: context.c.textSecondary, fontSize: 13)),
 
         const SizedBox(height: 20),
 
@@ -703,7 +726,7 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
             final active = i == step;
             final tone = done
                 ? AppTheme.green
-                : (active ? AppTheme.accent : AppTheme.textTertiary);
+                : (active ? AppTheme.accent : context.c.textTertiary);
             return Expanded(
               child: GestureDetector(
                 onTap: () => setState(() => step = i),
@@ -713,7 +736,7 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
                       height: 3,
                       margin: EdgeInsets.only(right: i < 2 ? 6 : 0),
                       decoration: BoxDecoration(
-                        color: done || active ? tone : AppTheme.border,
+                        color: done || active ? tone : context.c.border,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -820,7 +843,7 @@ class _PlanStep extends StatelessWidget {
                 child: LinearProgressIndicator(
                   minHeight: 4,
                   value: passedCount / kGates.length,
-                  backgroundColor: AppTheme.border,
+                  backgroundColor: context.c.border,
                   valueColor:
                       const AlwaysStoppedAnimation<Color>(AppTheme.green),
                 ),
@@ -828,8 +851,7 @@ class _PlanStep extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text('$passedCount/${kGates.length}',
-                style: const TextStyle(
-                    color: AppTheme.textSecondary, fontSize: 13)),
+                style: TextStyle(color: context.c.textSecondary, fontSize: 13)),
           ],
         ),
         const SizedBox(height: 16),
@@ -870,14 +892,14 @@ class _PlanStep extends StatelessWidget {
                         Text(gate.label,
                             style: TextStyle(
                               color: passed
-                                  ? AppTheme.text
-                                  : AppTheme.textSecondary,
+                                  ? context.c.text
+                                  : context.c.textSecondary,
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
                             )),
                         Text(gate.sub,
-                            style: const TextStyle(
-                                color: AppTheme.textTertiary, fontSize: 11)),
+                            style: TextStyle(
+                                color: context.c.textTertiary, fontSize: 11)),
                       ],
                     ),
                   ),
@@ -1020,7 +1042,7 @@ class _ExecuteStep extends StatelessWidget {
             locked
                 ? 'Execution blocked. Review journal and wait for next window.'
                 : 'Ready to execute. Log the trade in Journal immediately after entry.',
-            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+            style: TextStyle(color: context.c.textSecondary, fontSize: 13),
           ),
         ],
       ),
@@ -1080,8 +1102,7 @@ class _JournalTabState extends State<_JournalTab> {
                 ?.copyWith(fontSize: 24)),
         const SizedBox(height: 4),
         Text('${trades.length} trade${trades.length == 1 ? '' : 's'} today',
-            style:
-                const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+            style: TextStyle(color: context.c.textSecondary, fontSize: 13)),
 
         const SizedBox(height: 20),
 
@@ -1198,11 +1219,11 @@ class _JournalTabState extends State<_JournalTab> {
           _Card(
             child: Column(
               children: [
-                const Icon(Icons.inbox_outlined,
-                    size: 32, color: AppTheme.textTertiary),
+                Icon(Icons.inbox_outlined,
+                    size: 32, color: context.c.textTertiary),
                 const SizedBox(height: 8),
-                const Text('No trades today',
-                    style: TextStyle(color: AppTheme.textSecondary)),
+                Text('No trades today',
+                    style: TextStyle(color: context.c.textSecondary)),
               ],
             ),
           )
@@ -1231,8 +1252,8 @@ class _JournalTabState extends State<_JournalTab> {
                               style: const TextStyle(
                                   fontWeight: FontWeight.w600, fontSize: 14)),
                           Text('${t.time} · ${t.lots.toStringAsFixed(2)} lots',
-                              style: const TextStyle(
-                                  color: AppTheme.textTertiary, fontSize: 12)),
+                              style: TextStyle(
+                                  color: context.c.textTertiary, fontSize: 12)),
                         ],
                       ),
                     ),
@@ -1246,8 +1267,8 @@ class _JournalTabState extends State<_JournalTab> {
                     const SizedBox(width: 8),
                     IconButton(
                       onPressed: () => c.deleteTrade(t.id),
-                      icon: const Icon(Icons.close,
-                          size: 16, color: AppTheme.textTertiary),
+                      icon: Icon(Icons.close,
+                          size: 16, color: context.c.textTertiary),
                       visualDensity: VisualDensity.compact,
                     ),
                   ],
@@ -1286,8 +1307,8 @@ class _EdgeTab extends StatelessWidget {
                 .headlineMedium
                 ?.copyWith(fontSize: 24)),
         const SizedBox(height: 4),
-        const Text('What actually makes you money',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+        Text('What actually makes you money',
+            style: TextStyle(color: context.c.textSecondary, fontSize: 13)),
 
         // ── Section 1: Personal Account Overview ──────────────────
         const SizedBox(height: 24),
@@ -1397,7 +1418,7 @@ class _EdgeTab extends StatelessWidget {
               Text('Symbol performance — where your edge lives',
                   style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 16),
-              _sectionLabel('Your top instruments'),
+              _sectionLabel(context, 'Your top instruments'),
               const _EdgeRow(
                 label: 'XAUUSD',
                 sub: '19 trades · Primary instrument',
@@ -1423,7 +1444,7 @@ class _EdgeTab extends StatelessWidget {
                 percent: 25,
               ),
               const SizedBox(height: 20),
-              _sectionLabel('Avoid completely'),
+              _sectionLabel(context, 'Avoid completely'),
               const _EdgeRow(
                 label: 'XAGUSD',
                 sub: '3 trades',
@@ -1546,7 +1567,7 @@ class _EdgeTab extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 20),
-              _sectionLabel('EU day-of-week breakdown'),
+              _sectionLabel(context, 'EU day-of-week breakdown'),
               const _EdgeRow(
                 label: 'Thursday',
                 sub: '9 trades',
@@ -1720,16 +1741,16 @@ class _EdgeTab extends StatelessWidget {
 
 // ── Edge tab helper widgets ──────────────────────────────────────────
 
-Widget _sectionLabel(String text) {
+Widget _sectionLabel(BuildContext context, String text) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 10),
     child: Text(
       text.toUpperCase(),
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.6,
-        color: AppTheme.textTertiary,
+        color: context.c.textTertiary,
       ),
     ),
   );
@@ -1747,9 +1768,9 @@ class _StatBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceRaised,
+        color: context.c.surfaceRaised,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: context.c.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1758,11 +1779,11 @@ class _StatBox extends StatelessWidget {
           Text(label.toUpperCase(),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.4,
-                  color: AppTheme.textTertiary)),
+                  color: context.c.textTertiary)),
           const SizedBox(height: 8),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -1835,9 +1856,9 @@ class _EdgeRow extends StatelessWidget {
               border: Border(left: BorderSide(color: AppTheme.red, width: 3)),
               borderRadius: BorderRadius.circular(4),
             )
-          : const BoxDecoration(
+          : BoxDecoration(
               border: Border(
-                  bottom: BorderSide(color: AppTheme.border, width: 0.5)),
+                  bottom: BorderSide(color: context.c.border, width: 0.5)),
             ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1852,12 +1873,12 @@ class _EdgeRow extends StatelessWidget {
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       letterSpacing: -0.3,
-                      color: labelColor ?? AppTheme.text,
+                      color: labelColor ?? context.c.text,
                     )),
                 const SizedBox(height: 2),
                 Text(sub,
-                    style: const TextStyle(
-                        fontSize: 11, color: AppTheme.textTertiary)),
+                    style:
+                        TextStyle(fontSize: 11, color: context.c.textTertiary)),
               ],
             ),
           ),
@@ -1874,7 +1895,7 @@ class _EdgeRow extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: (percent! / 100).clamp(0.0, 1.0),
                       minHeight: 4,
-                      backgroundColor: AppTheme.border,
+                      backgroundColor: context.c.border,
                       color: valColor,
                     ),
                   ),
@@ -1896,10 +1917,10 @@ class _EdgeRow extends StatelessWidget {
               if (valSub != null) ...[
                 const SizedBox(height: 2),
                 Text(valSub!,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 10,
                         fontFamily: 'monospace',
-                        color: AppTheme.textTertiary)),
+                        color: context.c.textTertiary)),
               ],
             ],
           ),
@@ -2012,8 +2033,8 @@ class _AlertBox extends StatelessWidget {
                   color: tone)),
           const SizedBox(height: 6),
           Text(body,
-              style: const TextStyle(
-                  fontSize: 12, height: 1.5, color: AppTheme.textSecondary)),
+              style: TextStyle(
+                  fontSize: 12, height: 1.5, color: context.c.textSecondary)),
         ],
       ),
     );
@@ -2141,9 +2162,21 @@ class _SettingsTabState extends State<_SettingsTab> {
                 .headlineMedium
                 ?.copyWith(fontSize: 24)),
         const SizedBox(height: 4),
-        const Text('Challenge configuration & data',
-            style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+        Text('Challenge configuration & data',
+            style: TextStyle(color: context.c.textSecondary, fontSize: 13)),
         const SizedBox(height: 20),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Appearance',
+                  style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              _ThemeModeSelector(controller: c),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
         _Card(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2248,7 +2281,7 @@ class _SettingsTabState extends State<_SettingsTab> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.surface,
+        backgroundColor: context.c.surface,
         title: const Text('Import JSON'),
         content: TextField(
           controller: ctrl,
@@ -2287,9 +2320,9 @@ class _Card extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: context.c.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border),
+        border: Border.all(color: context.c.border),
       ),
       child: child,
     );
@@ -2311,8 +2344,7 @@ class _MetricTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
-              style:
-                  const TextStyle(color: AppTheme.textTertiary, fontSize: 11)),
+              style: TextStyle(color: context.c.textTertiary, fontSize: 11)),
           const SizedBox(height: 6),
           Text(value,
               style: TextStyle(
@@ -2356,8 +2388,7 @@ class _StatusRow extends StatelessWidget {
       child: Row(
         children: [
           Text(label,
-              style:
-                  const TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+              style: TextStyle(color: context.c.textSecondary, fontSize: 13)),
           const Spacer(),
           Text(value,
               style: TextStyle(
@@ -2370,15 +2401,16 @@ class _StatusRow extends StatelessWidget {
 
 /// Radial score ring painted around the readiness number.
 class _ScoreRingPainter extends CustomPainter {
-  _ScoreRingPainter(this.score, this.color);
+  _ScoreRingPainter(this.score, this.color, this.bgColor);
   final int score;
   final Color color;
+  final Color bgColor;
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final bg = Paint()
-      ..color = AppTheme.border
+      ..color = bgColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4;
     final fg = Paint()
@@ -2394,14 +2426,14 @@ class _ScoreRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ScoreRingPainter old) =>
-      old.score != score || old.color != color;
+      old.score != score || old.color != color || old.bgColor != bgColor;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
 //  HELPERS
 // ═══════════════════════════════════════════════════════════════════════
 
-Color _sessionTone(String type) {
+Color _sessionTone(BuildContext context, String type) {
   switch (type) {
     case 'green':
       return AppTheme.green;
@@ -2410,7 +2442,7 @@ Color _sessionTone(String type) {
     case 'amber':
       return AppTheme.amber;
     default:
-      return AppTheme.textTertiary;
+      return context.c.textTertiary;
   }
 }
 
@@ -2428,4 +2460,91 @@ String _compact(double v) {
 String _signed(double v) {
   final s = v >= 0 ? '+' : '';
   return '$s\$${v.toStringAsFixed(0)}';
+}
+
+
+// -----------------------------------------------------------------------
+//  THEME TOGGLE
+// -----------------------------------------------------------------------
+
+/// Quick icon button that cycles System ? Light ? Dark.
+class _ThemeToggleButton extends StatelessWidget {
+  const _ThemeToggleButton({required this.controller});
+  final TradingController controller;
+
+  IconData _iconFor(ThemeMode m) {
+    switch (m) {
+      case ThemeMode.light:
+        return Icons.light_mode_outlined;
+      case ThemeMode.dark:
+        return Icons.dark_mode_outlined;
+      case ThemeMode.system:
+        return Icons.brightness_auto_outlined;
+    }
+  }
+
+  String _labelFor(ThemeMode m) {
+    switch (m) {
+      case ThemeMode.light:
+        return 'Light theme';
+      case ThemeMode.dark:
+        return 'Dark theme';
+      case ThemeMode.system:
+        return 'System theme';
+    }
+  }
+
+  ThemeMode _next(ThemeMode m) {
+    switch (m) {
+      case ThemeMode.system:
+        return ThemeMode.light;
+      case ThemeMode.light:
+        return ThemeMode.dark;
+      case ThemeMode.dark:
+        return ThemeMode.system;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mode = controller.themeMode;
+    return IconButton(
+      onPressed: () => controller.setThemeMode(_next(mode)),
+      icon: Icon(_iconFor(mode),
+          color: context.c.textTertiary, size: 22),
+      tooltip: _labelFor(mode),
+    );
+  }
+}
+
+/// 3-way segmented control for ThemeMode (Settings screen).
+class _ThemeModeSelector extends StatelessWidget {
+  const _ThemeModeSelector({required this.controller});
+  final TradingController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<ThemeMode>(
+      segments: const [
+        ButtonSegment(
+          value: ThemeMode.system,
+          label: Text('System'),
+          icon: Icon(Icons.brightness_auto_outlined),
+        ),
+        ButtonSegment(
+          value: ThemeMode.light,
+          label: Text('Light'),
+          icon: Icon(Icons.light_mode_outlined),
+        ),
+        ButtonSegment(
+          value: ThemeMode.dark,
+          label: Text('Dark'),
+          icon: Icon(Icons.dark_mode_outlined),
+        ),
+      ],
+      selected: {controller.themeMode},
+      onSelectionChanged: (s) => controller.setThemeMode(s.first),
+      showSelectedIcon: false,
+    );
+  }
 }

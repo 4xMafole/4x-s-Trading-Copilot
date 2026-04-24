@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/models.dart';
@@ -10,6 +11,7 @@ class TradingController extends ChangeNotifier {
   TradingController();
 
   static const String _storageKey = 'em_fp2_v4';
+  static const String _themeKey = 'theme_mode_v1';
 
   AppState _state = AppState.defaults();
   AppState get state => _state;
@@ -19,6 +21,9 @@ class TradingController extends ChangeNotifier {
 
   DateTime _nowEAT = _getEAT();
   DateTime get nowEAT => _nowEAT;
+
+  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode get themeMode => _themeMode;
 
   Timer? _ticker;
 
@@ -46,6 +51,13 @@ class TradingController extends ChangeNotifier {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
+    // Theme mode
+    final themeIdx = prefs.getInt(_themeKey);
+    if (themeIdx != null &&
+        themeIdx >= 0 &&
+        themeIdx < ThemeMode.values.length) {
+      _themeMode = ThemeMode.values[themeIdx];
+    }
     final stored = prefs.getString(_storageKey);
     if (stored == null || stored.isEmpty) {
       _state = AppState.defaults().copyWith(preloaded: true);
@@ -57,6 +69,14 @@ class TradingController extends ChangeNotifier {
     } catch (_) {
       _state = AppState.defaults().copyWith(preloaded: true);
     }
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    if (_themeMode == mode) return;
+    _themeMode = mode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_themeKey, mode.index);
+    notifyListeners();
   }
 
   Future<void> _save() async {
@@ -92,8 +112,7 @@ class TradingController extends ChangeNotifier {
   }
 
   int getDayNumber() {
-    final start =
-        DateTime.tryParse('${_state.startDate}T00:00:00Z') ??
+    final start = DateTime.tryParse('${_state.startDate}T00:00:00Z') ??
         DateTime.utc(2026, 4, 20);
     final today = DateTime.parse('${eatDateStr(_nowEAT)}T00:00:00Z');
     final diff = today.difference(start).inDays + 1;

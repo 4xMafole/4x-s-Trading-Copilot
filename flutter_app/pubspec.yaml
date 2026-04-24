@@ -1,5 +1,5 @@
 name: trading_copilot_flutter
-description: Flutter conversion of 4x Trading Copilot.
+description: 4x Trades — premium personal trading copilot.
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -16,6 +16,33 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.1
+  flutter_native_splash: ^2.4.1
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/avatar.png
+
+# Run: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/avatar.png"
+  background_color: "#FFFFFF"
+  theme_color: "#FFFFFF"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/avatar.png"
+  remove_alpha_ios: true
+
+# Run: dart run flutter_native_splash:create
+# Native splash is intentionally minimal (white only) — Flutter renders the
+# polished branded splash itself in lib/ui/splash_screen.dart so we get
+# proper sizing, dark/light support, and animation.
+flutter_native_splash:
+  color: "#FFFFFF"
+  color_dark: "#000000"
+  android_12:
+    color: "#FFFFFF"
+    color_dark: "#000000"
+  fullscreen: false

@@ -14,7 +14,7 @@ void main() {
     await tester.pumpWidget(CopilotApp(controller: controller));
     await tester.pumpAndSettle();
 
-    expect(find.text('4x Trading Copilot'), findsOneWidget);
+    expect(find.text('4x Trades'), findsOneWidget);
     expect(find.text('Readiness Score'), findsOneWidget);
 
     controller.dispose();

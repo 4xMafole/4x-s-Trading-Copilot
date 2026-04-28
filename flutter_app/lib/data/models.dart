@@ -11,6 +11,8 @@ class Trade {
     required this.pnl,
     required this.note,
     required this.violations,
+    this.htfImage,
+    this.ltfImage,
   });
 
   final String id;
@@ -22,6 +24,8 @@ class Trade {
   final double pnl;
   final String note;
   final List<String> violations;
+  final String? htfImage; // Higher timeframe chart image path
+  final String? ltfImage; // Lower timeframe chart image path
 
   factory Trade.fromJson(Map<String, dynamic> json) {
     return Trade(
@@ -36,6 +40,8 @@ class Trade {
       violations: (json['violations'] as List<dynamic>? ?? const [])
           .map((e) => e.toString())
           .toList(),
+      htfImage: json['htfImage'] as String?,
+      ltfImage: json['ltfImage'] as String?,
     );
   }
 
@@ -50,6 +56,8 @@ class Trade {
       'pnl': pnl,
       'note': note,
       'violations': violations,
+      'htfImage': htfImage,
+      'ltfImage': ltfImage,
     };
   }
 }

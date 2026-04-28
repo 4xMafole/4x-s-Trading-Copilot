@@ -155,6 +155,8 @@ class TradingController extends ChangeNotifier {
     required double pnl,
     required String note,
     required List<String> violations,
+    String? htfImage,
+    String? ltfImage,
   }) async {
     final eat = _getEAT();
     final trade = Trade(
@@ -168,6 +170,8 @@ class TradingController extends ChangeNotifier {
       pnl: pnl,
       note: note,
       violations: violations,
+      htfImage: htfImage,
+      ltfImage: ltfImage,
     );
 
     _state = _state.copyWith(allTrades: <Trade>[..._state.allTrades, trade]);
@@ -251,6 +255,43 @@ class TradingController extends ChangeNotifier {
   }
 
   SessionInfo getSessionInfo() => computeSessionInfo(_nowEAT);
+
+  List<Trade> getTradesByDate(String date) {
+    return _state.allTrades.where((t) => t.date == date).toList();
+  }
+
+  List<String> getAllTradeDates() {
+    final dates = <String>{};
+    for (final t in _state.allTrades) {
+      dates.add(t.date);
+    }
+    return dates.toList()..sort((a, b) => b.compareTo(a));
+  }
+
+  String exportAsJson() {
+    final data = {
+      'balance': _state.balance,
+      'startDate': _state.startDate,
+      'priorPnl': _state.priorPnl,
+      'trades': _state.allTrades.map((t) => t.toJson()).toList(),
+      'exportedAt': DateTime.now().toIso8601String(),
+    };
+    return jsonEncode(data);
+  }
+
+  String exportAsCsv() {
+    final buffer = StringBuffer();
+    buffer.writeln(
+        'Date,Time,Instrument,Direction,Lots,P&L,Notes,Violations,HTF Image,LTF Image');
+    for (final t in _state.allTrades) {
+      final violations = t.violations.join('|');
+      final htf = t.htfImage ?? '';
+      final ltf = t.ltfImage ?? '';
+      buffer.writeln(
+          '"${t.date}","${t.time}","${t.sym}","${t.dir}",${t.lots},${t.pnl},"${t.note}","$violations","$htf","$ltf"');
+    }
+    return buffer.toString();
+  }
 
   static DateTime _getEAT() {
     return DateTime.now().toUtc().add(const Duration(hours: 3));

@@ -1,8 +1,10 @@
 import 'dart:math' as math;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../data/models.dart';
 import '../logic/trading_controller.dart';
@@ -1069,6 +1071,10 @@ class _JournalTabState extends State<_JournalTab> {
   String sym = 'XAUUSD';
   String dir = 'buy';
   final Set<String> violations = {};
+  String? htfImagePath;
+  String? ltfImagePath;
+  String? selectedDate;
+  final ImagePicker _imagePicker = ImagePicker();
 
   static const _vList = [
     {'id': 'stacking', 'label': 'Stacking'},
@@ -1086,11 +1092,62 @@ class _JournalTabState extends State<_JournalTab> {
     super.dispose();
   }
 
+  Future<void> _pickImage(bool isHTF) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2000,
+        maxHeight: 2000,
+        imageQuality: 85,
+      );
+      if (image != null && mounted) {
+        setState(() {
+          if (isHTF) {
+            htfImagePath = image.path;
+          } else {
+            ltfImagePath = image.path;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        _snack(context, 'Error picking image');
+      }
+    }
+  }
+
+  Future<void> _exportData(String format) async {
+    try {
+      final c = widget.controller;
+      String content;
+
+      if (format == 'json') {
+        content = c.exportAsJson();
+      } else {
+        content = c.exportAsCsv();
+      }
+
+      // Copy to clipboard and show success
+      await Clipboard.setData(ClipboardData(text: content));
+      if (mounted) {
+        _snack(context, 'Exported $format data copied to clipboard');
+      }
+    } catch (e) {
+      if (mounted) {
+        _snack(context, 'Export failed');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
-    final trades = c.getTodayTrades();
-    final locked = c.state.lock || trades.length >= 2;
+    final todayTrades = c.getTodayTrades();
+    final allDates = c.getAllTradeDates();
+    final displayTrades = selectedDate != null
+        ? c.getTradesByDate(selectedDate!)
+        : todayTrades;
+    final locked = c.state.lock || todayTrades.length >= 2;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -1101,7 +1158,10 @@ class _JournalTabState extends State<_JournalTab> {
                 .headlineMedium
                 ?.copyWith(fontSize: 24)),
         const SizedBox(height: 4),
-        Text('${trades.length} trade${trades.length == 1 ? '' : 's'} today',
+        Text(
+            selectedDate == null
+                ? '${todayTrades.length} trade${todayTrades.length == 1 ? '' : 's'} today'
+                : '${displayTrades.length} trade${displayTrades.length == 1 ? '' : 's'} on $selectedDate',
             style: TextStyle(color: context.c.textSecondary, fontSize: 13)),
 
         const SizedBox(height: 20),
@@ -1176,6 +1236,31 @@ class _JournalTabState extends State<_JournalTab> {
                 maxLines: 3,
                 decoration: const InputDecoration(labelText: 'Notes'),
               ),
+              const SizedBox(height: 12),
+              // Image uploads
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _pickImage(true),
+                      icon: const Icon(Icons.image, size: 18),
+                      label: Text(htfImagePath != null
+                          ? 'HTF ✓'
+                          : 'HTF Chart'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _pickImage(false),
+                      icon: const Icon(Icons.image, size: 18),
+                      label: Text(ltfImagePath != null
+                          ? 'LTF ✓'
+                          : 'LTF Chart'),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
@@ -1197,11 +1282,15 @@ class _JournalTabState extends State<_JournalTab> {
                       pnl: pnl,
                       note: noteCtrl.text,
                       violations: violations.toList(),
+                      htfImage: htfImagePath,
+                      ltfImage: ltfImagePath,
                     );
                     lotsCtrl.clear();
                     pnlCtrl.clear();
                     noteCtrl.clear();
                     violations.clear();
+                    htfImagePath = null;
+                    ltfImagePath = null;
                     if (context.mounted) setState(() {});
                     if (context.mounted) _snack(context, 'Trade logged.');
                   },
@@ -1214,63 +1303,214 @@ class _JournalTabState extends State<_JournalTab> {
 
         const SizedBox(height: 16),
 
+        // ── Export buttons ──
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _exportData('json'),
+                icon: const Icon(Icons.download, size: 16),
+                label: const Text('JSON'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _exportData('csv'),
+                icon: const Icon(Icons.download, size: 16),
+                label: const Text('CSV'),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // ── Date selector and history ──
+        if (allDates.isNotEmpty)
+          _Card(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Trade History',
+                    style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChip(
+                          label: const Text('All'),
+                          selected: selectedDate == null,
+                          onSelected: (selected) =>
+                              setState(() => selectedDate = null),
+                        ),
+                      ),
+                      ...allDates.map((date) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(date),
+                            selected: selectedDate == date,
+                            onSelected: (selected) =>
+                                setState(() => selectedDate = selected ? date : null),
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        const SizedBox(height: 16),
+
         // ── Trade list ──
-        if (trades.isEmpty)
+        if (displayTrades.isEmpty)
           _Card(
             child: Column(
               children: [
                 Icon(Icons.inbox_outlined,
                     size: 32, color: context.c.textTertiary),
                 const SizedBox(height: 8),
-                Text('No trades today',
+                Text(
+                    selectedDate == null ? 'No trades today' : 'No trades on $selectedDate',
                     style: TextStyle(color: context.c.textSecondary)),
               ],
             ),
           )
         else
-          ...trades.map((t) {
+          ...displayTrades.map((t) {
             final tone = t.pnl >= 0 ? AppTheme.green : AppTheme.red;
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: _Card(
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 4,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: tone,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: tone,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('${t.sym} ${t.dir.toUpperCase()}',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w600, fontSize: 14)),
+                              Text('${t.time} · ${t.lots.toStringAsFixed(2)} lots',
+                                  style: TextStyle(
+                                      color: context.c.textTertiary, fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          _signed(t.pnl),
+                          style: TextStyle(
+                              color: tone,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => c.deleteTrade(t.id),
+                          icon: Icon(Icons.close,
+                              size: 16, color: context.c.textTertiary),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    // Show images if available
+                    if (t.htfImage != null || t.ltfImage != null) ...[
+                      const SizedBox(height: 12),
+                      Row(
                         children: [
-                          Text('${t.sym} ${t.dir.toUpperCase()}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w600, fontSize: 14)),
-                          Text('${t.time} · ${t.lots.toStringAsFixed(2)} lots',
-                              style: TextStyle(
-                                  color: context.c.textTertiary, fontSize: 12)),
+                          if (t.htfImage != null)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('HTF',
+                                      style: TextStyle(
+                                          color: context.c.textTertiary,
+                                          fontSize: 11)),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                          color: context.c.border, width: 1),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Image.file(
+                                        File(t.htfImage!),
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Icon(
+                                          Icons.image_not_supported,
+                                          color: context.c.textTertiary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          if (t.htfImage != null && t.ltfImage != null)
+                            const SizedBox(width: 12),
+                          if (t.ltfImage != null)
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('LTF',
+                                      style: TextStyle(
+                                          color: context.c.textTertiary,
+                                          fontSize: 11)),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                          color: context.c.border, width: 1),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Image.file(
+                                        File(t.ltfImage!),
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => Icon(
+                                          Icons.image_not_supported,
+                                          color: context.c.textTertiary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
-                    ),
-                    Text(
-                      _signed(t.pnl),
-                      style: TextStyle(
-                          color: tone,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () => c.deleteTrade(t.id),
-                      icon: Icon(Icons.close,
-                          size: 16, color: context.c.textTertiary),
-                      visualDensity: VisualDensity.compact,
-                    ),
+                    ],
+                    if (t.note.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(t.note,
+                          style: TextStyle(
+                              color: context.c.textTertiary, fontSize: 12)),
+                    ],
                   ],
                 ),
               ),
@@ -2463,7 +2703,6 @@ String _signed(double v) {
   return '$s\$${v.toStringAsFixed(0)}';
 }
 
-
 // -----------------------------------------------------------------------
 //  THEME TOGGLE
 // -----------------------------------------------------------------------
@@ -2511,8 +2750,7 @@ class _ThemeToggleButton extends StatelessWidget {
     final mode = controller.themeMode;
     return IconButton(
       onPressed: () => controller.setThemeMode(_next(mode)),
-      icon: Icon(_iconFor(mode),
-          color: context.c.textTertiary, size: 22),
+      icon: Icon(_iconFor(mode), color: context.c.textTertiary, size: 22),
       tooltip: _labelFor(mode),
     );
   }

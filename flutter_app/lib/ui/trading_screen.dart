@@ -4,7 +4,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../data/models.dart';
 import '../logic/trading_controller.dart';
@@ -142,6 +143,8 @@ class TradingScreen extends StatefulWidget {
 
 class _TradingScreenState extends State<TradingScreen> {
   static const _walkthroughKey = 'walkthrough_v2';
+  final GlobalKey<_JournalTabState> _journalTabKey =
+      GlobalKey<_JournalTabState>();
 
   @override
   void initState() {
@@ -158,6 +161,12 @@ class _TradingScreenState extends State<TradingScreen> {
 
   // ── Interactive walkthrough ──────────────────────────────────────────
   Future<void> _showWalkthrough({bool markSeen = false}) async {
+    if (markSeen) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_walkthroughKey, true);
+    }
+    if (!mounted) return;
+
     final steps = <_WalkthroughStep>[
       _WalkthroughStep(
         icon: Icons.dashboard_outlined,
@@ -321,10 +330,6 @@ class _TradingScreenState extends State<TradingScreen> {
                                 curve: Curves.easeOut,
                               );
                             } else {
-                              if (markSeen) {
-                                final p = await SharedPreferences.getInstance();
-                                await p.setBool(_walkthroughKey, true);
-                              }
                               if (ctx.mounted) Navigator.pop(ctx);
                             }
                           },
@@ -351,7 +356,7 @@ class _TradingScreenState extends State<TradingScreen> {
         final pages = <Widget>[
           _DashboardTab(controller: c, onWalkthrough: _showWalkthrough),
           _TradeFlowTab(controller: c),
-          _JournalTab(controller: c),
+          _JournalTab(key: _journalTabKey, controller: c),
           _EdgeTab(controller: c),
           _SettingsTab(controller: c),
         ];
@@ -365,6 +370,16 @@ class _TradingScreenState extends State<TradingScreen> {
               child: KeyedSubtree(key: ValueKey(tab), child: pages[tab]),
             ),
           ),
+          floatingActionButton: tab == 2
+              ? FloatingActionButton.extended(
+                  onPressed: () {
+                    _journalTabKey.currentState?.openLogTradeSheet();
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Log Trade'),
+                )
+              : null,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
           bottomNavigationBar: NavigationBar(
             selectedIndex: tab,
             onDestinationSelected: c.setActiveTab,
@@ -432,8 +447,13 @@ class _DashboardTab extends StatelessWidget {
     final session = c.getSessionInfo();
     final score = _readinessScore(c);
     final insights = _computeInsights(c);
+    final todayTrades = c.getTodayTrades();
+    final allTrades = c.getAllTradesDesc();
     final challenge = c.getChallengePnl();
     final today = c.getTodayPnl();
+    final allPnl = allTrades.fold<double>(0, (sum, t) => sum + t.pnl);
+    final wins = allTrades.where((t) => t.pnl > 0).length;
+    final winRate = allTrades.isEmpty ? 0.0 : (wins / allTrades.length) * 100;
     final balance = c.state.balance + challenge;
     final progress = (challenge / 1250).clamp(0.0, 1.0);
 
@@ -575,6 +595,37 @@ class _DashboardTab extends StatelessWidget {
           ],
         ),
 
+        const SizedBox(height: 8),
+
+        // ── Overall metrics row ──
+        Row(
+          children: [
+            Expanded(
+              child: _MetricTile(
+                label: 'All Trades',
+                value: '${allTrades.length}',
+                tone: context.c.text,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _MetricTile(
+                label: 'All-Time',
+                value: _signed(allPnl),
+                tone: allPnl >= 0 ? AppTheme.green : AppTheme.red,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _MetricTile(
+                label: 'Win Rate',
+                value: '${winRate.toStringAsFixed(0)}%',
+                tone: AppTheme.accent,
+              ),
+            ),
+          ],
+        ),
+
         const SizedBox(height: 12),
 
         // ── Session status ──
@@ -601,7 +652,7 @@ class _DashboardTab extends StatelessWidget {
                         )),
                     const SizedBox(height: 2),
                     Text(
-                        'Day ${c.getDayNumber()} · ${c.getTodayTrades().length}/2 trades',
+                        'Day ${c.getDayNumber()} · ${todayTrades.length}/2 today · ${allTrades.length} total',
                         style: TextStyle(
                             color: context.c.textSecondary, fontSize: 13)),
                   ],
@@ -1057,7 +1108,7 @@ class _ExecuteStep extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════
 
 class _JournalTab extends StatefulWidget {
-  const _JournalTab({required this.controller});
+  const _JournalTab({super.key, required this.controller});
   final TradingController controller;
 
   @override
@@ -1065,14 +1116,8 @@ class _JournalTab extends StatefulWidget {
 }
 
 class _JournalTabState extends State<_JournalTab> {
-  final lotsCtrl = TextEditingController();
-  final pnlCtrl = TextEditingController();
-  final noteCtrl = TextEditingController();
-  String sym = 'XAUUSD';
-  String dir = 'buy';
-  final Set<String> violations = {};
-  String? htfImagePath;
-  String? ltfImagePath;
+  final ImagePicker _imagePicker = ImagePicker();
+  String? _lastImagePickError;
   String? selectedDate;
 
   static const _vList = [
@@ -1083,36 +1128,322 @@ class _JournalTabState extends State<_JournalTab> {
     {'id': 'rr', 'label': 'R:R'},
   ];
 
-  @override
-  void dispose() {
-    lotsCtrl.dispose();
-    pnlCtrl.dispose();
-    noteCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickImage(bool isHTF) async {
+  Future<String?> _pickImagePath() async {
+    _lastImagePickError = null;
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
+      final img = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2000,
+        maxHeight: 2000,
+        imageQuality: 85,
       );
-      if (result != null && result.files.single.path != null && mounted) {
-        setState(() {
-          if (isHTF) {
-            htfImagePath = result.files.single.path;
-          } else {
-            ltfImagePath = result.files.single.path;
-          }
-        });
+      if (img == null || img.path.isEmpty) return null;
+      final copied = await _copyImageToAppStorage(img.path);
+      if (copied == null) {
+        _lastImagePickError =
+            'Image selected but could not be saved in app storage.';
       }
-    } catch (e) {
-      if (mounted) {
-        _snack(context, 'Error picking image');
-      }
+      return copied;
+    } catch (_) {
+      _lastImagePickError = 'Image picker failed. Please try again.';
+      return null;
     }
   }
 
-  // Remove the _exportData method as we're moving it to settings.
+  Future<String?> _copyImageToAppStorage(String sourcePath) async {
+    try {
+      final source = File(sourcePath);
+      if (!await source.exists()) return null;
+
+      final docsDir = await getApplicationDocumentsDirectory();
+      final imageDir =
+          Directory('${docsDir.path}${Platform.pathSeparator}journal_images');
+      if (!await imageDir.exists()) {
+        await imageDir.create(recursive: true);
+      }
+
+      final ext = _fileExtension(source.path);
+      final stamp = DateTime.now().microsecondsSinceEpoch;
+      final fileName = 'trade_${stamp}_${math.Random().nextInt(100000)}$ext';
+      final target = File('${imageDir.path}${Platform.pathSeparator}$fileName');
+      await source.copy(target.path);
+      return target.path;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _fileExtension(String path) {
+    final idx = path.lastIndexOf('.');
+    if (idx <= 0 || idx >= path.length - 1) return '.jpg';
+    final raw = path.substring(idx);
+    final clean = raw.length > 8 ? raw.substring(0, 8) : raw;
+    return clean;
+  }
+
+  Future<void> openLogTradeSheet() async {
+    final c = widget.controller;
+    final todayTrades = c.getTodayTrades();
+    final locked = c.state.lock || todayTrades.length >= 2;
+    if (locked) {
+      _snack(context, 'Session closed.');
+      return;
+    }
+
+    var sheetSym = 'XAUUSD';
+    var sheetDir = 'buy';
+    final sheetViolations = <String>{};
+    String? sheetHtfImagePath;
+    String? sheetLtfImagePath;
+    final sheetLotsCtrl = TextEditingController();
+    final sheetPnlCtrl = TextEditingController();
+    final sheetNoteCtrl = TextEditingController();
+
+    try {
+      await showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (ctx) {
+          return StatefulBuilder(
+            builder: (ctx, setSheetState) {
+              Future<void> attachImage(bool isHTF) async {
+                final path = await _pickImagePath();
+                if (!mounted || !ctx.mounted) return;
+                if (path == null) {
+                  _snack(context, _lastImagePickError ?? 'No image selected.');
+                  return;
+                }
+                setSheetState(() {
+                  if (isHTF) {
+                    sheetHtfImagePath = path;
+                  } else {
+                    sheetLtfImagePath = path;
+                  }
+                });
+              }
+
+              return SafeArea(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    16,
+                    16,
+                    16 + MediaQuery.of(ctx).viewInsets.bottom,
+                  ),
+                  child: _Card(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text('Log trade',
+                                style: Theme.of(ctx).textTheme.titleMedium),
+                            const Spacer(),
+                            IconButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              icon: const Icon(Icons.close),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String>(
+                          value: sheetSym,
+                          items: const [
+                            DropdownMenuItem(
+                                value: 'XAUUSD', child: Text('XAUUSD')),
+                            DropdownMenuItem(value: 'NQ', child: Text('NQ100')),
+                            DropdownMenuItem(
+                                value: 'EURUSD', child: Text('EURUSD')),
+                          ],
+                          onChanged: (v) {
+                            setSheetState(() => sheetSym = v ?? 'XAUUSD');
+                          },
+                          decoration:
+                              const InputDecoration(labelText: 'Instrument'),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DropdownButtonFormField<String>(
+                                value: sheetDir,
+                                items: const [
+                                  DropdownMenuItem(
+                                      value: 'buy', child: Text('Buy')),
+                                  DropdownMenuItem(
+                                      value: 'sell', child: Text('Sell')),
+                                ],
+                                onChanged: (v) {
+                                  setSheetState(() => sheetDir = v ?? 'buy');
+                                },
+                                decoration: const InputDecoration(
+                                    labelText: 'Direction'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextField(
+                                controller: sheetLotsCtrl,
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
+                                decoration:
+                                    const InputDecoration(labelText: 'Lots'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: sheetPnlCtrl,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          decoration:
+                              const InputDecoration(labelText: 'P&L (USD)'),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: _vList.map((item) {
+                            final id = item['id']!;
+                            return FilterChip(
+                              label: Text(item['label']!),
+                              selected: sheetViolations.contains(id),
+                              onSelected: (on) => setSheetState(() {
+                                on
+                                    ? sheetViolations.add(id)
+                                    : sheetViolations.remove(id);
+                              }),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: sheetNoteCtrl,
+                          maxLines: 3,
+                          decoration: const InputDecoration(labelText: 'Notes'),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => attachImage(true),
+                                icon: const Icon(Icons.image, size: 18),
+                                label: Text(sheetHtfImagePath != null
+                                    ? 'HTF ✓'
+                                    : 'HTF Chart'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => attachImage(false),
+                                icon: const Icon(Icons.image, size: 18),
+                                label: Text(sheetLtfImagePath != null
+                                    ? 'LTF ✓'
+                                    : 'LTF Chart'),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: () async {
+                              final pnl =
+                                  double.tryParse(sheetPnlCtrl.text.trim());
+                              if (pnl == null) {
+                                _snack(context, 'Enter valid P&L.');
+                                return;
+                              }
+
+                              await c.addTrade(
+                                sym: sheetSym,
+                                dir: sheetDir,
+                                lots: double.tryParse(
+                                        sheetLotsCtrl.text.trim()) ??
+                                    0,
+                                pnl: pnl,
+                                note: sheetNoteCtrl.text,
+                                violations: sheetViolations.toList(),
+                                htfImage: sheetHtfImagePath,
+                                ltfImage: sheetLtfImagePath,
+                              );
+
+                              if (ctx.mounted) Navigator.pop(ctx);
+                              if (mounted) {
+                                setState(() => selectedDate = null);
+                                _snack(context, 'Trade logged.');
+                              }
+                            },
+                            child: const Text('Save'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      sheetLotsCtrl.dispose();
+      sheetPnlCtrl.dispose();
+      sheetNoteCtrl.dispose();
+    }
+  }
+
+  Future<void> _confirmDeleteTrade(Trade t) async {
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: context.c.surface,
+            title: const Text('Delete trade?'),
+            content: Text(
+              '${t.sym} ${t.dir.toUpperCase()} · ${t.time}\nThis action cannot be undone.',
+              style: TextStyle(color: context.c.textSecondary),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: FilledButton.styleFrom(backgroundColor: AppTheme.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!confirmed) return;
+    await widget.controller.deleteTrade(t.id);
+    if (mounted) {
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text('Trade deleted.'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () {
+              widget.controller.restoreTrade(t);
+            },
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1121,7 +1452,7 @@ class _JournalTabState extends State<_JournalTab> {
     final allDates = c.getAllTradeDates();
     final displayTrades = selectedDate != null
         ? c.getTradesByDate(selectedDate!)
-        : c.state.allTrades;
+        : c.getAllTradesDesc();
     final locked = c.state.lock || todayTrades.length >= 2;
 
     return ListView(
@@ -1139,137 +1470,18 @@ class _JournalTabState extends State<_JournalTab> {
                 : '${displayTrades.length} trade${displayTrades.length == 1 ? '' : 's'} on $selectedDate',
             style: TextStyle(color: context.c.textSecondary, fontSize: 13)),
 
-        const SizedBox(height: 20),
-
-        // ── Log form ──
+        const SizedBox(height: 12),
         _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text('Log trade', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 14),
-              DropdownButtonFormField<String>(
-                value: sym,
-                items: const [
-                  DropdownMenuItem(value: 'XAUUSD', child: Text('XAUUSD')),
-                  DropdownMenuItem(value: 'NQ', child: Text('NQ100')),
-                  DropdownMenuItem(value: 'EURUSD', child: Text('EURUSD')),
-                ],
-                onChanged: (v) => setState(() => sym = v ?? 'XAUUSD'),
-                decoration: const InputDecoration(labelText: 'Instrument'),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: dir,
-                      items: const [
-                        DropdownMenuItem(value: 'buy', child: Text('Buy')),
-                        DropdownMenuItem(value: 'sell', child: Text('Sell')),
-                      ],
-                      onChanged: (v) => setState(() => dir = v ?? 'buy'),
-                      decoration: const InputDecoration(labelText: 'Direction'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      controller: lotsCtrl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(labelText: 'Lots'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: pnlCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'P&L (USD)'),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: _vList.map((item) {
-                  final id = item['id']!;
-                  return FilterChip(
-                    label: Text(item['label']!),
-                    selected: violations.contains(id),
-                    onSelected: (on) => setState(() {
-                      on ? violations.add(id) : violations.remove(id);
-                    }),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: noteCtrl,
-                maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Notes'),
-              ),
-              const SizedBox(height: 12),
-              // Image uploads
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickImage(true),
-                      icon: const Icon(Icons.image, size: 18),
-                      label: Text(htfImagePath != null
-                          ? 'HTF ✓'
-                          : 'HTF Chart'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickImage(false),
-                      icon: const Icon(Icons.image, size: 18),
-                      label: Text(ltfImagePath != null
-                          ? 'LTF ✓'
-                          : 'LTF Chart'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () async {
-                    if (locked) {
-                      _snack(context, 'Session closed.');
-                      return;
-                    }
-                    final pnl = double.tryParse(pnlCtrl.text);
-                    if (pnl == null) {
-                      _snack(context, 'Enter valid P&L.');
-                      return;
-                    }
-                    await c.addTrade(
-                      sym: sym,
-                      dir: dir,
-                      lots: double.tryParse(lotsCtrl.text) ?? 0,
-                      pnl: pnl,
-                      note: noteCtrl.text,
-                      violations: violations.toList(),
-                      htfImage: htfImagePath,
-                      ltfImage: ltfImagePath,
-                    );
-                    lotsCtrl.clear();
-                    pnlCtrl.clear();
-                    noteCtrl.clear();
-                    violations.clear();
-                    htfImagePath = null;
-                    ltfImagePath = null;
-                    if (context.mounted) setState(() {});
-                    if (context.mounted) _snack(context, 'Trade logged.');
-                  },
-                  child: const Text('Save'),
+              Icon(Icons.add_circle_outline, color: AppTheme.accent, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  locked
+                      ? 'Session closed for new entries.'
+                      : 'Use the + Log Trade button to add a new journal entry.',
+                  style: TextStyle(color: context.c.textSecondary),
                 ),
               ),
             ],
@@ -1306,8 +1518,8 @@ class _JournalTabState extends State<_JournalTab> {
                           child: FilterChip(
                             label: Text(date),
                             selected: selectedDate == date,
-                            onSelected: (selected) =>
-                                setState(() => selectedDate = selected ? date : null),
+                            onSelected: (selected) => setState(
+                                () => selectedDate = selected ? date : null),
                           ),
                         );
                       }),
@@ -1329,7 +1541,9 @@ class _JournalTabState extends State<_JournalTab> {
                     size: 32, color: context.c.textTertiary),
                 const SizedBox(height: 8),
                 Text(
-                    selectedDate == null ? 'No trades today' : 'No trades on $selectedDate',
+                    selectedDate == null
+                        ? 'No trades yet'
+                        : 'No trades on $selectedDate',
                     style: TextStyle(color: context.c.textSecondary)),
               ],
             ),
@@ -1360,10 +1574,13 @@ class _JournalTabState extends State<_JournalTab> {
                             children: [
                               Text('${t.sym} ${t.dir.toUpperCase()}',
                                   style: const TextStyle(
-                                      fontWeight: FontWeight.w600, fontSize: 14)),
-                              Text('${t.time} · ${t.lots.toStringAsFixed(2)} lots',
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14)),
+                              Text(
+                                  '${t.time} · ${t.lots.toStringAsFixed(2)} lots',
                                   style: TextStyle(
-                                      color: context.c.textTertiary, fontSize: 12)),
+                                      color: context.c.textTertiary,
+                                      fontSize: 12)),
                             ],
                           ),
                         ),
@@ -1376,7 +1593,7 @@ class _JournalTabState extends State<_JournalTab> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          onPressed: () => c.deleteTrade(t.id),
+                          onPressed: () => _confirmDeleteTrade(t),
                           icon: Icon(Icons.close,
                               size: 16, color: context.c.textTertiary),
                           visualDensity: VisualDensity.compact,
@@ -1468,6 +1685,7 @@ class _JournalTabState extends State<_JournalTab> {
               ),
             );
           }),
+        const SizedBox(height: 96),
       ],
     );
   }
@@ -2355,7 +2573,8 @@ class _SettingsTabState extends State<_SettingsTab> {
       await Clipboard.setData(ClipboardData(text: content));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Exported ${format.toUpperCase()} data copied.')),
+          SnackBar(
+              content: Text('Exported ${format.toUpperCase()} data copied.')),
         );
       }
     } catch (e) {
@@ -2365,6 +2584,252 @@ class _SettingsTabState extends State<_SettingsTab> {
         );
       }
     }
+  }
+
+  Future<ImportResult?> _importDialog(
+      BuildContext context, TradingController c) async {
+    importCtrl.clear();
+    var format = 'json';
+    var merge = true;
+    var isBusy = false;
+    ImportResult? result;
+    ImportResult? preview;
+    var previewSignature = '';
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          Future<void> runPreview() async {
+            final raw = importCtrl.text.trim();
+            if (raw.isEmpty) {
+              setDialogState(() {
+                preview = const ImportResult(
+                  ok: false,
+                  message: 'Import payload is empty.',
+                  dryRun: true,
+                );
+                previewSignature = '';
+              });
+              return;
+            }
+
+            setDialogState(() => isBusy = true);
+            final next = format == 'json'
+                ? await c.importJsonData(raw, merge: merge, dryRun: true)
+                : await c.importCsvData(raw, merge: merge, dryRun: true);
+            if (!ctx.mounted) return;
+            setDialogState(() {
+              preview = next;
+              previewSignature = '$format|$merge|$raw';
+              isBusy = false;
+            });
+          }
+
+          final raw = importCtrl.text.trim();
+          final currentSignature = '$format|$merge|$raw';
+          final canImport = !isBusy &&
+              raw.isNotEmpty &&
+              preview?.ok == true &&
+              previewSignature == currentSignature;
+
+          return AlertDialog(
+            backgroundColor: context.c.surface,
+            title: const Text('Import Data'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'json', label: Text('JSON')),
+                      ButtonSegment(value: 'csv', label: Text('CSV')),
+                    ],
+                    selected: {format},
+                    onSelectionChanged: (s) {
+                      setDialogState(() {
+                        format = s.first;
+                        preview = null;
+                        previewSignature = '';
+                      });
+                    },
+                    showSelectedIcon: false,
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile.adaptive(
+                    value: merge,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Merge with existing history'),
+                    subtitle: Text(
+                      merge
+                          ? 'Keeps existing data and adds imported rows.'
+                          : 'Replaces existing trade history with imported rows.',
+                      style: TextStyle(color: context.c.textSecondary),
+                    ),
+                    onChanged: (v) => setDialogState(() {
+                      merge = v;
+                      preview = null;
+                      previewSignature = '';
+                    }),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: importCtrl,
+                    maxLines: 12,
+                    onChanged: (_) {
+                      setDialogState(() {
+                        preview = null;
+                        previewSignature = '';
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: format == 'json'
+                          ? 'Paste exported JSON content here'
+                          : 'Paste CSV with header row here',
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  if (isBusy) const LinearProgressIndicator(minHeight: 3),
+                  if (preview != null) ...[
+                    const SizedBox(height: 10),
+                    _buildImportSummaryPanel(context, preview!),
+                  ] else ...[
+                    Text(
+                      'Tap Preview to validate rows and see import impact before applying.',
+                      style: TextStyle(color: context.c.textSecondary),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: isBusy ? null : () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              OutlinedButton(
+                onPressed: isBusy ? null : runPreview,
+                child: const Text('Preview'),
+              ),
+              FilledButton(
+                onPressed: canImport
+                    ? () async {
+                        setDialogState(() => isBusy = true);
+                        result = format == 'json'
+                            ? await c.importJsonData(raw, merge: merge)
+                            : await c.importCsvData(raw, merge: merge);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                      }
+                    : null,
+                child: const Text('Import'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    return result;
+  }
+
+  Widget _buildImportSummaryPanel(BuildContext context, ImportResult result) {
+    final preview = result.preview;
+    final tone = result.ok ? AppTheme.green : AppTheme.red;
+
+    if (preview == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: tone.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: tone.withValues(alpha: 0.25)),
+        ),
+        child: Text(
+          result.message,
+          style: TextStyle(color: context.c.textSecondary),
+        ),
+      );
+    }
+
+    final mode = preview.merge ? 'Merge' : 'Replace';
+    final dateRange = (preview.fromDate != null && preview.toDate != null)
+        ? '${preview.fromDate} to ${preview.toDate}'
+        : 'N/A';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: tone.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            result.ok ? 'Preview ready' : 'Preview failed',
+            style: TextStyle(fontWeight: FontWeight.w700, color: tone),
+          ),
+          const SizedBox(height: 8),
+          _buildImportMetricRow('Format', preview.format.toUpperCase()),
+          _buildImportMetricRow('Mode', mode),
+          _buildImportMetricRow('Current trades', '${preview.currentCount}'),
+          _buildImportMetricRow('Incoming rows', '${preview.incomingCount}'),
+          _buildImportMetricRow('Valid rows', '${preview.importedCount}'),
+          _buildImportMetricRow('Skipped rows', '${preview.skippedCount}'),
+          _buildImportMetricRow('Duplicate IDs', '${preview.duplicateCount}'),
+          _buildImportMetricRow(
+              'Resulting trades', '${preview.resultingCount}'),
+          _buildImportMetricRow('Date range', dateRange),
+          const SizedBox(height: 8),
+          Text(
+            result.message,
+            style: TextStyle(color: context.c.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImportMetricRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label,
+                style: TextStyle(fontSize: 12, color: context.c.textSecondary)),
+          ),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: context.c.text)),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showImportReportDialog(
+      BuildContext context, ImportResult result) async {
+    if (!context.mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.c.surface,
+        title: Text(result.ok ? 'Import Report' : 'Import Failed'),
+        content: _buildImportSummaryPanel(context, result),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -2468,18 +2933,15 @@ class _SettingsTabState extends State<_SettingsTab> {
                   ),
                   OutlinedButton(
                     onPressed: () async {
-                      final ok = await _importDialog(context, c);
-                      if (context.mounted && ok) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Imported.')),
-                        );
-                      } else if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Import canceled or failed.')),
-                        );
-                      }
+                      final result = await _importDialog(context, c);
+                      if (!context.mounted || result == null) return;
+                      await _showImportReportDialog(context, result);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result.message)),
+                      );
                     },
-                    child: const Text('Import JSON'),
+                    child: const Text('Import JSON/CSV'),
                   ),
                 ],
               ),
@@ -2488,27 +2950,6 @@ class _SettingsTabState extends State<_SettingsTab> {
         ),
       ],
     );
-  }
-
-  Future<bool> _importDialog(BuildContext context, TradingController c) async {
-    try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-      );
-      if (result != null && result.files.single.path != null) {
-        final file = File(result.files.single.path!);
-        final jsonStr = await file.readAsString();
-        return await c.importData(jsonStr);
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error reading file')),
-        );
-      }
-    }
-    return false;
   }
 }
 

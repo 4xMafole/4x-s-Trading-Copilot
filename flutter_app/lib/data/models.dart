@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'schema_migration.dart';
+
 class Trade {
   Trade({
     required this.id,
@@ -64,6 +66,7 @@ class Trade {
 
 class AppState {
   AppState({
+    required this.schemaVersion,
     required this.balance,
     required this.startDate,
     required this.priorPnl,
@@ -74,6 +77,7 @@ class AppState {
     required this.preloaded,
   });
 
+  final int schemaVersion;
   final double balance;
   final String startDate;
   final double priorPnl;
@@ -85,6 +89,7 @@ class AppState {
 
   factory AppState.defaults() {
     return AppState(
+      schemaVersion: kCurrentSchemaVersion,
       balance: 25000,
       startDate: '2026-04-20',
       priorPnl: 0,
@@ -97,6 +102,7 @@ class AppState {
   }
 
   AppState copyWith({
+    int? schemaVersion,
     double? balance,
     String? startDate,
     double? priorPnl,
@@ -108,6 +114,7 @@ class AppState {
     bool? preloaded,
   }) {
     return AppState(
+      schemaVersion: schemaVersion ?? this.schemaVersion,
       balance: balance ?? this.balance,
       startDate: startDate ?? this.startDate,
       priorPnl: priorPnl ?? this.priorPnl,
@@ -121,6 +128,7 @@ class AppState {
 
   factory AppState.fromJson(Map<String, dynamic> json) {
     return AppState(
+      schemaVersion: (json['schemaVersion'] as num?)?.toInt() ?? 1,
       balance: (json['balance'] as num?)?.toDouble() ?? 25000,
       startDate: json['startDate'] as String? ?? '2026-04-20',
       priorPnl: (json['priorPnl'] as num?)?.toDouble() ?? 0,
@@ -139,6 +147,7 @@ class AppState {
 
   Map<String, dynamic> toJson() {
     return {
+      'schemaVersion': schemaVersion,
       'balance': balance,
       'startDate': startDate,
       'priorPnl': priorPnl,

@@ -2469,15 +2469,17 @@ class _SettingsTabState extends State<_SettingsTab> {
                   OutlinedButton(
                     onPressed: () async {
                       final ok = await _importDialog(context, c);
-                      if (context.mounted) {
+                      if (context.mounted && ok) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content:
-                                  Text(ok ? 'Imported.' : 'Import failed.')),
+                          const SnackBar(content: Text('Imported.')),
+                        );
+                      } else if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Import canceled or failed.')),
                         );
                       }
                     },
-                    child: const Text('Import'),
+                    child: const Text('Import JSON'),
                   ),
                 ],
               ),
@@ -2489,32 +2491,24 @@ class _SettingsTabState extends State<_SettingsTab> {
   }
 
   Future<bool> _importDialog(BuildContext context, TradingController c) async {
-    importCtrl.clear();
-    bool ok = false;
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: context.c.surface,
-        title: const Text('Import JSON'),
-        content: TextField(
-          controller: importCtrl,
-          maxLines: 10,
-          decoration: const InputDecoration(hintText: 'Paste JSON'),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () async {
-              ok = await c.importData(importCtrl.text);
-              if (ctx.mounted) Navigator.pop(ctx);
-            },
-            child: const Text('Import'),
-          ),
-        ],
-      ),
-    );
-    return ok;
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+      if (result != null && result.files.single.path != null) {
+        final file = File(result.files.single.path!);
+        final jsonStr = await file.readAsString();
+        return await c.importData(jsonStr);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error reading file')),
+        );
+      }
+    }
+    return false;
   }
 }
 

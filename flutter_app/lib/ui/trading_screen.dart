@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 
 import '../data/models.dart';
 import '../logic/trading_controller.dart';
@@ -1074,7 +1074,6 @@ class _JournalTabState extends State<_JournalTab> {
   String? htfImagePath;
   String? ltfImagePath;
   String? selectedDate;
-  final ImagePicker _imagePicker = ImagePicker();
 
   static const _vList = [
     {'id': 'stacking', 'label': 'Stacking'},
@@ -1094,18 +1093,15 @@ class _JournalTabState extends State<_JournalTab> {
 
   Future<void> _pickImage(bool isHTF) async {
     try {
-      final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 2000,
-        maxHeight: 2000,
-        imageQuality: 85,
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
       );
-      if (image != null && mounted) {
+      if (result != null && result.files.single.path != null && mounted) {
         setState(() {
           if (isHTF) {
-            htfImagePath = image.path;
+            htfImagePath = result.files.single.path;
           } else {
-            ltfImagePath = image.path;
+            ltfImagePath = result.files.single.path;
           }
         });
       }
@@ -1116,28 +1112,7 @@ class _JournalTabState extends State<_JournalTab> {
     }
   }
 
-  Future<void> _exportData(String format) async {
-    try {
-      final c = widget.controller;
-      String content;
-
-      if (format == 'json') {
-        content = c.exportAsJson();
-      } else {
-        content = c.exportAsCsv();
-      }
-
-      // Copy to clipboard and show success
-      await Clipboard.setData(ClipboardData(text: content));
-      if (mounted) {
-        _snack(context, 'Exported $format data copied to clipboard');
-      }
-    } catch (e) {
-      if (mounted) {
-        _snack(context, 'Export failed');
-      }
-    }
-  }
+  // Remove the _exportData method as we're moving it to settings.
 
   @override
   Widget build(BuildContext context) {
@@ -1146,7 +1121,7 @@ class _JournalTabState extends State<_JournalTab> {
     final allDates = c.getAllTradeDates();
     final displayTrades = selectedDate != null
         ? c.getTradesByDate(selectedDate!)
-        : todayTrades;
+        : c.state.allTrades;
     final locked = c.state.lock || todayTrades.length >= 2;
 
     return ListView(
@@ -1160,7 +1135,7 @@ class _JournalTabState extends State<_JournalTab> {
         const SizedBox(height: 4),
         Text(
             selectedDate == null
-                ? '${todayTrades.length} trade${todayTrades.length == 1 ? '' : 's'} today'
+                ? '${c.state.allTrades.length} trade${c.state.allTrades.length == 1 ? '' : 's'} total'
                 : '${displayTrades.length} trade${displayTrades.length == 1 ? '' : 's'} on $selectedDate',
             style: TextStyle(color: context.c.textSecondary, fontSize: 13)),
 
@@ -1299,29 +1274,6 @@ class _JournalTabState extends State<_JournalTab> {
               ),
             ],
           ),
-        ),
-
-        const SizedBox(height: 16),
-
-        // ── Export buttons ──
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _exportData('json'),
-                icon: const Icon(Icons.download, size: 16),
-                label: const Text('JSON'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () => _exportData('csv'),
-                icon: const Icon(Icons.download, size: 16),
-                label: const Text('CSV'),
-              ),
-            ),
-          ],
         ),
 
         const SizedBox(height: 16),
@@ -2392,6 +2344,29 @@ class _SettingsTabState extends State<_SettingsTab> {
     super.dispose();
   }
 
+  Future<void> _exportData(String format, TradingController c) async {
+    try {
+      String content;
+      if (format == 'json') {
+        content = c.exportAsJson();
+      } else {
+        content = c.exportAsCsv();
+      }
+      await Clipboard.setData(ClipboardData(text: content));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Exported ${format.toUpperCase()} data copied.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Export failed.')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
@@ -2484,16 +2459,12 @@ class _SettingsTabState extends State<_SettingsTab> {
                     child: const Text('Full reset'),
                   ),
                   OutlinedButton(
-                    onPressed: () async {
-                      await Clipboard.setData(
-                          ClipboardData(text: c.exportData()));
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('JSON copied.')),
-                        );
-                      }
-                    },
-                    child: const Text('Export'),
+                    onPressed: () => _exportData('json', c),
+                    child: const Text('Export JSON'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => _exportData('csv', c),
+                    child: const Text('Export CSV'),
                   ),
                   OutlinedButton(
                     onPressed: () async {

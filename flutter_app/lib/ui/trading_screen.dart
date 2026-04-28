@@ -2141,12 +2141,14 @@ class _SettingsTabState extends State<_SettingsTab> {
       TextEditingController(text: widget.controller.state.startDate);
   late final priorCtrl = TextEditingController(
       text: widget.controller.state.priorPnl.toStringAsFixed(2));
+  late final importCtrl = TextEditingController();
 
   @override
   void dispose() {
     balanceCtrl.dispose();
     startCtrl.dispose();
     priorCtrl.dispose();
+    importCtrl.dispose();
     super.dispose();
   }
 
@@ -2276,7 +2278,7 @@ class _SettingsTabState extends State<_SettingsTab> {
   }
 
   Future<bool> _importDialog(BuildContext context, TradingController c) async {
-    final ctrl = TextEditingController();
+    importCtrl.clear();
     bool ok = false;
     await showDialog<void>(
       context: context,
@@ -2284,7 +2286,7 @@ class _SettingsTabState extends State<_SettingsTab> {
         backgroundColor: context.c.surface,
         title: const Text('Import JSON'),
         content: TextField(
-          controller: ctrl,
+          controller: importCtrl,
           maxLines: 10,
           decoration: const InputDecoration(hintText: 'Paste JSON'),
         ),
@@ -2293,7 +2295,7 @@ class _SettingsTabState extends State<_SettingsTab> {
               onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           FilledButton(
             onPressed: () async {
-              ok = await c.importData(ctrl.text);
+              ok = await c.importData(importCtrl.text);
               if (ctx.mounted) Navigator.pop(ctx);
             },
             child: const Text('Import'),
@@ -2301,7 +2303,6 @@ class _SettingsTabState extends State<_SettingsTab> {
         ],
       ),
     );
-    ctrl.dispose();
     return ok;
   }
 }

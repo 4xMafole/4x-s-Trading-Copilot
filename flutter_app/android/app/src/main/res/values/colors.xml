@@ -1,4 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="widget_surface">#11151C</color>
+    <color name="widget_surface_top">#1A1F29</color>
+    <color name="widget_surface_bottom">#0F131A</color>
+    <color name="widget_border">#293241</color>
+    <color name="widget_text_primary">#F7FAFC</color>
+    <color name="widget_text_secondary">#C2CBD8</color>
+    <color name="widget_text_tertiary">#8B96A8</color>
+    <color name="widget_badge_text">#F7FAFC</color>
+    <color name="widget_session_green">#3DDB9A</color>
+    <color name="widget_session_red">#FF7B72</color>
+    <color name="widget_session_amber">#F9C74F</color>
+    <color name="widget_session_neutral">#A7B4C6</color>
+    <color name="widget_badge_active_bg">#1D3A31</color>
+    <color name="widget_badge_active_stroke">#2E8162</color>
+    <color name="widget_badge_locked_bg">#4B252B</color>
+    <color name="widget_badge_locked_stroke">#A84A55</color>
+    <color name="widget_badge_standby_bg">#3D3221</color>
+    <color name="widget_badge_standby_stroke">#8E7647</color>
 </resources>

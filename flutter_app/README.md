@@ -1,16 +1,39 @@
 # trading_copilot_flutter
 
-A new Flutter project.
+Flutter mobile app for 4x Trades trading discipline workflows.
 
-## Getting Started
+## Implemented mobile behavior loop
 
-This project is a starting point for a Flutter application.
+1. Journal missed-trade backfill with date/time and quick shortcuts.
+2. Push session alerts with configurable EAT schedule in Settings.
+3. Biometric lock on app open/resume.
+4. Android home-screen widget with:
+	- EAT clock
+	- live session status
+	- trades remaining today
 
-A few resources to get you started if this is your first Flutter project:
+## Run locally
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+1. Install dependencies:
+	`flutter pub get`
+2. Run tests:
+	`flutter test`
+3. Run app:
+	`flutter run`
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Android widget notes
+
+- Widget provider: `android/app/src/main/kotlin/com/example/trading_copilot_flutter/TradingStatusWidgetProvider.kt`
+- Widget layout: `android/app/src/main/res/layout/trading_status_widget.xml`
+- Widget metadata: `android/app/src/main/res/xml/trading_status_widget_info.xml`
+
+## iOS Live Activity handoff (Mac/Xcode required)
+
+iOS project scaffold and app-side method-channel bridge are already included, but Live Activity final wiring still requires Xcode target configuration on macOS.
+
+Use:
+- `ios/Runner/AppDelegate.swift` for native bridge handling.
+- `ios/LiveActivityExtensionTemplate/` for extension template and setup guide.
+
+Additional implementation notes:
+- `docs/mobile_surfaces.md`

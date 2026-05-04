@@ -1,163 +1,51 @@
 import 'dart:convert';
-
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'schema_migration.dart';
 
-class Trade {
-  Trade({
-    required this.id,
-    required this.date,
-    required this.time,
-    required this.sym,
-    required this.dir,
-    required this.lots,
-    required this.pnl,
-    required this.note,
-    required this.violations,
-    this.htfImage,
-    this.ltfImage,
-  });
+part 'models.freezed.dart';
+part 'models.g.dart';
 
-  final String id;
-  final String date;
-  final String time;
-  final String sym;
-  final String dir;
-  final double lots;
-  final double pnl;
-  final String note;
-  final List<String> violations;
-  final String? htfImage; // Higher timeframe chart image path
-  final String? ltfImage; // Lower timeframe chart image path
+@freezed
+abstract class Trade with _$Trade {
+  const factory Trade({
+    required String id,
+    required String date,
+    required String time,
+    @Default('XAUUSD') String sym,
+    @Default('buy') String dir,
+    @Default(0.0) double lots,
+    @Default(0.0) double pnl,
+    @Default('') String note,
+    @Default([]) List<String> violations,
+    @Default([]) List<String> tags,
+    String? htfImage,
+    String? ltfImage,
+    @Default(false) bool isHypothetical,
+  }) = _Trade;
 
-  factory Trade.fromJson(Map<String, dynamic> json) {
-    return Trade(
-      id: json['id'] as String? ?? '',
-      date: json['date'] as String? ?? '',
-      time: json['time'] as String? ?? '',
-      sym: json['sym'] as String? ?? 'XAUUSD',
-      dir: json['dir'] as String? ?? 'buy',
-      lots: (json['lots'] as num?)?.toDouble() ?? 0,
-      pnl: (json['pnl'] as num?)?.toDouble() ?? 0,
-      note: json['note'] as String? ?? '',
-      violations: (json['violations'] as List<dynamic>? ?? const [])
-          .map((e) => e.toString())
-          .toList(),
-      htfImage: json['htfImage'] as String?,
-      ltfImage: json['ltfImage'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'date': date,
-      'time': time,
-      'sym': sym,
-      'dir': dir,
-      'lots': lots,
-      'pnl': pnl,
-      'note': note,
-      'violations': violations,
-      'htfImage': htfImage,
-      'ltfImage': ltfImage,
-    };
-  }
+  factory Trade.fromJson(Map<String, dynamic> json) => _$TradeFromJson(json);
 }
 
-class AppState {
-  AppState({
-    required this.schemaVersion,
-    required this.balance,
-    required this.startDate,
-    required this.priorPnl,
-    required this.checks,
-    required this.allTrades,
-    required this.lock,
-    required this.lockUntil,
-    required this.preloaded,
-  });
+@freezed
+abstract class AppState with _$AppState {
+  const AppState._(); // Added for custom methods
 
-  final int schemaVersion;
-  final double balance;
-  final String startDate;
-  final double priorPnl;
-  final Map<String, bool> checks;
-  final List<Trade> allTrades;
-  final bool lock;
-  final int? lockUntil;
-  final bool preloaded;
-
-  factory AppState.defaults() {
-    return AppState(
-      schemaVersion: kCurrentSchemaVersion,
-      balance: 25000,
-      startDate: '2026-04-20',
-      priorPnl: 0,
-      checks: <String, bool>{},
-      allTrades: <Trade>[],
-      lock: false,
-      lockUntil: null,
-      preloaded: false,
-    );
-  }
-
-  AppState copyWith({
-    int? schemaVersion,
-    double? balance,
-    String? startDate,
-    double? priorPnl,
-    Map<String, bool>? checks,
-    List<Trade>? allTrades,
-    bool? lock,
+  const factory AppState({
+    @Default(kCurrentSchemaVersion) int schemaVersion,
+    @Default(25000.0) double balance,
+    @Default('2026-04-20') String startDate,
+    @Default(0.0) double priorPnl,
+    @Default({}) Map<String, bool> checks,
+    @Default([]) List<Trade> allTrades,
+    @Default(false) bool lock,
     int? lockUntil,
-    bool clearLockUntil = false,
-    bool? preloaded,
-  }) {
-    return AppState(
-      schemaVersion: schemaVersion ?? this.schemaVersion,
-      balance: balance ?? this.balance,
-      startDate: startDate ?? this.startDate,
-      priorPnl: priorPnl ?? this.priorPnl,
-      checks: checks ?? this.checks,
-      allTrades: allTrades ?? this.allTrades,
-      lock: lock ?? this.lock,
-      lockUntil: clearLockUntil ? null : (lockUntil ?? this.lockUntil),
-      preloaded: preloaded ?? this.preloaded,
-    );
-  }
+    @Default(false) bool preloaded,
+  }) = _AppState;
 
-  factory AppState.fromJson(Map<String, dynamic> json) {
-    return AppState(
-      schemaVersion: (json['schemaVersion'] as num?)?.toInt() ?? 1,
-      balance: (json['balance'] as num?)?.toDouble() ?? 25000,
-      startDate: json['startDate'] as String? ?? '2026-04-20',
-      priorPnl: (json['priorPnl'] as num?)?.toDouble() ?? 0,
-      checks: (json['checks'] as Map<String, dynamic>? ?? const {}).map(
-        (k, v) => MapEntry(k, v == true),
-      ),
-      allTrades: (json['allTrades'] as List<dynamic>? ?? const [])
-          .whereType<Map<String, dynamic>>()
-          .map(Trade.fromJson)
-          .toList(),
-      lock: json['lock'] == true,
-      lockUntil: json['lockUntil'] as int?,
-      preloaded: json['preloaded'] == true,
-    );
-  }
+  factory AppState.defaults() => const AppState();
 
-  Map<String, dynamic> toJson() {
-    return {
-      'schemaVersion': schemaVersion,
-      'balance': balance,
-      'startDate': startDate,
-      'priorPnl': priorPnl,
-      'checks': checks,
-      'allTrades': allTrades.map((e) => e.toJson()).toList(),
-      'lock': lock,
-      'lockUntil': lockUntil,
-      'preloaded': preloaded,
-    };
-  }
+  factory AppState.fromJson(Map<String, dynamic> json) =>
+      _$AppStateFromJson(json);
 
   String toPrettyJson() {
     const encoder = JsonEncoder.withIndent('  ');

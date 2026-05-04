@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">4x Trades Status</string>
+    <string name="widget_title">4X TRADES</string>
+    <string name="widget_default_badge">STANDBY</string>
+    <string name="widget_default_day_date">Africa/Nairobi</string>
+    <string name="widget_session_caption">SESSION WINDOW</string>
+    <string name="widget_default_session">Session status</string>
+    <string name="widget_default_trades">Trades remaining today</string>
+    <string name="widget_default_updated">Updated now</string>
+</resources>

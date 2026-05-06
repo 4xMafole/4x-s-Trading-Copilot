@@ -15,7 +15,14 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Trade {
 
- String get id; String get date; String get time; String get sym; String get dir; double get lots; double get pnl; String get note; List<String> get violations; List<String> get tags; String? get htfImage; String? get ltfImage; bool get isHypothetical;
+ String get id; String get date; String get time; String get sym; String get dir; double get lots; double get pnl; String get note; List<String> get violations; List<String> get tags; String? get htfImage; String? get ltfImage; bool get isHypothetical;/// Mandatory setup grade for new trades. One of: A+, B, C.
+/// Nullable so historical trades imported before Sprint 2.1 still load.
+ String? get setupQuality;/// Mandatory trigger that caused the trade. One of:
+/// Plan, FOMO, Revenge, Boredom, News, Other.
+ String? get trigger;/// Optional 30-second post-trade reflection (Sprint 2.2).
+ TradeReflection? get reflection;/// Sprint 4.3 — planned $ risk at entry (from calculator). Nullable
+/// so older trades still deserialize.
+ double? get plannedRisk;
 /// Create a copy of Trade
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +35,16 @@ $TradeCopyWith<Trade> get copyWith => _$TradeCopyWithImpl<Trade>(this as Trade, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Trade&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.time, time) || other.time == time)&&(identical(other.sym, sym) || other.sym == sym)&&(identical(other.dir, dir) || other.dir == dir)&&(identical(other.lots, lots) || other.lots == lots)&&(identical(other.pnl, pnl) || other.pnl == pnl)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.violations, violations)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.htfImage, htfImage) || other.htfImage == htfImage)&&(identical(other.ltfImage, ltfImage) || other.ltfImage == ltfImage)&&(identical(other.isHypothetical, isHypothetical) || other.isHypothetical == isHypothetical));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Trade&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.time, time) || other.time == time)&&(identical(other.sym, sym) || other.sym == sym)&&(identical(other.dir, dir) || other.dir == dir)&&(identical(other.lots, lots) || other.lots == lots)&&(identical(other.pnl, pnl) || other.pnl == pnl)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.violations, violations)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.htfImage, htfImage) || other.htfImage == htfImage)&&(identical(other.ltfImage, ltfImage) || other.ltfImage == ltfImage)&&(identical(other.isHypothetical, isHypothetical) || other.isHypothetical == isHypothetical)&&(identical(other.setupQuality, setupQuality) || other.setupQuality == setupQuality)&&(identical(other.trigger, trigger) || other.trigger == trigger)&&(identical(other.reflection, reflection) || other.reflection == reflection)&&(identical(other.plannedRisk, plannedRisk) || other.plannedRisk == plannedRisk));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,date,time,sym,dir,lots,pnl,note,const DeepCollectionEquality().hash(violations),const DeepCollectionEquality().hash(tags),htfImage,ltfImage,isHypothetical);
+int get hashCode => Object.hash(runtimeType,id,date,time,sym,dir,lots,pnl,note,const DeepCollectionEquality().hash(violations),const DeepCollectionEquality().hash(tags),htfImage,ltfImage,isHypothetical,setupQuality,trigger,reflection,plannedRisk);
 
 @override
 String toString() {
-  return 'Trade(id: $id, date: $date, time: $time, sym: $sym, dir: $dir, lots: $lots, pnl: $pnl, note: $note, violations: $violations, tags: $tags, htfImage: $htfImage, ltfImage: $ltfImage, isHypothetical: $isHypothetical)';
+  return 'Trade(id: $id, date: $date, time: $time, sym: $sym, dir: $dir, lots: $lots, pnl: $pnl, note: $note, violations: $violations, tags: $tags, htfImage: $htfImage, ltfImage: $ltfImage, isHypothetical: $isHypothetical, setupQuality: $setupQuality, trigger: $trigger, reflection: $reflection, plannedRisk: $plannedRisk)';
 }
 
 
@@ -48,11 +55,11 @@ abstract mixin class $TradeCopyWith<$Res>  {
   factory $TradeCopyWith(Trade value, $Res Function(Trade) _then) = _$TradeCopyWithImpl;
 @useResult
 $Res call({
- String id, String date, String time, String sym, String dir, double lots, double pnl, String note, List<String> violations, List<String> tags, String? htfImage, String? ltfImage, bool isHypothetical
+ String id, String date, String time, String sym, String dir, double lots, double pnl, String note, List<String> violations, List<String> tags, String? htfImage, String? ltfImage, bool isHypothetical, String? setupQuality, String? trigger, TradeReflection? reflection, double? plannedRisk
 });
 
 
-
+$TradeReflectionCopyWith<$Res>? get reflection;
 
 }
 /// @nodoc
@@ -65,7 +72,7 @@ class _$TradeCopyWithImpl<$Res>
 
 /// Create a copy of Trade
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? date = null,Object? time = null,Object? sym = null,Object? dir = null,Object? lots = null,Object? pnl = null,Object? note = null,Object? violations = null,Object? tags = null,Object? htfImage = freezed,Object? ltfImage = freezed,Object? isHypothetical = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? date = null,Object? time = null,Object? sym = null,Object? dir = null,Object? lots = null,Object? pnl = null,Object? note = null,Object? violations = null,Object? tags = null,Object? htfImage = freezed,Object? ltfImage = freezed,Object? isHypothetical = null,Object? setupQuality = freezed,Object? trigger = freezed,Object? reflection = freezed,Object? plannedRisk = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
@@ -80,10 +87,26 @@ as List<String>,tags: null == tags ? _self.tags : tags // ignore: cast_nullable_
 as List<String>,htfImage: freezed == htfImage ? _self.htfImage : htfImage // ignore: cast_nullable_to_non_nullable
 as String?,ltfImage: freezed == ltfImage ? _self.ltfImage : ltfImage // ignore: cast_nullable_to_non_nullable
 as String?,isHypothetical: null == isHypothetical ? _self.isHypothetical : isHypothetical // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,setupQuality: freezed == setupQuality ? _self.setupQuality : setupQuality // ignore: cast_nullable_to_non_nullable
+as String?,trigger: freezed == trigger ? _self.trigger : trigger // ignore: cast_nullable_to_non_nullable
+as String?,reflection: freezed == reflection ? _self.reflection : reflection // ignore: cast_nullable_to_non_nullable
+as TradeReflection?,plannedRisk: freezed == plannedRisk ? _self.plannedRisk : plannedRisk // ignore: cast_nullable_to_non_nullable
+as double?,
   ));
 }
+/// Create a copy of Trade
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$TradeReflectionCopyWith<$Res>? get reflection {
+    if (_self.reflection == null) {
+    return null;
+  }
 
+  return $TradeReflectionCopyWith<$Res>(_self.reflection!, (value) {
+    return _then(_self.copyWith(reflection: value));
+  });
+}
 }
 
 
@@ -165,10 +188,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical,  String? setupQuality,  String? trigger,  TradeReflection? reflection,  double? plannedRisk)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Trade() when $default != null:
-return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical);case _:
+return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical,_that.setupQuality,_that.trigger,_that.reflection,_that.plannedRisk);case _:
   return orElse();
 
 }
@@ -186,10 +209,10 @@ return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical,  String? setupQuality,  String? trigger,  TradeReflection? reflection,  double? plannedRisk)  $default,) {final _that = this;
 switch (_that) {
 case _Trade():
-return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical);case _:
+return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical,_that.setupQuality,_that.trigger,_that.reflection,_that.plannedRisk);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -206,10 +229,10 @@ return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical,  String? setupQuality,  String? trigger,  TradeReflection? reflection,  double? plannedRisk)?  $default,) {final _that = this;
 switch (_that) {
 case _Trade() when $default != null:
-return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical);case _:
+return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical,_that.setupQuality,_that.trigger,_that.reflection,_that.plannedRisk);case _:
   return null;
 
 }
@@ -221,7 +244,7 @@ return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_t
 @JsonSerializable()
 
 class _Trade implements Trade {
-  const _Trade({required this.id, required this.date, required this.time, this.sym = 'XAUUSD', this.dir = 'buy', this.lots = 0.0, this.pnl = 0.0, this.note = '', final  List<String> violations = const [], final  List<String> tags = const [], this.htfImage, this.ltfImage, this.isHypothetical = false}): _violations = violations,_tags = tags;
+  const _Trade({required this.id, required this.date, required this.time, this.sym = 'XAUUSD', this.dir = 'buy', this.lots = 0.0, this.pnl = 0.0, this.note = '', final  List<String> violations = const [], final  List<String> tags = const [], this.htfImage, this.ltfImage, this.isHypothetical = false, this.setupQuality, this.trigger, this.reflection, this.plannedRisk}): _violations = violations,_tags = tags;
   factory _Trade.fromJson(Map<String, dynamic> json) => _$TradeFromJson(json);
 
 @override final  String id;
@@ -249,6 +272,17 @@ class _Trade implements Trade {
 @override final  String? htfImage;
 @override final  String? ltfImage;
 @override@JsonKey() final  bool isHypothetical;
+/// Mandatory setup grade for new trades. One of: A+, B, C.
+/// Nullable so historical trades imported before Sprint 2.1 still load.
+@override final  String? setupQuality;
+/// Mandatory trigger that caused the trade. One of:
+/// Plan, FOMO, Revenge, Boredom, News, Other.
+@override final  String? trigger;
+/// Optional 30-second post-trade reflection (Sprint 2.2).
+@override final  TradeReflection? reflection;
+/// Sprint 4.3 — planned $ risk at entry (from calculator). Nullable
+/// so older trades still deserialize.
+@override final  double? plannedRisk;
 
 /// Create a copy of Trade
 /// with the given fields replaced by the non-null parameter values.
@@ -263,16 +297,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Trade&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.time, time) || other.time == time)&&(identical(other.sym, sym) || other.sym == sym)&&(identical(other.dir, dir) || other.dir == dir)&&(identical(other.lots, lots) || other.lots == lots)&&(identical(other.pnl, pnl) || other.pnl == pnl)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other._violations, _violations)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.htfImage, htfImage) || other.htfImage == htfImage)&&(identical(other.ltfImage, ltfImage) || other.ltfImage == ltfImage)&&(identical(other.isHypothetical, isHypothetical) || other.isHypothetical == isHypothetical));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Trade&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.time, time) || other.time == time)&&(identical(other.sym, sym) || other.sym == sym)&&(identical(other.dir, dir) || other.dir == dir)&&(identical(other.lots, lots) || other.lots == lots)&&(identical(other.pnl, pnl) || other.pnl == pnl)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other._violations, _violations)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.htfImage, htfImage) || other.htfImage == htfImage)&&(identical(other.ltfImage, ltfImage) || other.ltfImage == ltfImage)&&(identical(other.isHypothetical, isHypothetical) || other.isHypothetical == isHypothetical)&&(identical(other.setupQuality, setupQuality) || other.setupQuality == setupQuality)&&(identical(other.trigger, trigger) || other.trigger == trigger)&&(identical(other.reflection, reflection) || other.reflection == reflection)&&(identical(other.plannedRisk, plannedRisk) || other.plannedRisk == plannedRisk));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,date,time,sym,dir,lots,pnl,note,const DeepCollectionEquality().hash(_violations),const DeepCollectionEquality().hash(_tags),htfImage,ltfImage,isHypothetical);
+int get hashCode => Object.hash(runtimeType,id,date,time,sym,dir,lots,pnl,note,const DeepCollectionEquality().hash(_violations),const DeepCollectionEquality().hash(_tags),htfImage,ltfImage,isHypothetical,setupQuality,trigger,reflection,plannedRisk);
 
 @override
 String toString() {
-  return 'Trade(id: $id, date: $date, time: $time, sym: $sym, dir: $dir, lots: $lots, pnl: $pnl, note: $note, violations: $violations, tags: $tags, htfImage: $htfImage, ltfImage: $ltfImage, isHypothetical: $isHypothetical)';
+  return 'Trade(id: $id, date: $date, time: $time, sym: $sym, dir: $dir, lots: $lots, pnl: $pnl, note: $note, violations: $violations, tags: $tags, htfImage: $htfImage, ltfImage: $ltfImage, isHypothetical: $isHypothetical, setupQuality: $setupQuality, trigger: $trigger, reflection: $reflection, plannedRisk: $plannedRisk)';
 }
 
 
@@ -283,11 +317,11 @@ abstract mixin class _$TradeCopyWith<$Res> implements $TradeCopyWith<$Res> {
   factory _$TradeCopyWith(_Trade value, $Res Function(_Trade) _then) = __$TradeCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String date, String time, String sym, String dir, double lots, double pnl, String note, List<String> violations, List<String> tags, String? htfImage, String? ltfImage, bool isHypothetical
+ String id, String date, String time, String sym, String dir, double lots, double pnl, String note, List<String> violations, List<String> tags, String? htfImage, String? ltfImage, bool isHypothetical, String? setupQuality, String? trigger, TradeReflection? reflection, double? plannedRisk
 });
 
 
-
+@override $TradeReflectionCopyWith<$Res>? get reflection;
 
 }
 /// @nodoc
@@ -300,7 +334,7 @@ class __$TradeCopyWithImpl<$Res>
 
 /// Create a copy of Trade
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? date = null,Object? time = null,Object? sym = null,Object? dir = null,Object? lots = null,Object? pnl = null,Object? note = null,Object? violations = null,Object? tags = null,Object? htfImage = freezed,Object? ltfImage = freezed,Object? isHypothetical = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? date = null,Object? time = null,Object? sym = null,Object? dir = null,Object? lots = null,Object? pnl = null,Object? note = null,Object? violations = null,Object? tags = null,Object? htfImage = freezed,Object? ltfImage = freezed,Object? isHypothetical = null,Object? setupQuality = freezed,Object? trigger = freezed,Object? reflection = freezed,Object? plannedRisk = freezed,}) {
   return _then(_Trade(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
@@ -315,6 +349,2305 @@ as List<String>,tags: null == tags ? _self._tags : tags // ignore: cast_nullable
 as List<String>,htfImage: freezed == htfImage ? _self.htfImage : htfImage // ignore: cast_nullable_to_non_nullable
 as String?,ltfImage: freezed == ltfImage ? _self.ltfImage : ltfImage // ignore: cast_nullable_to_non_nullable
 as String?,isHypothetical: null == isHypothetical ? _self.isHypothetical : isHypothetical // ignore: cast_nullable_to_non_nullable
+as bool,setupQuality: freezed == setupQuality ? _self.setupQuality : setupQuality // ignore: cast_nullable_to_non_nullable
+as String?,trigger: freezed == trigger ? _self.trigger : trigger // ignore: cast_nullable_to_non_nullable
+as String?,reflection: freezed == reflection ? _self.reflection : reflection // ignore: cast_nullable_to_non_nullable
+as TradeReflection?,plannedRisk: freezed == plannedRisk ? _self.plannedRisk : plannedRisk // ignore: cast_nullable_to_non_nullable
+as double?,
+  ));
+}
+
+/// Create a copy of Trade
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$TradeReflectionCopyWith<$Res>? get reflection {
+    if (_self.reflection == null) {
+    return null;
+  }
+
+  return $TradeReflectionCopyWith<$Res>(_self.reflection!, (value) {
+    return _then(_self.copyWith(reflection: value));
+  });
+}
+}
+
+
+/// @nodoc
+mixin _$TradeReflection {
+
+ bool get followedPlan;/// One of: TP, SL, Manual, Time.
+ String get exitReason;/// 1 (terrible) — 10 (locked-in).
+ int get emotionalState;
+/// Create a copy of TradeReflection
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TradeReflectionCopyWith<TradeReflection> get copyWith => _$TradeReflectionCopyWithImpl<TradeReflection>(this as TradeReflection, _$identity);
+
+  /// Serializes this TradeReflection to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TradeReflection&&(identical(other.followedPlan, followedPlan) || other.followedPlan == followedPlan)&&(identical(other.exitReason, exitReason) || other.exitReason == exitReason)&&(identical(other.emotionalState, emotionalState) || other.emotionalState == emotionalState));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,followedPlan,exitReason,emotionalState);
+
+@override
+String toString() {
+  return 'TradeReflection(followedPlan: $followedPlan, exitReason: $exitReason, emotionalState: $emotionalState)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $TradeReflectionCopyWith<$Res>  {
+  factory $TradeReflectionCopyWith(TradeReflection value, $Res Function(TradeReflection) _then) = _$TradeReflectionCopyWithImpl;
+@useResult
+$Res call({
+ bool followedPlan, String exitReason, int emotionalState
+});
+
+
+
+
+}
+/// @nodoc
+class _$TradeReflectionCopyWithImpl<$Res>
+    implements $TradeReflectionCopyWith<$Res> {
+  _$TradeReflectionCopyWithImpl(this._self, this._then);
+
+  final TradeReflection _self;
+  final $Res Function(TradeReflection) _then;
+
+/// Create a copy of TradeReflection
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? followedPlan = null,Object? exitReason = null,Object? emotionalState = null,}) {
+  return _then(_self.copyWith(
+followedPlan: null == followedPlan ? _self.followedPlan : followedPlan // ignore: cast_nullable_to_non_nullable
+as bool,exitReason: null == exitReason ? _self.exitReason : exitReason // ignore: cast_nullable_to_non_nullable
+as String,emotionalState: null == emotionalState ? _self.emotionalState : emotionalState // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [TradeReflection].
+extension TradeReflectionPatterns on TradeReflection {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _TradeReflection value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _TradeReflection() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _TradeReflection value)  $default,){
+final _that = this;
+switch (_that) {
+case _TradeReflection():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _TradeReflection value)?  $default,){
+final _that = this;
+switch (_that) {
+case _TradeReflection() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool followedPlan,  String exitReason,  int emotionalState)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _TradeReflection() when $default != null:
+return $default(_that.followedPlan,_that.exitReason,_that.emotionalState);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool followedPlan,  String exitReason,  int emotionalState)  $default,) {final _that = this;
+switch (_that) {
+case _TradeReflection():
+return $default(_that.followedPlan,_that.exitReason,_that.emotionalState);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool followedPlan,  String exitReason,  int emotionalState)?  $default,) {final _that = this;
+switch (_that) {
+case _TradeReflection() when $default != null:
+return $default(_that.followedPlan,_that.exitReason,_that.emotionalState);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _TradeReflection implements TradeReflection {
+  const _TradeReflection({required this.followedPlan, required this.exitReason, required this.emotionalState});
+  factory _TradeReflection.fromJson(Map<String, dynamic> json) => _$TradeReflectionFromJson(json);
+
+@override final  bool followedPlan;
+/// One of: TP, SL, Manual, Time.
+@override final  String exitReason;
+/// 1 (terrible) — 10 (locked-in).
+@override final  int emotionalState;
+
+/// Create a copy of TradeReflection
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$TradeReflectionCopyWith<_TradeReflection> get copyWith => __$TradeReflectionCopyWithImpl<_TradeReflection>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$TradeReflectionToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TradeReflection&&(identical(other.followedPlan, followedPlan) || other.followedPlan == followedPlan)&&(identical(other.exitReason, exitReason) || other.exitReason == exitReason)&&(identical(other.emotionalState, emotionalState) || other.emotionalState == emotionalState));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,followedPlan,exitReason,emotionalState);
+
+@override
+String toString() {
+  return 'TradeReflection(followedPlan: $followedPlan, exitReason: $exitReason, emotionalState: $emotionalState)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$TradeReflectionCopyWith<$Res> implements $TradeReflectionCopyWith<$Res> {
+  factory _$TradeReflectionCopyWith(_TradeReflection value, $Res Function(_TradeReflection) _then) = __$TradeReflectionCopyWithImpl;
+@override @useResult
+$Res call({
+ bool followedPlan, String exitReason, int emotionalState
+});
+
+
+
+
+}
+/// @nodoc
+class __$TradeReflectionCopyWithImpl<$Res>
+    implements _$TradeReflectionCopyWith<$Res> {
+  __$TradeReflectionCopyWithImpl(this._self, this._then);
+
+  final _TradeReflection _self;
+  final $Res Function(_TradeReflection) _then;
+
+/// Create a copy of TradeReflection
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? followedPlan = null,Object? exitReason = null,Object? emotionalState = null,}) {
+  return _then(_TradeReflection(
+followedPlan: null == followedPlan ? _self.followedPlan : followedPlan // ignore: cast_nullable_to_non_nullable
+as bool,exitReason: null == exitReason ? _self.exitReason : exitReason // ignore: cast_nullable_to_non_nullable
+as String,emotionalState: null == emotionalState ? _self.emotionalState : emotionalState // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$DailyMood {
+
+/// One of: Tired, Neutral, Sharp, Frustrated, Hyped.
+ String get mood; String get note; int get timestamp;
+/// Create a copy of DailyMood
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$DailyMoodCopyWith<DailyMood> get copyWith => _$DailyMoodCopyWithImpl<DailyMood>(this as DailyMood, _$identity);
+
+  /// Serializes this DailyMood to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DailyMood&&(identical(other.mood, mood) || other.mood == mood)&&(identical(other.note, note) || other.note == note)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,mood,note,timestamp);
+
+@override
+String toString() {
+  return 'DailyMood(mood: $mood, note: $note, timestamp: $timestamp)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $DailyMoodCopyWith<$Res>  {
+  factory $DailyMoodCopyWith(DailyMood value, $Res Function(DailyMood) _then) = _$DailyMoodCopyWithImpl;
+@useResult
+$Res call({
+ String mood, String note, int timestamp
+});
+
+
+
+
+}
+/// @nodoc
+class _$DailyMoodCopyWithImpl<$Res>
+    implements $DailyMoodCopyWith<$Res> {
+  _$DailyMoodCopyWithImpl(this._self, this._then);
+
+  final DailyMood _self;
+  final $Res Function(DailyMood) _then;
+
+/// Create a copy of DailyMood
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? mood = null,Object? note = null,Object? timestamp = null,}) {
+  return _then(_self.copyWith(
+mood: null == mood ? _self.mood : mood // ignore: cast_nullable_to_non_nullable
+as String,note: null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [DailyMood].
+extension DailyMoodPatterns on DailyMood {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _DailyMood value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _DailyMood() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _DailyMood value)  $default,){
+final _that = this;
+switch (_that) {
+case _DailyMood():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _DailyMood value)?  $default,){
+final _that = this;
+switch (_that) {
+case _DailyMood() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String mood,  String note,  int timestamp)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _DailyMood() when $default != null:
+return $default(_that.mood,_that.note,_that.timestamp);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String mood,  String note,  int timestamp)  $default,) {final _that = this;
+switch (_that) {
+case _DailyMood():
+return $default(_that.mood,_that.note,_that.timestamp);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String mood,  String note,  int timestamp)?  $default,) {final _that = this;
+switch (_that) {
+case _DailyMood() when $default != null:
+return $default(_that.mood,_that.note,_that.timestamp);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _DailyMood implements DailyMood {
+  const _DailyMood({required this.mood, this.note = '', required this.timestamp});
+  factory _DailyMood.fromJson(Map<String, dynamic> json) => _$DailyMoodFromJson(json);
+
+/// One of: Tired, Neutral, Sharp, Frustrated, Hyped.
+@override final  String mood;
+@override@JsonKey() final  String note;
+@override final  int timestamp;
+
+/// Create a copy of DailyMood
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$DailyMoodCopyWith<_DailyMood> get copyWith => __$DailyMoodCopyWithImpl<_DailyMood>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$DailyMoodToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _DailyMood&&(identical(other.mood, mood) || other.mood == mood)&&(identical(other.note, note) || other.note == note)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,mood,note,timestamp);
+
+@override
+String toString() {
+  return 'DailyMood(mood: $mood, note: $note, timestamp: $timestamp)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$DailyMoodCopyWith<$Res> implements $DailyMoodCopyWith<$Res> {
+  factory _$DailyMoodCopyWith(_DailyMood value, $Res Function(_DailyMood) _then) = __$DailyMoodCopyWithImpl;
+@override @useResult
+$Res call({
+ String mood, String note, int timestamp
+});
+
+
+
+
+}
+/// @nodoc
+class __$DailyMoodCopyWithImpl<$Res>
+    implements _$DailyMoodCopyWith<$Res> {
+  __$DailyMoodCopyWithImpl(this._self, this._then);
+
+  final _DailyMood _self;
+  final $Res Function(_DailyMood) _then;
+
+/// Create a copy of DailyMood
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? mood = null,Object? note = null,Object? timestamp = null,}) {
+  return _then(_DailyMood(
+mood: null == mood ? _self.mood : mood // ignore: cast_nullable_to_non_nullable
+as String,note: null == note ? _self.note : note // ignore: cast_nullable_to_non_nullable
+as String,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$WeeklyDigest {
+
+ String get weekId;// ISO week label e.g. "2026-W18"
+ int get generatedAt;// ms since epoch
+ String get win;// "Your A+ setups produced +$340 this week."
+ String get worstHabit;// "60% of trades were FOMO. Worst day: Wed."
+ String get oneFix;// "Skip trades after 2 losses..."
+ bool get seen;
+/// Create a copy of WeeklyDigest
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$WeeklyDigestCopyWith<WeeklyDigest> get copyWith => _$WeeklyDigestCopyWithImpl<WeeklyDigest>(this as WeeklyDigest, _$identity);
+
+  /// Serializes this WeeklyDigest to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WeeklyDigest&&(identical(other.weekId, weekId) || other.weekId == weekId)&&(identical(other.generatedAt, generatedAt) || other.generatedAt == generatedAt)&&(identical(other.win, win) || other.win == win)&&(identical(other.worstHabit, worstHabit) || other.worstHabit == worstHabit)&&(identical(other.oneFix, oneFix) || other.oneFix == oneFix)&&(identical(other.seen, seen) || other.seen == seen));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,weekId,generatedAt,win,worstHabit,oneFix,seen);
+
+@override
+String toString() {
+  return 'WeeklyDigest(weekId: $weekId, generatedAt: $generatedAt, win: $win, worstHabit: $worstHabit, oneFix: $oneFix, seen: $seen)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $WeeklyDigestCopyWith<$Res>  {
+  factory $WeeklyDigestCopyWith(WeeklyDigest value, $Res Function(WeeklyDigest) _then) = _$WeeklyDigestCopyWithImpl;
+@useResult
+$Res call({
+ String weekId, int generatedAt, String win, String worstHabit, String oneFix, bool seen
+});
+
+
+
+
+}
+/// @nodoc
+class _$WeeklyDigestCopyWithImpl<$Res>
+    implements $WeeklyDigestCopyWith<$Res> {
+  _$WeeklyDigestCopyWithImpl(this._self, this._then);
+
+  final WeeklyDigest _self;
+  final $Res Function(WeeklyDigest) _then;
+
+/// Create a copy of WeeklyDigest
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? weekId = null,Object? generatedAt = null,Object? win = null,Object? worstHabit = null,Object? oneFix = null,Object? seen = null,}) {
+  return _then(_self.copyWith(
+weekId: null == weekId ? _self.weekId : weekId // ignore: cast_nullable_to_non_nullable
+as String,generatedAt: null == generatedAt ? _self.generatedAt : generatedAt // ignore: cast_nullable_to_non_nullable
+as int,win: null == win ? _self.win : win // ignore: cast_nullable_to_non_nullable
+as String,worstHabit: null == worstHabit ? _self.worstHabit : worstHabit // ignore: cast_nullable_to_non_nullable
+as String,oneFix: null == oneFix ? _self.oneFix : oneFix // ignore: cast_nullable_to_non_nullable
+as String,seen: null == seen ? _self.seen : seen // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [WeeklyDigest].
+extension WeeklyDigestPatterns on WeeklyDigest {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _WeeklyDigest value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _WeeklyDigest() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _WeeklyDigest value)  $default,){
+final _that = this;
+switch (_that) {
+case _WeeklyDigest():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _WeeklyDigest value)?  $default,){
+final _that = this;
+switch (_that) {
+case _WeeklyDigest() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String weekId,  int generatedAt,  String win,  String worstHabit,  String oneFix,  bool seen)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _WeeklyDigest() when $default != null:
+return $default(_that.weekId,_that.generatedAt,_that.win,_that.worstHabit,_that.oneFix,_that.seen);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String weekId,  int generatedAt,  String win,  String worstHabit,  String oneFix,  bool seen)  $default,) {final _that = this;
+switch (_that) {
+case _WeeklyDigest():
+return $default(_that.weekId,_that.generatedAt,_that.win,_that.worstHabit,_that.oneFix,_that.seen);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String weekId,  int generatedAt,  String win,  String worstHabit,  String oneFix,  bool seen)?  $default,) {final _that = this;
+switch (_that) {
+case _WeeklyDigest() when $default != null:
+return $default(_that.weekId,_that.generatedAt,_that.win,_that.worstHabit,_that.oneFix,_that.seen);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _WeeklyDigest implements WeeklyDigest {
+  const _WeeklyDigest({required this.weekId, required this.generatedAt, required this.win, required this.worstHabit, required this.oneFix, this.seen = false});
+  factory _WeeklyDigest.fromJson(Map<String, dynamic> json) => _$WeeklyDigestFromJson(json);
+
+@override final  String weekId;
+// ISO week label e.g. "2026-W18"
+@override final  int generatedAt;
+// ms since epoch
+@override final  String win;
+// "Your A+ setups produced +$340 this week."
+@override final  String worstHabit;
+// "60% of trades were FOMO. Worst day: Wed."
+@override final  String oneFix;
+// "Skip trades after 2 losses..."
+@override@JsonKey() final  bool seen;
+
+/// Create a copy of WeeklyDigest
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$WeeklyDigestCopyWith<_WeeklyDigest> get copyWith => __$WeeklyDigestCopyWithImpl<_WeeklyDigest>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$WeeklyDigestToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WeeklyDigest&&(identical(other.weekId, weekId) || other.weekId == weekId)&&(identical(other.generatedAt, generatedAt) || other.generatedAt == generatedAt)&&(identical(other.win, win) || other.win == win)&&(identical(other.worstHabit, worstHabit) || other.worstHabit == worstHabit)&&(identical(other.oneFix, oneFix) || other.oneFix == oneFix)&&(identical(other.seen, seen) || other.seen == seen));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,weekId,generatedAt,win,worstHabit,oneFix,seen);
+
+@override
+String toString() {
+  return 'WeeklyDigest(weekId: $weekId, generatedAt: $generatedAt, win: $win, worstHabit: $worstHabit, oneFix: $oneFix, seen: $seen)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$WeeklyDigestCopyWith<$Res> implements $WeeklyDigestCopyWith<$Res> {
+  factory _$WeeklyDigestCopyWith(_WeeklyDigest value, $Res Function(_WeeklyDigest) _then) = __$WeeklyDigestCopyWithImpl;
+@override @useResult
+$Res call({
+ String weekId, int generatedAt, String win, String worstHabit, String oneFix, bool seen
+});
+
+
+
+
+}
+/// @nodoc
+class __$WeeklyDigestCopyWithImpl<$Res>
+    implements _$WeeklyDigestCopyWith<$Res> {
+  __$WeeklyDigestCopyWithImpl(this._self, this._then);
+
+  final _WeeklyDigest _self;
+  final $Res Function(_WeeklyDigest) _then;
+
+/// Create a copy of WeeklyDigest
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? weekId = null,Object? generatedAt = null,Object? win = null,Object? worstHabit = null,Object? oneFix = null,Object? seen = null,}) {
+  return _then(_WeeklyDigest(
+weekId: null == weekId ? _self.weekId : weekId // ignore: cast_nullable_to_non_nullable
+as String,generatedAt: null == generatedAt ? _self.generatedAt : generatedAt // ignore: cast_nullable_to_non_nullable
+as int,win: null == win ? _self.win : win // ignore: cast_nullable_to_non_nullable
+as String,worstHabit: null == worstHabit ? _self.worstHabit : worstHabit // ignore: cast_nullable_to_non_nullable
+as String,oneFix: null == oneFix ? _self.oneFix : oneFix // ignore: cast_nullable_to_non_nullable
+as String,seen: null == seen ? _self.seen : seen // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$PropFirmRules {
+
+/// Max single-day loss the firm tolerates (e.g. $1000 on a $25k account).
+ double get maxDailyDrawdown;/// Max trailing drawdown from peak balance (e.g. $2000).
+ double get maxTotalDrawdown;/// Optional firm name for display ("FTMO", "MyForexFunds", etc).
+ String get firmName;/// Whether the user has opted in to prop-firm enforcement.
+ bool get enabled;
+/// Create a copy of PropFirmRules
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$PropFirmRulesCopyWith<PropFirmRules> get copyWith => _$PropFirmRulesCopyWithImpl<PropFirmRules>(this as PropFirmRules, _$identity);
+
+  /// Serializes this PropFirmRules to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PropFirmRules&&(identical(other.maxDailyDrawdown, maxDailyDrawdown) || other.maxDailyDrawdown == maxDailyDrawdown)&&(identical(other.maxTotalDrawdown, maxTotalDrawdown) || other.maxTotalDrawdown == maxTotalDrawdown)&&(identical(other.firmName, firmName) || other.firmName == firmName)&&(identical(other.enabled, enabled) || other.enabled == enabled));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,maxDailyDrawdown,maxTotalDrawdown,firmName,enabled);
+
+@override
+String toString() {
+  return 'PropFirmRules(maxDailyDrawdown: $maxDailyDrawdown, maxTotalDrawdown: $maxTotalDrawdown, firmName: $firmName, enabled: $enabled)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $PropFirmRulesCopyWith<$Res>  {
+  factory $PropFirmRulesCopyWith(PropFirmRules value, $Res Function(PropFirmRules) _then) = _$PropFirmRulesCopyWithImpl;
+@useResult
+$Res call({
+ double maxDailyDrawdown, double maxTotalDrawdown, String firmName, bool enabled
+});
+
+
+
+
+}
+/// @nodoc
+class _$PropFirmRulesCopyWithImpl<$Res>
+    implements $PropFirmRulesCopyWith<$Res> {
+  _$PropFirmRulesCopyWithImpl(this._self, this._then);
+
+  final PropFirmRules _self;
+  final $Res Function(PropFirmRules) _then;
+
+/// Create a copy of PropFirmRules
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? maxDailyDrawdown = null,Object? maxTotalDrawdown = null,Object? firmName = null,Object? enabled = null,}) {
+  return _then(_self.copyWith(
+maxDailyDrawdown: null == maxDailyDrawdown ? _self.maxDailyDrawdown : maxDailyDrawdown // ignore: cast_nullable_to_non_nullable
+as double,maxTotalDrawdown: null == maxTotalDrawdown ? _self.maxTotalDrawdown : maxTotalDrawdown // ignore: cast_nullable_to_non_nullable
+as double,firmName: null == firmName ? _self.firmName : firmName // ignore: cast_nullable_to_non_nullable
+as String,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [PropFirmRules].
+extension PropFirmRulesPatterns on PropFirmRules {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _PropFirmRules value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _PropFirmRules() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _PropFirmRules value)  $default,){
+final _that = this;
+switch (_that) {
+case _PropFirmRules():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _PropFirmRules value)?  $default,){
+final _that = this;
+switch (_that) {
+case _PropFirmRules() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( double maxDailyDrawdown,  double maxTotalDrawdown,  String firmName,  bool enabled)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _PropFirmRules() when $default != null:
+return $default(_that.maxDailyDrawdown,_that.maxTotalDrawdown,_that.firmName,_that.enabled);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( double maxDailyDrawdown,  double maxTotalDrawdown,  String firmName,  bool enabled)  $default,) {final _that = this;
+switch (_that) {
+case _PropFirmRules():
+return $default(_that.maxDailyDrawdown,_that.maxTotalDrawdown,_that.firmName,_that.enabled);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( double maxDailyDrawdown,  double maxTotalDrawdown,  String firmName,  bool enabled)?  $default,) {final _that = this;
+switch (_that) {
+case _PropFirmRules() when $default != null:
+return $default(_that.maxDailyDrawdown,_that.maxTotalDrawdown,_that.firmName,_that.enabled);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _PropFirmRules implements PropFirmRules {
+  const _PropFirmRules({this.maxDailyDrawdown = 0.0, this.maxTotalDrawdown = 0.0, this.firmName = '', this.enabled = false});
+  factory _PropFirmRules.fromJson(Map<String, dynamic> json) => _$PropFirmRulesFromJson(json);
+
+/// Max single-day loss the firm tolerates (e.g. $1000 on a $25k account).
+@override@JsonKey() final  double maxDailyDrawdown;
+/// Max trailing drawdown from peak balance (e.g. $2000).
+@override@JsonKey() final  double maxTotalDrawdown;
+/// Optional firm name for display ("FTMO", "MyForexFunds", etc).
+@override@JsonKey() final  String firmName;
+/// Whether the user has opted in to prop-firm enforcement.
+@override@JsonKey() final  bool enabled;
+
+/// Create a copy of PropFirmRules
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$PropFirmRulesCopyWith<_PropFirmRules> get copyWith => __$PropFirmRulesCopyWithImpl<_PropFirmRules>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$PropFirmRulesToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PropFirmRules&&(identical(other.maxDailyDrawdown, maxDailyDrawdown) || other.maxDailyDrawdown == maxDailyDrawdown)&&(identical(other.maxTotalDrawdown, maxTotalDrawdown) || other.maxTotalDrawdown == maxTotalDrawdown)&&(identical(other.firmName, firmName) || other.firmName == firmName)&&(identical(other.enabled, enabled) || other.enabled == enabled));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,maxDailyDrawdown,maxTotalDrawdown,firmName,enabled);
+
+@override
+String toString() {
+  return 'PropFirmRules(maxDailyDrawdown: $maxDailyDrawdown, maxTotalDrawdown: $maxTotalDrawdown, firmName: $firmName, enabled: $enabled)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$PropFirmRulesCopyWith<$Res> implements $PropFirmRulesCopyWith<$Res> {
+  factory _$PropFirmRulesCopyWith(_PropFirmRules value, $Res Function(_PropFirmRules) _then) = __$PropFirmRulesCopyWithImpl;
+@override @useResult
+$Res call({
+ double maxDailyDrawdown, double maxTotalDrawdown, String firmName, bool enabled
+});
+
+
+
+
+}
+/// @nodoc
+class __$PropFirmRulesCopyWithImpl<$Res>
+    implements _$PropFirmRulesCopyWith<$Res> {
+  __$PropFirmRulesCopyWithImpl(this._self, this._then);
+
+  final _PropFirmRules _self;
+  final $Res Function(_PropFirmRules) _then;
+
+/// Create a copy of PropFirmRules
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? maxDailyDrawdown = null,Object? maxTotalDrawdown = null,Object? firmName = null,Object? enabled = null,}) {
+  return _then(_PropFirmRules(
+maxDailyDrawdown: null == maxDailyDrawdown ? _self.maxDailyDrawdown : maxDailyDrawdown // ignore: cast_nullable_to_non_nullable
+as double,maxTotalDrawdown: null == maxTotalDrawdown ? _self.maxTotalDrawdown : maxTotalDrawdown // ignore: cast_nullable_to_non_nullable
+as double,firmName: null == firmName ? _self.firmName : firmName // ignore: cast_nullable_to_non_nullable
+as String,enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$WeeklyRiskBudget {
+
+ bool get enabled; double get rUnitUsd; double get weeklyBudgetR;
+/// Create a copy of WeeklyRiskBudget
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$WeeklyRiskBudgetCopyWith<WeeklyRiskBudget> get copyWith => _$WeeklyRiskBudgetCopyWithImpl<WeeklyRiskBudget>(this as WeeklyRiskBudget, _$identity);
+
+  /// Serializes this WeeklyRiskBudget to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WeeklyRiskBudget&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.rUnitUsd, rUnitUsd) || other.rUnitUsd == rUnitUsd)&&(identical(other.weeklyBudgetR, weeklyBudgetR) || other.weeklyBudgetR == weeklyBudgetR));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,enabled,rUnitUsd,weeklyBudgetR);
+
+@override
+String toString() {
+  return 'WeeklyRiskBudget(enabled: $enabled, rUnitUsd: $rUnitUsd, weeklyBudgetR: $weeklyBudgetR)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $WeeklyRiskBudgetCopyWith<$Res>  {
+  factory $WeeklyRiskBudgetCopyWith(WeeklyRiskBudget value, $Res Function(WeeklyRiskBudget) _then) = _$WeeklyRiskBudgetCopyWithImpl;
+@useResult
+$Res call({
+ bool enabled, double rUnitUsd, double weeklyBudgetR
+});
+
+
+
+
+}
+/// @nodoc
+class _$WeeklyRiskBudgetCopyWithImpl<$Res>
+    implements $WeeklyRiskBudgetCopyWith<$Res> {
+  _$WeeklyRiskBudgetCopyWithImpl(this._self, this._then);
+
+  final WeeklyRiskBudget _self;
+  final $Res Function(WeeklyRiskBudget) _then;
+
+/// Create a copy of WeeklyRiskBudget
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? enabled = null,Object? rUnitUsd = null,Object? weeklyBudgetR = null,}) {
+  return _then(_self.copyWith(
+enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,rUnitUsd: null == rUnitUsd ? _self.rUnitUsd : rUnitUsd // ignore: cast_nullable_to_non_nullable
+as double,weeklyBudgetR: null == weeklyBudgetR ? _self.weeklyBudgetR : weeklyBudgetR // ignore: cast_nullable_to_non_nullable
+as double,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [WeeklyRiskBudget].
+extension WeeklyRiskBudgetPatterns on WeeklyRiskBudget {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _WeeklyRiskBudget value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _WeeklyRiskBudget() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _WeeklyRiskBudget value)  $default,){
+final _that = this;
+switch (_that) {
+case _WeeklyRiskBudget():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _WeeklyRiskBudget value)?  $default,){
+final _that = this;
+switch (_that) {
+case _WeeklyRiskBudget() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool enabled,  double rUnitUsd,  double weeklyBudgetR)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _WeeklyRiskBudget() when $default != null:
+return $default(_that.enabled,_that.rUnitUsd,_that.weeklyBudgetR);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool enabled,  double rUnitUsd,  double weeklyBudgetR)  $default,) {final _that = this;
+switch (_that) {
+case _WeeklyRiskBudget():
+return $default(_that.enabled,_that.rUnitUsd,_that.weeklyBudgetR);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool enabled,  double rUnitUsd,  double weeklyBudgetR)?  $default,) {final _that = this;
+switch (_that) {
+case _WeeklyRiskBudget() when $default != null:
+return $default(_that.enabled,_that.rUnitUsd,_that.weeklyBudgetR);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _WeeklyRiskBudget implements WeeklyRiskBudget {
+  const _WeeklyRiskBudget({this.enabled = false, this.rUnitUsd = 125.0, this.weeklyBudgetR = 10.0});
+  factory _WeeklyRiskBudget.fromJson(Map<String, dynamic> json) => _$WeeklyRiskBudgetFromJson(json);
+
+@override@JsonKey() final  bool enabled;
+@override@JsonKey() final  double rUnitUsd;
+@override@JsonKey() final  double weeklyBudgetR;
+
+/// Create a copy of WeeklyRiskBudget
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$WeeklyRiskBudgetCopyWith<_WeeklyRiskBudget> get copyWith => __$WeeklyRiskBudgetCopyWithImpl<_WeeklyRiskBudget>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$WeeklyRiskBudgetToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WeeklyRiskBudget&&(identical(other.enabled, enabled) || other.enabled == enabled)&&(identical(other.rUnitUsd, rUnitUsd) || other.rUnitUsd == rUnitUsd)&&(identical(other.weeklyBudgetR, weeklyBudgetR) || other.weeklyBudgetR == weeklyBudgetR));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,enabled,rUnitUsd,weeklyBudgetR);
+
+@override
+String toString() {
+  return 'WeeklyRiskBudget(enabled: $enabled, rUnitUsd: $rUnitUsd, weeklyBudgetR: $weeklyBudgetR)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$WeeklyRiskBudgetCopyWith<$Res> implements $WeeklyRiskBudgetCopyWith<$Res> {
+  factory _$WeeklyRiskBudgetCopyWith(_WeeklyRiskBudget value, $Res Function(_WeeklyRiskBudget) _then) = __$WeeklyRiskBudgetCopyWithImpl;
+@override @useResult
+$Res call({
+ bool enabled, double rUnitUsd, double weeklyBudgetR
+});
+
+
+
+
+}
+/// @nodoc
+class __$WeeklyRiskBudgetCopyWithImpl<$Res>
+    implements _$WeeklyRiskBudgetCopyWith<$Res> {
+  __$WeeklyRiskBudgetCopyWithImpl(this._self, this._then);
+
+  final _WeeklyRiskBudget _self;
+  final $Res Function(_WeeklyRiskBudget) _then;
+
+/// Create a copy of WeeklyRiskBudget
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? enabled = null,Object? rUnitUsd = null,Object? weeklyBudgetR = null,}) {
+  return _then(_WeeklyRiskBudget(
+enabled: null == enabled ? _self.enabled : enabled // ignore: cast_nullable_to_non_nullable
+as bool,rUnitUsd: null == rUnitUsd ? _self.rUnitUsd : rUnitUsd // ignore: cast_nullable_to_non_nullable
+as double,weeklyBudgetR: null == weeklyBudgetR ? _self.weeklyBudgetR : weeklyBudgetR // ignore: cast_nullable_to_non_nullable
+as double,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$IntegrityEvent {
+
+ String get id; int get timestamp;// ms since epoch
+ String get type;// reset_today | reset_all | balance_changed | lock_override
+ String get detail;
+/// Create a copy of IntegrityEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$IntegrityEventCopyWith<IntegrityEvent> get copyWith => _$IntegrityEventCopyWithImpl<IntegrityEvent>(this as IntegrityEvent, _$identity);
+
+  /// Serializes this IntegrityEvent to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is IntegrityEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.type, type) || other.type == type)&&(identical(other.detail, detail) || other.detail == detail));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,timestamp,type,detail);
+
+@override
+String toString() {
+  return 'IntegrityEvent(id: $id, timestamp: $timestamp, type: $type, detail: $detail)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $IntegrityEventCopyWith<$Res>  {
+  factory $IntegrityEventCopyWith(IntegrityEvent value, $Res Function(IntegrityEvent) _then) = _$IntegrityEventCopyWithImpl;
+@useResult
+$Res call({
+ String id, int timestamp, String type, String detail
+});
+
+
+
+
+}
+/// @nodoc
+class _$IntegrityEventCopyWithImpl<$Res>
+    implements $IntegrityEventCopyWith<$Res> {
+  _$IntegrityEventCopyWithImpl(this._self, this._then);
+
+  final IntegrityEvent _self;
+  final $Res Function(IntegrityEvent) _then;
+
+/// Create a copy of IntegrityEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? timestamp = null,Object? type = null,Object? detail = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as int,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as String,detail: null == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [IntegrityEvent].
+extension IntegrityEventPatterns on IntegrityEvent {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _IntegrityEvent value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _IntegrityEvent() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _IntegrityEvent value)  $default,){
+final _that = this;
+switch (_that) {
+case _IntegrityEvent():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _IntegrityEvent value)?  $default,){
+final _that = this;
+switch (_that) {
+case _IntegrityEvent() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int timestamp,  String type,  String detail)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _IntegrityEvent() when $default != null:
+return $default(_that.id,_that.timestamp,_that.type,_that.detail);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int timestamp,  String type,  String detail)  $default,) {final _that = this;
+switch (_that) {
+case _IntegrityEvent():
+return $default(_that.id,_that.timestamp,_that.type,_that.detail);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int timestamp,  String type,  String detail)?  $default,) {final _that = this;
+switch (_that) {
+case _IntegrityEvent() when $default != null:
+return $default(_that.id,_that.timestamp,_that.type,_that.detail);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _IntegrityEvent implements IntegrityEvent {
+  const _IntegrityEvent({required this.id, required this.timestamp, required this.type, this.detail = ''});
+  factory _IntegrityEvent.fromJson(Map<String, dynamic> json) => _$IntegrityEventFromJson(json);
+
+@override final  String id;
+@override final  int timestamp;
+// ms since epoch
+@override final  String type;
+// reset_today | reset_all | balance_changed | lock_override
+@override@JsonKey() final  String detail;
+
+/// Create a copy of IntegrityEvent
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$IntegrityEventCopyWith<_IntegrityEvent> get copyWith => __$IntegrityEventCopyWithImpl<_IntegrityEvent>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$IntegrityEventToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _IntegrityEvent&&(identical(other.id, id) || other.id == id)&&(identical(other.timestamp, timestamp) || other.timestamp == timestamp)&&(identical(other.type, type) || other.type == type)&&(identical(other.detail, detail) || other.detail == detail));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,timestamp,type,detail);
+
+@override
+String toString() {
+  return 'IntegrityEvent(id: $id, timestamp: $timestamp, type: $type, detail: $detail)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$IntegrityEventCopyWith<$Res> implements $IntegrityEventCopyWith<$Res> {
+  factory _$IntegrityEventCopyWith(_IntegrityEvent value, $Res Function(_IntegrityEvent) _then) = __$IntegrityEventCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, int timestamp, String type, String detail
+});
+
+
+
+
+}
+/// @nodoc
+class __$IntegrityEventCopyWithImpl<$Res>
+    implements _$IntegrityEventCopyWith<$Res> {
+  __$IntegrityEventCopyWithImpl(this._self, this._then);
+
+  final _IntegrityEvent _self;
+  final $Res Function(_IntegrityEvent) _then;
+
+/// Create a copy of IntegrityEvent
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? timestamp = null,Object? type = null,Object? detail = null,}) {
+  return _then(_IntegrityEvent(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,timestamp: null == timestamp ? _self.timestamp : timestamp // ignore: cast_nullable_to_non_nullable
+as int,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
+as String,detail: null == detail ? _self.detail : detail // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$TradingAccount {
+
+ String get id; String get name; double get balance; String get startDate; double get priorPnl; List<Trade> get allTrades; bool get lock; int? get lockUntil; PropFirmRules get propFirmRules; WeeklyRiskBudget get weeklyRiskBudget; int get dailyTradeCap;
+/// Create a copy of TradingAccount
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TradingAccountCopyWith<TradingAccount> get copyWith => _$TradingAccountCopyWithImpl<TradingAccount>(this as TradingAccount, _$identity);
+
+  /// Serializes this TradingAccount to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TradingAccount&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.priorPnl, priorPnl) || other.priorPnl == priorPnl)&&const DeepCollectionEquality().equals(other.allTrades, allTrades)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.lockUntil, lockUntil) || other.lockUntil == lockUntil)&&(identical(other.propFirmRules, propFirmRules) || other.propFirmRules == propFirmRules)&&(identical(other.weeklyRiskBudget, weeklyRiskBudget) || other.weeklyRiskBudget == weeklyRiskBudget)&&(identical(other.dailyTradeCap, dailyTradeCap) || other.dailyTradeCap == dailyTradeCap));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,name,balance,startDate,priorPnl,const DeepCollectionEquality().hash(allTrades),lock,lockUntil,propFirmRules,weeklyRiskBudget,dailyTradeCap);
+
+@override
+String toString() {
+  return 'TradingAccount(id: $id, name: $name, balance: $balance, startDate: $startDate, priorPnl: $priorPnl, allTrades: $allTrades, lock: $lock, lockUntil: $lockUntil, propFirmRules: $propFirmRules, weeklyRiskBudget: $weeklyRiskBudget, dailyTradeCap: $dailyTradeCap)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $TradingAccountCopyWith<$Res>  {
+  factory $TradingAccountCopyWith(TradingAccount value, $Res Function(TradingAccount) _then) = _$TradingAccountCopyWithImpl;
+@useResult
+$Res call({
+ String id, String name, double balance, String startDate, double priorPnl, List<Trade> allTrades, bool lock, int? lockUntil, PropFirmRules propFirmRules, WeeklyRiskBudget weeklyRiskBudget, int dailyTradeCap
+});
+
+
+$PropFirmRulesCopyWith<$Res> get propFirmRules;$WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget;
+
+}
+/// @nodoc
+class _$TradingAccountCopyWithImpl<$Res>
+    implements $TradingAccountCopyWith<$Res> {
+  _$TradingAccountCopyWithImpl(this._self, this._then);
+
+  final TradingAccount _self;
+  final $Res Function(TradingAccount) _then;
+
+/// Create a copy of TradingAccount
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? balance = null,Object? startDate = null,Object? priorPnl = null,Object? allTrades = null,Object? lock = null,Object? lockUntil = freezed,Object? propFirmRules = null,Object? weeklyRiskBudget = null,Object? dailyTradeCap = null,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
+as double,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
+as String,priorPnl: null == priorPnl ? _self.priorPnl : priorPnl // ignore: cast_nullable_to_non_nullable
+as double,allTrades: null == allTrades ? _self.allTrades : allTrades // ignore: cast_nullable_to_non_nullable
+as List<Trade>,lock: null == lock ? _self.lock : lock // ignore: cast_nullable_to_non_nullable
+as bool,lockUntil: freezed == lockUntil ? _self.lockUntil : lockUntil // ignore: cast_nullable_to_non_nullable
+as int?,propFirmRules: null == propFirmRules ? _self.propFirmRules : propFirmRules // ignore: cast_nullable_to_non_nullable
+as PropFirmRules,weeklyRiskBudget: null == weeklyRiskBudget ? _self.weeklyRiskBudget : weeklyRiskBudget // ignore: cast_nullable_to_non_nullable
+as WeeklyRiskBudget,dailyTradeCap: null == dailyTradeCap ? _self.dailyTradeCap : dailyTradeCap // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+/// Create a copy of TradingAccount
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$PropFirmRulesCopyWith<$Res> get propFirmRules {
+  
+  return $PropFirmRulesCopyWith<$Res>(_self.propFirmRules, (value) {
+    return _then(_self.copyWith(propFirmRules: value));
+  });
+}/// Create a copy of TradingAccount
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget {
+  
+  return $WeeklyRiskBudgetCopyWith<$Res>(_self.weeklyRiskBudget, (value) {
+    return _then(_self.copyWith(weeklyRiskBudget: value));
+  });
+}
+}
+
+
+/// Adds pattern-matching-related methods to [TradingAccount].
+extension TradingAccountPatterns on TradingAccount {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _TradingAccount value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _TradingAccount() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _TradingAccount value)  $default,){
+final _that = this;
+switch (_that) {
+case _TradingAccount():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _TradingAccount value)?  $default,){
+final _that = this;
+switch (_that) {
+case _TradingAccount() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  double balance,  String startDate,  double priorPnl,  List<Trade> allTrades,  bool lock,  int? lockUntil,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  int dailyTradeCap)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _TradingAccount() when $default != null:
+return $default(_that.id,_that.name,_that.balance,_that.startDate,_that.priorPnl,_that.allTrades,_that.lock,_that.lockUntil,_that.propFirmRules,_that.weeklyRiskBudget,_that.dailyTradeCap);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  double balance,  String startDate,  double priorPnl,  List<Trade> allTrades,  bool lock,  int? lockUntil,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  int dailyTradeCap)  $default,) {final _that = this;
+switch (_that) {
+case _TradingAccount():
+return $default(_that.id,_that.name,_that.balance,_that.startDate,_that.priorPnl,_that.allTrades,_that.lock,_that.lockUntil,_that.propFirmRules,_that.weeklyRiskBudget,_that.dailyTradeCap);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  double balance,  String startDate,  double priorPnl,  List<Trade> allTrades,  bool lock,  int? lockUntil,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  int dailyTradeCap)?  $default,) {final _that = this;
+switch (_that) {
+case _TradingAccount() when $default != null:
+return $default(_that.id,_that.name,_that.balance,_that.startDate,_that.priorPnl,_that.allTrades,_that.lock,_that.lockUntil,_that.propFirmRules,_that.weeklyRiskBudget,_that.dailyTradeCap);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _TradingAccount implements TradingAccount {
+  const _TradingAccount({required this.id, required this.name, this.balance = 25000.0, this.startDate = '2026-04-20', this.priorPnl = 0.0, final  List<Trade> allTrades = const [], this.lock = false, this.lockUntil, this.propFirmRules = const PropFirmRules(), this.weeklyRiskBudget = const WeeklyRiskBudget(), this.dailyTradeCap = 2}): _allTrades = allTrades;
+  factory _TradingAccount.fromJson(Map<String, dynamic> json) => _$TradingAccountFromJson(json);
+
+@override final  String id;
+@override final  String name;
+@override@JsonKey() final  double balance;
+@override@JsonKey() final  String startDate;
+@override@JsonKey() final  double priorPnl;
+ final  List<Trade> _allTrades;
+@override@JsonKey() List<Trade> get allTrades {
+  if (_allTrades is EqualUnmodifiableListView) return _allTrades;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_allTrades);
+}
+
+@override@JsonKey() final  bool lock;
+@override final  int? lockUntil;
+@override@JsonKey() final  PropFirmRules propFirmRules;
+@override@JsonKey() final  WeeklyRiskBudget weeklyRiskBudget;
+@override@JsonKey() final  int dailyTradeCap;
+
+/// Create a copy of TradingAccount
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$TradingAccountCopyWith<_TradingAccount> get copyWith => __$TradingAccountCopyWithImpl<_TradingAccount>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$TradingAccountToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TradingAccount&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.priorPnl, priorPnl) || other.priorPnl == priorPnl)&&const DeepCollectionEquality().equals(other._allTrades, _allTrades)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.lockUntil, lockUntil) || other.lockUntil == lockUntil)&&(identical(other.propFirmRules, propFirmRules) || other.propFirmRules == propFirmRules)&&(identical(other.weeklyRiskBudget, weeklyRiskBudget) || other.weeklyRiskBudget == weeklyRiskBudget)&&(identical(other.dailyTradeCap, dailyTradeCap) || other.dailyTradeCap == dailyTradeCap));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,id,name,balance,startDate,priorPnl,const DeepCollectionEquality().hash(_allTrades),lock,lockUntil,propFirmRules,weeklyRiskBudget,dailyTradeCap);
+
+@override
+String toString() {
+  return 'TradingAccount(id: $id, name: $name, balance: $balance, startDate: $startDate, priorPnl: $priorPnl, allTrades: $allTrades, lock: $lock, lockUntil: $lockUntil, propFirmRules: $propFirmRules, weeklyRiskBudget: $weeklyRiskBudget, dailyTradeCap: $dailyTradeCap)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$TradingAccountCopyWith<$Res> implements $TradingAccountCopyWith<$Res> {
+  factory _$TradingAccountCopyWith(_TradingAccount value, $Res Function(_TradingAccount) _then) = __$TradingAccountCopyWithImpl;
+@override @useResult
+$Res call({
+ String id, String name, double balance, String startDate, double priorPnl, List<Trade> allTrades, bool lock, int? lockUntil, PropFirmRules propFirmRules, WeeklyRiskBudget weeklyRiskBudget, int dailyTradeCap
+});
+
+
+@override $PropFirmRulesCopyWith<$Res> get propFirmRules;@override $WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget;
+
+}
+/// @nodoc
+class __$TradingAccountCopyWithImpl<$Res>
+    implements _$TradingAccountCopyWith<$Res> {
+  __$TradingAccountCopyWithImpl(this._self, this._then);
+
+  final _TradingAccount _self;
+  final $Res Function(_TradingAccount) _then;
+
+/// Create a copy of TradingAccount
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? balance = null,Object? startDate = null,Object? priorPnl = null,Object? allTrades = null,Object? lock = null,Object? lockUntil = freezed,Object? propFirmRules = null,Object? weeklyRiskBudget = null,Object? dailyTradeCap = null,}) {
+  return _then(_TradingAccount(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
+as String,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
+as double,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
+as String,priorPnl: null == priorPnl ? _self.priorPnl : priorPnl // ignore: cast_nullable_to_non_nullable
+as double,allTrades: null == allTrades ? _self._allTrades : allTrades // ignore: cast_nullable_to_non_nullable
+as List<Trade>,lock: null == lock ? _self.lock : lock // ignore: cast_nullable_to_non_nullable
+as bool,lockUntil: freezed == lockUntil ? _self.lockUntil : lockUntil // ignore: cast_nullable_to_non_nullable
+as int?,propFirmRules: null == propFirmRules ? _self.propFirmRules : propFirmRules // ignore: cast_nullable_to_non_nullable
+as PropFirmRules,weeklyRiskBudget: null == weeklyRiskBudget ? _self.weeklyRiskBudget : weeklyRiskBudget // ignore: cast_nullable_to_non_nullable
+as WeeklyRiskBudget,dailyTradeCap: null == dailyTradeCap ? _self.dailyTradeCap : dailyTradeCap // ignore: cast_nullable_to_non_nullable
+as int,
+  ));
+}
+
+/// Create a copy of TradingAccount
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$PropFirmRulesCopyWith<$Res> get propFirmRules {
+  
+  return $PropFirmRulesCopyWith<$Res>(_self.propFirmRules, (value) {
+    return _then(_self.copyWith(propFirmRules: value));
+  });
+}/// Create a copy of TradingAccount
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget {
+  
+  return $WeeklyRiskBudgetCopyWith<$Res>(_self.weeklyRiskBudget, (value) {
+    return _then(_self.copyWith(weeklyRiskBudget: value));
+  });
+}
+}
+
+
+/// @nodoc
+mixin _$NotificationPrefs {
+
+/// Master kill-switch. When false, every category is suppressed
+/// regardless of its individual flag.
+ bool get master; bool get drawdown; bool get riskBudget; bool get lock; bool get streak; bool get dailyCap; bool get newsImminent; bool get moodReminder; bool get backupReminder;
+/// Create a copy of NotificationPrefs
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$NotificationPrefsCopyWith<NotificationPrefs> get copyWith => _$NotificationPrefsCopyWithImpl<NotificationPrefs>(this as NotificationPrefs, _$identity);
+
+  /// Serializes this NotificationPrefs to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NotificationPrefs&&(identical(other.master, master) || other.master == master)&&(identical(other.drawdown, drawdown) || other.drawdown == drawdown)&&(identical(other.riskBudget, riskBudget) || other.riskBudget == riskBudget)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.streak, streak) || other.streak == streak)&&(identical(other.dailyCap, dailyCap) || other.dailyCap == dailyCap)&&(identical(other.newsImminent, newsImminent) || other.newsImminent == newsImminent)&&(identical(other.moodReminder, moodReminder) || other.moodReminder == moodReminder)&&(identical(other.backupReminder, backupReminder) || other.backupReminder == backupReminder));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,master,drawdown,riskBudget,lock,streak,dailyCap,newsImminent,moodReminder,backupReminder);
+
+@override
+String toString() {
+  return 'NotificationPrefs(master: $master, drawdown: $drawdown, riskBudget: $riskBudget, lock: $lock, streak: $streak, dailyCap: $dailyCap, newsImminent: $newsImminent, moodReminder: $moodReminder, backupReminder: $backupReminder)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $NotificationPrefsCopyWith<$Res>  {
+  factory $NotificationPrefsCopyWith(NotificationPrefs value, $Res Function(NotificationPrefs) _then) = _$NotificationPrefsCopyWithImpl;
+@useResult
+$Res call({
+ bool master, bool drawdown, bool riskBudget, bool lock, bool streak, bool dailyCap, bool newsImminent, bool moodReminder, bool backupReminder
+});
+
+
+
+
+}
+/// @nodoc
+class _$NotificationPrefsCopyWithImpl<$Res>
+    implements $NotificationPrefsCopyWith<$Res> {
+  _$NotificationPrefsCopyWithImpl(this._self, this._then);
+
+  final NotificationPrefs _self;
+  final $Res Function(NotificationPrefs) _then;
+
+/// Create a copy of NotificationPrefs
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? master = null,Object? drawdown = null,Object? riskBudget = null,Object? lock = null,Object? streak = null,Object? dailyCap = null,Object? newsImminent = null,Object? moodReminder = null,Object? backupReminder = null,}) {
+  return _then(_self.copyWith(
+master: null == master ? _self.master : master // ignore: cast_nullable_to_non_nullable
+as bool,drawdown: null == drawdown ? _self.drawdown : drawdown // ignore: cast_nullable_to_non_nullable
+as bool,riskBudget: null == riskBudget ? _self.riskBudget : riskBudget // ignore: cast_nullable_to_non_nullable
+as bool,lock: null == lock ? _self.lock : lock // ignore: cast_nullable_to_non_nullable
+as bool,streak: null == streak ? _self.streak : streak // ignore: cast_nullable_to_non_nullable
+as bool,dailyCap: null == dailyCap ? _self.dailyCap : dailyCap // ignore: cast_nullable_to_non_nullable
+as bool,newsImminent: null == newsImminent ? _self.newsImminent : newsImminent // ignore: cast_nullable_to_non_nullable
+as bool,moodReminder: null == moodReminder ? _self.moodReminder : moodReminder // ignore: cast_nullable_to_non_nullable
+as bool,backupReminder: null == backupReminder ? _self.backupReminder : backupReminder // ignore: cast_nullable_to_non_nullable
+as bool,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [NotificationPrefs].
+extension NotificationPrefsPatterns on NotificationPrefs {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _NotificationPrefs value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _NotificationPrefs() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _NotificationPrefs value)  $default,){
+final _that = this;
+switch (_that) {
+case _NotificationPrefs():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _NotificationPrefs value)?  $default,){
+final _that = this;
+switch (_that) {
+case _NotificationPrefs() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool master,  bool drawdown,  bool riskBudget,  bool lock,  bool streak,  bool dailyCap,  bool newsImminent,  bool moodReminder,  bool backupReminder)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _NotificationPrefs() when $default != null:
+return $default(_that.master,_that.drawdown,_that.riskBudget,_that.lock,_that.streak,_that.dailyCap,_that.newsImminent,_that.moodReminder,_that.backupReminder);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool master,  bool drawdown,  bool riskBudget,  bool lock,  bool streak,  bool dailyCap,  bool newsImminent,  bool moodReminder,  bool backupReminder)  $default,) {final _that = this;
+switch (_that) {
+case _NotificationPrefs():
+return $default(_that.master,_that.drawdown,_that.riskBudget,_that.lock,_that.streak,_that.dailyCap,_that.newsImminent,_that.moodReminder,_that.backupReminder);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool master,  bool drawdown,  bool riskBudget,  bool lock,  bool streak,  bool dailyCap,  bool newsImminent,  bool moodReminder,  bool backupReminder)?  $default,) {final _that = this;
+switch (_that) {
+case _NotificationPrefs() when $default != null:
+return $default(_that.master,_that.drawdown,_that.riskBudget,_that.lock,_that.streak,_that.dailyCap,_that.newsImminent,_that.moodReminder,_that.backupReminder);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _NotificationPrefs implements NotificationPrefs {
+  const _NotificationPrefs({this.master = true, this.drawdown = true, this.riskBudget = true, this.lock = true, this.streak = true, this.dailyCap = true, this.newsImminent = true, this.moodReminder = true, this.backupReminder = true});
+  factory _NotificationPrefs.fromJson(Map<String, dynamic> json) => _$NotificationPrefsFromJson(json);
+
+/// Master kill-switch. When false, every category is suppressed
+/// regardless of its individual flag.
+@override@JsonKey() final  bool master;
+@override@JsonKey() final  bool drawdown;
+@override@JsonKey() final  bool riskBudget;
+@override@JsonKey() final  bool lock;
+@override@JsonKey() final  bool streak;
+@override@JsonKey() final  bool dailyCap;
+@override@JsonKey() final  bool newsImminent;
+@override@JsonKey() final  bool moodReminder;
+@override@JsonKey() final  bool backupReminder;
+
+/// Create a copy of NotificationPrefs
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$NotificationPrefsCopyWith<_NotificationPrefs> get copyWith => __$NotificationPrefsCopyWithImpl<_NotificationPrefs>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$NotificationPrefsToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NotificationPrefs&&(identical(other.master, master) || other.master == master)&&(identical(other.drawdown, drawdown) || other.drawdown == drawdown)&&(identical(other.riskBudget, riskBudget) || other.riskBudget == riskBudget)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.streak, streak) || other.streak == streak)&&(identical(other.dailyCap, dailyCap) || other.dailyCap == dailyCap)&&(identical(other.newsImminent, newsImminent) || other.newsImminent == newsImminent)&&(identical(other.moodReminder, moodReminder) || other.moodReminder == moodReminder)&&(identical(other.backupReminder, backupReminder) || other.backupReminder == backupReminder));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,master,drawdown,riskBudget,lock,streak,dailyCap,newsImminent,moodReminder,backupReminder);
+
+@override
+String toString() {
+  return 'NotificationPrefs(master: $master, drawdown: $drawdown, riskBudget: $riskBudget, lock: $lock, streak: $streak, dailyCap: $dailyCap, newsImminent: $newsImminent, moodReminder: $moodReminder, backupReminder: $backupReminder)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$NotificationPrefsCopyWith<$Res> implements $NotificationPrefsCopyWith<$Res> {
+  factory _$NotificationPrefsCopyWith(_NotificationPrefs value, $Res Function(_NotificationPrefs) _then) = __$NotificationPrefsCopyWithImpl;
+@override @useResult
+$Res call({
+ bool master, bool drawdown, bool riskBudget, bool lock, bool streak, bool dailyCap, bool newsImminent, bool moodReminder, bool backupReminder
+});
+
+
+
+
+}
+/// @nodoc
+class __$NotificationPrefsCopyWithImpl<$Res>
+    implements _$NotificationPrefsCopyWith<$Res> {
+  __$NotificationPrefsCopyWithImpl(this._self, this._then);
+
+  final _NotificationPrefs _self;
+  final $Res Function(_NotificationPrefs) _then;
+
+/// Create a copy of NotificationPrefs
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? master = null,Object? drawdown = null,Object? riskBudget = null,Object? lock = null,Object? streak = null,Object? dailyCap = null,Object? newsImminent = null,Object? moodReminder = null,Object? backupReminder = null,}) {
+  return _then(_NotificationPrefs(
+master: null == master ? _self.master : master // ignore: cast_nullable_to_non_nullable
+as bool,drawdown: null == drawdown ? _self.drawdown : drawdown // ignore: cast_nullable_to_non_nullable
+as bool,riskBudget: null == riskBudget ? _self.riskBudget : riskBudget // ignore: cast_nullable_to_non_nullable
+as bool,lock: null == lock ? _self.lock : lock // ignore: cast_nullable_to_non_nullable
+as bool,streak: null == streak ? _self.streak : streak // ignore: cast_nullable_to_non_nullable
+as bool,dailyCap: null == dailyCap ? _self.dailyCap : dailyCap // ignore: cast_nullable_to_non_nullable
+as bool,newsImminent: null == newsImminent ? _self.newsImminent : newsImminent // ignore: cast_nullable_to_non_nullable
+as bool,moodReminder: null == moodReminder ? _self.moodReminder : moodReminder // ignore: cast_nullable_to_non_nullable
+as bool,backupReminder: null == backupReminder ? _self.backupReminder : backupReminder // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -326,7 +2659,21 @@ as bool,
 /// @nodoc
 mixin _$AppState {
 
- int get schemaVersion; double get balance; String get startDate; double get priorPnl; Map<String, bool> get checks; List<Trade> get allTrades; bool get lock; int? get lockUntil; bool get preloaded;
+ int get schemaVersion; double get balance; String get startDate; double get priorPnl; Map<String, bool> get checks; Map<String, String> get gateProofs; List<Trade> get allTrades; bool get lock; int? get lockUntil; bool get preloaded; List<IntegrityEvent> get integrityLog; int? get lastResetAt;/// Map of `YYYY-MM-DD` (EAT) → mood check-in for that day.
+ Map<String, DailyMood> get dailyMoods;/// Most recent generated weekly digests (newest first). Capped at ~12.
+ List<WeeklyDigest> get weeklyDigests;/// Sprint 4.1 — optional prop-firm drawdown rules.
+ PropFirmRules get propFirmRules;/// Sprint 4.2 — optional weekly risk budget (R-units per week).
+ WeeklyRiskBudget get weeklyRiskBudget;/// Sprint 4.4 — block trade logging within ±15 min of high-impact news.
+ bool get blockTradesAroundNews;/// Sprint 5.3 — Local-only AI mode. When true, all Gemini cloud calls
+/// are short-circuited and rule-based fallbacks are used instead.
+ bool get localOnlyAiMode;/// Sprint 6.3 — User-configurable daily trade cap (default 2).
+/// Allowed values: 1, 2, 3, 5.
+ int get dailyTradeCap;/// Sprint 6.5 — Multi-account support. Snapshots of inactive accounts.
+/// The currently-active account always lives in the top-level fields
+/// above; switching packs current values into `accounts` and unpacks
+/// the target snapshot in their place.
+ List<TradingAccount> get accounts; String? get activeAccountId;/// Post-Tier-1 — per-category local-notification toggles.
+ NotificationPrefs get notificationPrefs;
 /// Create a copy of AppState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -339,16 +2686,16 @@ $AppStateCopyWith<AppState> get copyWith => _$AppStateCopyWithImpl<AppState>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppState&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.priorPnl, priorPnl) || other.priorPnl == priorPnl)&&const DeepCollectionEquality().equals(other.checks, checks)&&const DeepCollectionEquality().equals(other.allTrades, allTrades)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.lockUntil, lockUntil) || other.lockUntil == lockUntil)&&(identical(other.preloaded, preloaded) || other.preloaded == preloaded));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppState&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.priorPnl, priorPnl) || other.priorPnl == priorPnl)&&const DeepCollectionEquality().equals(other.checks, checks)&&const DeepCollectionEquality().equals(other.gateProofs, gateProofs)&&const DeepCollectionEquality().equals(other.allTrades, allTrades)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.lockUntil, lockUntil) || other.lockUntil == lockUntil)&&(identical(other.preloaded, preloaded) || other.preloaded == preloaded)&&const DeepCollectionEquality().equals(other.integrityLog, integrityLog)&&(identical(other.lastResetAt, lastResetAt) || other.lastResetAt == lastResetAt)&&const DeepCollectionEquality().equals(other.dailyMoods, dailyMoods)&&const DeepCollectionEquality().equals(other.weeklyDigests, weeklyDigests)&&(identical(other.propFirmRules, propFirmRules) || other.propFirmRules == propFirmRules)&&(identical(other.weeklyRiskBudget, weeklyRiskBudget) || other.weeklyRiskBudget == weeklyRiskBudget)&&(identical(other.blockTradesAroundNews, blockTradesAroundNews) || other.blockTradesAroundNews == blockTradesAroundNews)&&(identical(other.localOnlyAiMode, localOnlyAiMode) || other.localOnlyAiMode == localOnlyAiMode)&&(identical(other.dailyTradeCap, dailyTradeCap) || other.dailyTradeCap == dailyTradeCap)&&const DeepCollectionEquality().equals(other.accounts, accounts)&&(identical(other.activeAccountId, activeAccountId) || other.activeAccountId == activeAccountId)&&(identical(other.notificationPrefs, notificationPrefs) || other.notificationPrefs == notificationPrefs));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,schemaVersion,balance,startDate,priorPnl,const DeepCollectionEquality().hash(checks),const DeepCollectionEquality().hash(allTrades),lock,lockUntil,preloaded);
+int get hashCode => Object.hashAll([runtimeType,schemaVersion,balance,startDate,priorPnl,const DeepCollectionEquality().hash(checks),const DeepCollectionEquality().hash(gateProofs),const DeepCollectionEquality().hash(allTrades),lock,lockUntil,preloaded,const DeepCollectionEquality().hash(integrityLog),lastResetAt,const DeepCollectionEquality().hash(dailyMoods),const DeepCollectionEquality().hash(weeklyDigests),propFirmRules,weeklyRiskBudget,blockTradesAroundNews,localOnlyAiMode,dailyTradeCap,const DeepCollectionEquality().hash(accounts),activeAccountId,notificationPrefs]);
 
 @override
 String toString() {
-  return 'AppState(schemaVersion: $schemaVersion, balance: $balance, startDate: $startDate, priorPnl: $priorPnl, checks: $checks, allTrades: $allTrades, lock: $lock, lockUntil: $lockUntil, preloaded: $preloaded)';
+  return 'AppState(schemaVersion: $schemaVersion, balance: $balance, startDate: $startDate, priorPnl: $priorPnl, checks: $checks, gateProofs: $gateProofs, allTrades: $allTrades, lock: $lock, lockUntil: $lockUntil, preloaded: $preloaded, integrityLog: $integrityLog, lastResetAt: $lastResetAt, dailyMoods: $dailyMoods, weeklyDigests: $weeklyDigests, propFirmRules: $propFirmRules, weeklyRiskBudget: $weeklyRiskBudget, blockTradesAroundNews: $blockTradesAroundNews, localOnlyAiMode: $localOnlyAiMode, dailyTradeCap: $dailyTradeCap, accounts: $accounts, activeAccountId: $activeAccountId, notificationPrefs: $notificationPrefs)';
 }
 
 
@@ -359,11 +2706,11 @@ abstract mixin class $AppStateCopyWith<$Res>  {
   factory $AppStateCopyWith(AppState value, $Res Function(AppState) _then) = _$AppStateCopyWithImpl;
 @useResult
 $Res call({
- int schemaVersion, double balance, String startDate, double priorPnl, Map<String, bool> checks, List<Trade> allTrades, bool lock, int? lockUntil, bool preloaded
+ int schemaVersion, double balance, String startDate, double priorPnl, Map<String, bool> checks, Map<String, String> gateProofs, List<Trade> allTrades, bool lock, int? lockUntil, bool preloaded, List<IntegrityEvent> integrityLog, int? lastResetAt, Map<String, DailyMood> dailyMoods, List<WeeklyDigest> weeklyDigests, PropFirmRules propFirmRules, WeeklyRiskBudget weeklyRiskBudget, bool blockTradesAroundNews, bool localOnlyAiMode, int dailyTradeCap, List<TradingAccount> accounts, String? activeAccountId, NotificationPrefs notificationPrefs
 });
 
 
-
+$PropFirmRulesCopyWith<$Res> get propFirmRules;$WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget;$NotificationPrefsCopyWith<$Res> get notificationPrefs;
 
 }
 /// @nodoc
@@ -376,21 +2723,61 @@ class _$AppStateCopyWithImpl<$Res>
 
 /// Create a copy of AppState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? schemaVersion = null,Object? balance = null,Object? startDate = null,Object? priorPnl = null,Object? checks = null,Object? allTrades = null,Object? lock = null,Object? lockUntil = freezed,Object? preloaded = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? schemaVersion = null,Object? balance = null,Object? startDate = null,Object? priorPnl = null,Object? checks = null,Object? gateProofs = null,Object? allTrades = null,Object? lock = null,Object? lockUntil = freezed,Object? preloaded = null,Object? integrityLog = null,Object? lastResetAt = freezed,Object? dailyMoods = null,Object? weeklyDigests = null,Object? propFirmRules = null,Object? weeklyRiskBudget = null,Object? blockTradesAroundNews = null,Object? localOnlyAiMode = null,Object? dailyTradeCap = null,Object? accounts = null,Object? activeAccountId = freezed,Object? notificationPrefs = null,}) {
   return _then(_self.copyWith(
 schemaVersion: null == schemaVersion ? _self.schemaVersion : schemaVersion // ignore: cast_nullable_to_non_nullable
 as int,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
 as double,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as String,priorPnl: null == priorPnl ? _self.priorPnl : priorPnl // ignore: cast_nullable_to_non_nullable
 as double,checks: null == checks ? _self.checks : checks // ignore: cast_nullable_to_non_nullable
-as Map<String, bool>,allTrades: null == allTrades ? _self.allTrades : allTrades // ignore: cast_nullable_to_non_nullable
+as Map<String, bool>,gateProofs: null == gateProofs ? _self.gateProofs : gateProofs // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,allTrades: null == allTrades ? _self.allTrades : allTrades // ignore: cast_nullable_to_non_nullable
 as List<Trade>,lock: null == lock ? _self.lock : lock // ignore: cast_nullable_to_non_nullable
 as bool,lockUntil: freezed == lockUntil ? _self.lockUntil : lockUntil // ignore: cast_nullable_to_non_nullable
 as int?,preloaded: null == preloaded ? _self.preloaded : preloaded // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,integrityLog: null == integrityLog ? _self.integrityLog : integrityLog // ignore: cast_nullable_to_non_nullable
+as List<IntegrityEvent>,lastResetAt: freezed == lastResetAt ? _self.lastResetAt : lastResetAt // ignore: cast_nullable_to_non_nullable
+as int?,dailyMoods: null == dailyMoods ? _self.dailyMoods : dailyMoods // ignore: cast_nullable_to_non_nullable
+as Map<String, DailyMood>,weeklyDigests: null == weeklyDigests ? _self.weeklyDigests : weeklyDigests // ignore: cast_nullable_to_non_nullable
+as List<WeeklyDigest>,propFirmRules: null == propFirmRules ? _self.propFirmRules : propFirmRules // ignore: cast_nullable_to_non_nullable
+as PropFirmRules,weeklyRiskBudget: null == weeklyRiskBudget ? _self.weeklyRiskBudget : weeklyRiskBudget // ignore: cast_nullable_to_non_nullable
+as WeeklyRiskBudget,blockTradesAroundNews: null == blockTradesAroundNews ? _self.blockTradesAroundNews : blockTradesAroundNews // ignore: cast_nullable_to_non_nullable
+as bool,localOnlyAiMode: null == localOnlyAiMode ? _self.localOnlyAiMode : localOnlyAiMode // ignore: cast_nullable_to_non_nullable
+as bool,dailyTradeCap: null == dailyTradeCap ? _self.dailyTradeCap : dailyTradeCap // ignore: cast_nullable_to_non_nullable
+as int,accounts: null == accounts ? _self.accounts : accounts // ignore: cast_nullable_to_non_nullable
+as List<TradingAccount>,activeAccountId: freezed == activeAccountId ? _self.activeAccountId : activeAccountId // ignore: cast_nullable_to_non_nullable
+as String?,notificationPrefs: null == notificationPrefs ? _self.notificationPrefs : notificationPrefs // ignore: cast_nullable_to_non_nullable
+as NotificationPrefs,
   ));
 }
-
+/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$PropFirmRulesCopyWith<$Res> get propFirmRules {
+  
+  return $PropFirmRulesCopyWith<$Res>(_self.propFirmRules, (value) {
+    return _then(_self.copyWith(propFirmRules: value));
+  });
+}/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget {
+  
+  return $WeeklyRiskBudgetCopyWith<$Res>(_self.weeklyRiskBudget, (value) {
+    return _then(_self.copyWith(weeklyRiskBudget: value));
+  });
+}/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$NotificationPrefsCopyWith<$Res> get notificationPrefs {
+  
+  return $NotificationPrefsCopyWith<$Res>(_self.notificationPrefs, (value) {
+    return _then(_self.copyWith(notificationPrefs: value));
+  });
+}
 }
 
 
@@ -472,10 +2859,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  Map<String, String> gateProofs,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded,  List<IntegrityEvent> integrityLog,  int? lastResetAt,  Map<String, DailyMood> dailyMoods,  List<WeeklyDigest> weeklyDigests,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  bool blockTradesAroundNews,  bool localOnlyAiMode,  int dailyTradeCap,  List<TradingAccount> accounts,  String? activeAccountId,  NotificationPrefs notificationPrefs)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppState() when $default != null:
-return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded);case _:
+return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.gateProofs,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded,_that.integrityLog,_that.lastResetAt,_that.dailyMoods,_that.weeklyDigests,_that.propFirmRules,_that.weeklyRiskBudget,_that.blockTradesAroundNews,_that.localOnlyAiMode,_that.dailyTradeCap,_that.accounts,_that.activeAccountId,_that.notificationPrefs);case _:
   return orElse();
 
 }
@@ -493,10 +2880,10 @@ return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  Map<String, String> gateProofs,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded,  List<IntegrityEvent> integrityLog,  int? lastResetAt,  Map<String, DailyMood> dailyMoods,  List<WeeklyDigest> weeklyDigests,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  bool blockTradesAroundNews,  bool localOnlyAiMode,  int dailyTradeCap,  List<TradingAccount> accounts,  String? activeAccountId,  NotificationPrefs notificationPrefs)  $default,) {final _that = this;
 switch (_that) {
 case _AppState():
-return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded);case _:
+return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.gateProofs,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded,_that.integrityLog,_that.lastResetAt,_that.dailyMoods,_that.weeklyDigests,_that.propFirmRules,_that.weeklyRiskBudget,_that.blockTradesAroundNews,_that.localOnlyAiMode,_that.dailyTradeCap,_that.accounts,_that.activeAccountId,_that.notificationPrefs);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -513,10 +2900,10 @@ return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  Map<String, String> gateProofs,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded,  List<IntegrityEvent> integrityLog,  int? lastResetAt,  Map<String, DailyMood> dailyMoods,  List<WeeklyDigest> weeklyDigests,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  bool blockTradesAroundNews,  bool localOnlyAiMode,  int dailyTradeCap,  List<TradingAccount> accounts,  String? activeAccountId,  NotificationPrefs notificationPrefs)?  $default,) {final _that = this;
 switch (_that) {
 case _AppState() when $default != null:
-return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded);case _:
+return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.gateProofs,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded,_that.integrityLog,_that.lastResetAt,_that.dailyMoods,_that.weeklyDigests,_that.propFirmRules,_that.weeklyRiskBudget,_that.blockTradesAroundNews,_that.localOnlyAiMode,_that.dailyTradeCap,_that.accounts,_that.activeAccountId,_that.notificationPrefs);case _:
   return null;
 
 }
@@ -528,7 +2915,7 @@ return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl
 @JsonSerializable()
 
 class _AppState extends AppState {
-  const _AppState({this.schemaVersion = kCurrentSchemaVersion, this.balance = 25000.0, this.startDate = '2026-04-20', this.priorPnl = 0.0, final  Map<String, bool> checks = const {}, final  List<Trade> allTrades = const [], this.lock = false, this.lockUntil, this.preloaded = false}): _checks = checks,_allTrades = allTrades,super._();
+  const _AppState({this.schemaVersion = kCurrentSchemaVersion, this.balance = 25000.0, this.startDate = '2026-04-20', this.priorPnl = 0.0, final  Map<String, bool> checks = const {}, final  Map<String, String> gateProofs = const {}, final  List<Trade> allTrades = const [], this.lock = false, this.lockUntil, this.preloaded = false, final  List<IntegrityEvent> integrityLog = const [], this.lastResetAt, final  Map<String, DailyMood> dailyMoods = const {}, final  List<WeeklyDigest> weeklyDigests = const [], this.propFirmRules = const PropFirmRules(), this.weeklyRiskBudget = const WeeklyRiskBudget(), this.blockTradesAroundNews = false, this.localOnlyAiMode = false, this.dailyTradeCap = 2, final  List<TradingAccount> accounts = const [], this.activeAccountId, this.notificationPrefs = const NotificationPrefs()}): _checks = checks,_gateProofs = gateProofs,_allTrades = allTrades,_integrityLog = integrityLog,_dailyMoods = dailyMoods,_weeklyDigests = weeklyDigests,_accounts = accounts,super._();
   factory _AppState.fromJson(Map<String, dynamic> json) => _$AppStateFromJson(json);
 
 @override@JsonKey() final  int schemaVersion;
@@ -542,6 +2929,13 @@ class _AppState extends AppState {
   return EqualUnmodifiableMapView(_checks);
 }
 
+ final  Map<String, String> _gateProofs;
+@override@JsonKey() Map<String, String> get gateProofs {
+  if (_gateProofs is EqualUnmodifiableMapView) return _gateProofs;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_gateProofs);
+}
+
  final  List<Trade> _allTrades;
 @override@JsonKey() List<Trade> get allTrades {
   if (_allTrades is EqualUnmodifiableListView) return _allTrades;
@@ -552,6 +2946,62 @@ class _AppState extends AppState {
 @override@JsonKey() final  bool lock;
 @override final  int? lockUntil;
 @override@JsonKey() final  bool preloaded;
+ final  List<IntegrityEvent> _integrityLog;
+@override@JsonKey() List<IntegrityEvent> get integrityLog {
+  if (_integrityLog is EqualUnmodifiableListView) return _integrityLog;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_integrityLog);
+}
+
+@override final  int? lastResetAt;
+/// Map of `YYYY-MM-DD` (EAT) → mood check-in for that day.
+ final  Map<String, DailyMood> _dailyMoods;
+/// Map of `YYYY-MM-DD` (EAT) → mood check-in for that day.
+@override@JsonKey() Map<String, DailyMood> get dailyMoods {
+  if (_dailyMoods is EqualUnmodifiableMapView) return _dailyMoods;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_dailyMoods);
+}
+
+/// Most recent generated weekly digests (newest first). Capped at ~12.
+ final  List<WeeklyDigest> _weeklyDigests;
+/// Most recent generated weekly digests (newest first). Capped at ~12.
+@override@JsonKey() List<WeeklyDigest> get weeklyDigests {
+  if (_weeklyDigests is EqualUnmodifiableListView) return _weeklyDigests;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_weeklyDigests);
+}
+
+/// Sprint 4.1 — optional prop-firm drawdown rules.
+@override@JsonKey() final  PropFirmRules propFirmRules;
+/// Sprint 4.2 — optional weekly risk budget (R-units per week).
+@override@JsonKey() final  WeeklyRiskBudget weeklyRiskBudget;
+/// Sprint 4.4 — block trade logging within ±15 min of high-impact news.
+@override@JsonKey() final  bool blockTradesAroundNews;
+/// Sprint 5.3 — Local-only AI mode. When true, all Gemini cloud calls
+/// are short-circuited and rule-based fallbacks are used instead.
+@override@JsonKey() final  bool localOnlyAiMode;
+/// Sprint 6.3 — User-configurable daily trade cap (default 2).
+/// Allowed values: 1, 2, 3, 5.
+@override@JsonKey() final  int dailyTradeCap;
+/// Sprint 6.5 — Multi-account support. Snapshots of inactive accounts.
+/// The currently-active account always lives in the top-level fields
+/// above; switching packs current values into `accounts` and unpacks
+/// the target snapshot in their place.
+ final  List<TradingAccount> _accounts;
+/// Sprint 6.5 — Multi-account support. Snapshots of inactive accounts.
+/// The currently-active account always lives in the top-level fields
+/// above; switching packs current values into `accounts` and unpacks
+/// the target snapshot in their place.
+@override@JsonKey() List<TradingAccount> get accounts {
+  if (_accounts is EqualUnmodifiableListView) return _accounts;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_accounts);
+}
+
+@override final  String? activeAccountId;
+/// Post-Tier-1 — per-category local-notification toggles.
+@override@JsonKey() final  NotificationPrefs notificationPrefs;
 
 /// Create a copy of AppState
 /// with the given fields replaced by the non-null parameter values.
@@ -566,16 +3016,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppState&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.priorPnl, priorPnl) || other.priorPnl == priorPnl)&&const DeepCollectionEquality().equals(other._checks, _checks)&&const DeepCollectionEquality().equals(other._allTrades, _allTrades)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.lockUntil, lockUntil) || other.lockUntil == lockUntil)&&(identical(other.preloaded, preloaded) || other.preloaded == preloaded));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppState&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.priorPnl, priorPnl) || other.priorPnl == priorPnl)&&const DeepCollectionEquality().equals(other._checks, _checks)&&const DeepCollectionEquality().equals(other._gateProofs, _gateProofs)&&const DeepCollectionEquality().equals(other._allTrades, _allTrades)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.lockUntil, lockUntil) || other.lockUntil == lockUntil)&&(identical(other.preloaded, preloaded) || other.preloaded == preloaded)&&const DeepCollectionEquality().equals(other._integrityLog, _integrityLog)&&(identical(other.lastResetAt, lastResetAt) || other.lastResetAt == lastResetAt)&&const DeepCollectionEquality().equals(other._dailyMoods, _dailyMoods)&&const DeepCollectionEquality().equals(other._weeklyDigests, _weeklyDigests)&&(identical(other.propFirmRules, propFirmRules) || other.propFirmRules == propFirmRules)&&(identical(other.weeklyRiskBudget, weeklyRiskBudget) || other.weeklyRiskBudget == weeklyRiskBudget)&&(identical(other.blockTradesAroundNews, blockTradesAroundNews) || other.blockTradesAroundNews == blockTradesAroundNews)&&(identical(other.localOnlyAiMode, localOnlyAiMode) || other.localOnlyAiMode == localOnlyAiMode)&&(identical(other.dailyTradeCap, dailyTradeCap) || other.dailyTradeCap == dailyTradeCap)&&const DeepCollectionEquality().equals(other._accounts, _accounts)&&(identical(other.activeAccountId, activeAccountId) || other.activeAccountId == activeAccountId)&&(identical(other.notificationPrefs, notificationPrefs) || other.notificationPrefs == notificationPrefs));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,schemaVersion,balance,startDate,priorPnl,const DeepCollectionEquality().hash(_checks),const DeepCollectionEquality().hash(_allTrades),lock,lockUntil,preloaded);
+int get hashCode => Object.hashAll([runtimeType,schemaVersion,balance,startDate,priorPnl,const DeepCollectionEquality().hash(_checks),const DeepCollectionEquality().hash(_gateProofs),const DeepCollectionEquality().hash(_allTrades),lock,lockUntil,preloaded,const DeepCollectionEquality().hash(_integrityLog),lastResetAt,const DeepCollectionEquality().hash(_dailyMoods),const DeepCollectionEquality().hash(_weeklyDigests),propFirmRules,weeklyRiskBudget,blockTradesAroundNews,localOnlyAiMode,dailyTradeCap,const DeepCollectionEquality().hash(_accounts),activeAccountId,notificationPrefs]);
 
 @override
 String toString() {
-  return 'AppState(schemaVersion: $schemaVersion, balance: $balance, startDate: $startDate, priorPnl: $priorPnl, checks: $checks, allTrades: $allTrades, lock: $lock, lockUntil: $lockUntil, preloaded: $preloaded)';
+  return 'AppState(schemaVersion: $schemaVersion, balance: $balance, startDate: $startDate, priorPnl: $priorPnl, checks: $checks, gateProofs: $gateProofs, allTrades: $allTrades, lock: $lock, lockUntil: $lockUntil, preloaded: $preloaded, integrityLog: $integrityLog, lastResetAt: $lastResetAt, dailyMoods: $dailyMoods, weeklyDigests: $weeklyDigests, propFirmRules: $propFirmRules, weeklyRiskBudget: $weeklyRiskBudget, blockTradesAroundNews: $blockTradesAroundNews, localOnlyAiMode: $localOnlyAiMode, dailyTradeCap: $dailyTradeCap, accounts: $accounts, activeAccountId: $activeAccountId, notificationPrefs: $notificationPrefs)';
 }
 
 
@@ -586,11 +3036,11 @@ abstract mixin class _$AppStateCopyWith<$Res> implements $AppStateCopyWith<$Res>
   factory _$AppStateCopyWith(_AppState value, $Res Function(_AppState) _then) = __$AppStateCopyWithImpl;
 @override @useResult
 $Res call({
- int schemaVersion, double balance, String startDate, double priorPnl, Map<String, bool> checks, List<Trade> allTrades, bool lock, int? lockUntil, bool preloaded
+ int schemaVersion, double balance, String startDate, double priorPnl, Map<String, bool> checks, Map<String, String> gateProofs, List<Trade> allTrades, bool lock, int? lockUntil, bool preloaded, List<IntegrityEvent> integrityLog, int? lastResetAt, Map<String, DailyMood> dailyMoods, List<WeeklyDigest> weeklyDigests, PropFirmRules propFirmRules, WeeklyRiskBudget weeklyRiskBudget, bool blockTradesAroundNews, bool localOnlyAiMode, int dailyTradeCap, List<TradingAccount> accounts, String? activeAccountId, NotificationPrefs notificationPrefs
 });
 
 
-
+@override $PropFirmRulesCopyWith<$Res> get propFirmRules;@override $WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget;@override $NotificationPrefsCopyWith<$Res> get notificationPrefs;
 
 }
 /// @nodoc
@@ -603,22 +3053,62 @@ class __$AppStateCopyWithImpl<$Res>
 
 /// Create a copy of AppState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? schemaVersion = null,Object? balance = null,Object? startDate = null,Object? priorPnl = null,Object? checks = null,Object? allTrades = null,Object? lock = null,Object? lockUntil = freezed,Object? preloaded = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? schemaVersion = null,Object? balance = null,Object? startDate = null,Object? priorPnl = null,Object? checks = null,Object? gateProofs = null,Object? allTrades = null,Object? lock = null,Object? lockUntil = freezed,Object? preloaded = null,Object? integrityLog = null,Object? lastResetAt = freezed,Object? dailyMoods = null,Object? weeklyDigests = null,Object? propFirmRules = null,Object? weeklyRiskBudget = null,Object? blockTradesAroundNews = null,Object? localOnlyAiMode = null,Object? dailyTradeCap = null,Object? accounts = null,Object? activeAccountId = freezed,Object? notificationPrefs = null,}) {
   return _then(_AppState(
 schemaVersion: null == schemaVersion ? _self.schemaVersion : schemaVersion // ignore: cast_nullable_to_non_nullable
 as int,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
 as double,startDate: null == startDate ? _self.startDate : startDate // ignore: cast_nullable_to_non_nullable
 as String,priorPnl: null == priorPnl ? _self.priorPnl : priorPnl // ignore: cast_nullable_to_non_nullable
 as double,checks: null == checks ? _self._checks : checks // ignore: cast_nullable_to_non_nullable
-as Map<String, bool>,allTrades: null == allTrades ? _self._allTrades : allTrades // ignore: cast_nullable_to_non_nullable
+as Map<String, bool>,gateProofs: null == gateProofs ? _self._gateProofs : gateProofs // ignore: cast_nullable_to_non_nullable
+as Map<String, String>,allTrades: null == allTrades ? _self._allTrades : allTrades // ignore: cast_nullable_to_non_nullable
 as List<Trade>,lock: null == lock ? _self.lock : lock // ignore: cast_nullable_to_non_nullable
 as bool,lockUntil: freezed == lockUntil ? _self.lockUntil : lockUntil // ignore: cast_nullable_to_non_nullable
 as int?,preloaded: null == preloaded ? _self.preloaded : preloaded // ignore: cast_nullable_to_non_nullable
-as bool,
+as bool,integrityLog: null == integrityLog ? _self._integrityLog : integrityLog // ignore: cast_nullable_to_non_nullable
+as List<IntegrityEvent>,lastResetAt: freezed == lastResetAt ? _self.lastResetAt : lastResetAt // ignore: cast_nullable_to_non_nullable
+as int?,dailyMoods: null == dailyMoods ? _self._dailyMoods : dailyMoods // ignore: cast_nullable_to_non_nullable
+as Map<String, DailyMood>,weeklyDigests: null == weeklyDigests ? _self._weeklyDigests : weeklyDigests // ignore: cast_nullable_to_non_nullable
+as List<WeeklyDigest>,propFirmRules: null == propFirmRules ? _self.propFirmRules : propFirmRules // ignore: cast_nullable_to_non_nullable
+as PropFirmRules,weeklyRiskBudget: null == weeklyRiskBudget ? _self.weeklyRiskBudget : weeklyRiskBudget // ignore: cast_nullable_to_non_nullable
+as WeeklyRiskBudget,blockTradesAroundNews: null == blockTradesAroundNews ? _self.blockTradesAroundNews : blockTradesAroundNews // ignore: cast_nullable_to_non_nullable
+as bool,localOnlyAiMode: null == localOnlyAiMode ? _self.localOnlyAiMode : localOnlyAiMode // ignore: cast_nullable_to_non_nullable
+as bool,dailyTradeCap: null == dailyTradeCap ? _self.dailyTradeCap : dailyTradeCap // ignore: cast_nullable_to_non_nullable
+as int,accounts: null == accounts ? _self._accounts : accounts // ignore: cast_nullable_to_non_nullable
+as List<TradingAccount>,activeAccountId: freezed == activeAccountId ? _self.activeAccountId : activeAccountId // ignore: cast_nullable_to_non_nullable
+as String?,notificationPrefs: null == notificationPrefs ? _self.notificationPrefs : notificationPrefs // ignore: cast_nullable_to_non_nullable
+as NotificationPrefs,
   ));
 }
 
-
+/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$PropFirmRulesCopyWith<$Res> get propFirmRules {
+  
+  return $PropFirmRulesCopyWith<$Res>(_self.propFirmRules, (value) {
+    return _then(_self.copyWith(propFirmRules: value));
+  });
+}/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget {
+  
+  return $WeeklyRiskBudgetCopyWith<$Res>(_self.weeklyRiskBudget, (value) {
+    return _then(_self.copyWith(weeklyRiskBudget: value));
+  });
+}/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$NotificationPrefsCopyWith<$Res> get notificationPrefs {
+  
+  return $NotificationPrefsCopyWith<$Res>(_self.notificationPrefs, (value) {
+    return _then(_self.copyWith(notificationPrefs: value));
+  });
+}
 }
 
 // dart format on

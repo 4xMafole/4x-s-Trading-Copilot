@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,6 +14,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/models.dart';
 import '../services/mt5_parser.dart';
+import '../services/screenshot_ocr_service.dart';
+import '../services/trade_extractor.dart';
+import '../services/notification_center.dart';
+import '../services/weekly_digest_service.dart';
+import '../services/economic_calendar_service.dart';
+import '../services/cloud_backup_service.dart';
+import '../services/pdf_report_service.dart';
 import '../logic/cubits/settings_cubit.dart';
 import '../logic/cubits/settings_state.dart';
 import '../logic/cubits/trading_core_cubit.dart';
@@ -20,6 +29,9 @@ import '../logic/cubits/ai_coach_cubit.dart';
 import '../logic/cubits/ai_coach_state.dart';
 import '../services/ai_service.dart';
 import '../logic/intelligence_engine.dart';
+import '../logic/personal_edge_engine.dart';
+import '../logic/drawdown_engine.dart';
+import '../logic/risk_budget_engine.dart';
 import 'app_theme.dart';
 import 'tokens.dart';
 import 'trading_screen_view_model.dart';
@@ -44,7 +56,7 @@ class TradingScreen extends StatefulWidget {
 }
 
 class _TradingScreenState extends State<TradingScreen> {
-  static const _walkthroughKey = 'walkthrough_v2';
+  static const _walkthroughKey = 'walkthrough_v3';
   final GlobalKey<_JournalTabState> _journalTabKey =
       GlobalKey<_JournalTabState>();
   int _activeTab = 0;
@@ -72,6 +84,201 @@ class _TradingScreenState extends State<TradingScreen> {
     if (!(prefs.getBool(_walkthroughKey) ?? false) && mounted) {
       await _showWalkthrough(markSeen: true);
     }
+    // After walkthrough (or skipped), prompt for today's mood if missing.
+    if (mounted) await _autoMoodCheckIn();
+    // Then check whether last week's AI digest needs to be generated.
+    if (mounted) await _autoWeeklyDigest();
+  }
+
+  /// Sprint 3.2: generates last-week digest if Sun/Mon and not already cached.
+  /// Also schedules the recurring Sunday 18:00 EAT push if not yet scheduled.
+  Future<void> _autoWeeklyDigest() async {
+    if (!mounted) return;
+    final c = _vm();
+    try {
+      // Schedule (idempotent — flutter_local_notifications will replace).
+      unawaited(WeeklyDigestService().scheduleSundayReminder());
+      // Generate if due.
+      await c.generateWeeklyDigestIfDue();
+    } catch (e) {
+      debugPrint('Weekly digest auto-run failed: $e');
+    }
+    // Also (re)apply user notification preferences for recurring reminders.
+    try {
+      final prefs = c.state.notificationPrefs;
+      if (prefs.master && prefs.moodReminder) {
+        unawaited(NotificationCenter.instance.scheduleDailyMoodReminder());
+      } else {
+        unawaited(NotificationCenter.instance.cancelMoodReminder());
+      }
+      if (prefs.master && prefs.backupReminder) {
+        unawaited(NotificationCenter.instance.scheduleSundayBackupReminder());
+      } else {
+        unawaited(NotificationCenter.instance.cancelBackupReminder());
+      }
+    } catch (e) {
+      debugPrint('Recurring notification schedule failed: $e');
+    }
+  }
+
+  /// Sprint 2.3: First-open-of-the-day mood check-in. Shown once per EAT day.
+  Future<void> _autoMoodCheckIn() async {
+    final c = _vm();
+    if (c.getTodayMood() != null) return;
+    if (!mounted) return;
+    await _showMoodCheckInSheet(c);
+  }
+
+  Future<void> _showMoodCheckInSheet(TradingScreenViewModel c) async {
+    String? selected;
+    final noteCtrl = TextEditingController();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: context.c.bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (sheetCtx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 18,
+                bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'How are you today?',
+                    style: Theme.of(sheetCtx).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'A 1-tap check-in. Your mood is correlated with your trades.',
+                    style: TextStyle(
+                      color: context.c.textTertiary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: kMoodOptions.map((m) {
+                      final isSel = selected == m.id;
+                      return InkWell(
+                        onTap: () => setSheetState(() => selected = m.id),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 92,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSel
+                                ? AppTheme.accent.withValues(alpha: 0.12)
+                                : context.c.surfaceRaised,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSel ? AppTheme.accent : context.c.border,
+                              width: isSel ? 1.4 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                m.emoji,
+                                style: const TextStyle(fontSize: 28),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                m.label,
+                                style: TextStyle(
+                                  color: isSel
+                                      ? AppTheme.accent
+                                      : context.c.textSecondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: noteCtrl,
+                    maxLines: 2,
+                    minLines: 1,
+                    style: TextStyle(color: context.c.text, fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: 'Optional note (slept well, news anxiety, …)',
+                      hintStyle: TextStyle(
+                        color: context.c.textTertiary,
+                        fontSize: 12,
+                      ),
+                      filled: true,
+                      fillColor: context.c.surfaceRaised,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: context.c.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: context.c.border),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(sheetCtx),
+                          child: const Text('Skip'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: selected == null
+                              ? null
+                              : () async {
+                                  await c.setTodayMood(
+                                    selected!,
+                                    note: noteCtrl.text,
+                                  );
+                                  if (sheetCtx.mounted) {
+                                    Navigator.pop(sheetCtx);
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.accent,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Save'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+    noteCtrl.dispose();
   }
 
   // ── Interactive walkthrough ──────────────────────────────────────────
@@ -84,11 +291,19 @@ class _TradingScreenState extends State<TradingScreen> {
 
     final steps = <_WalkthroughStep>[
       _WalkthroughStep(
+        icon: Icons.auto_awesome,
+        title: 'What’s New',
+        body:
+            'Welcome to 4x Trades. New since last release: • OCR screenshot import for MT5 statements  • AI Coach with edge analysis  • Weekly Sunday digest  • Drawdown + weekly risk-budget guards  • Forex Factory news blackout  • Encrypted backups + PDF tear sheets  • Local-only AI mode for full privacy.',
+        action: () => _setActiveTab(0),
+        actionLabel: 'Tour the app',
+      ),
+      _WalkthroughStep(
         icon: Icons.dashboard_outlined,
         title: 'Dashboard',
         body:
-            'Your command center. The readiness score tells you instantly if conditions are right. '
-            'Smart insights update in real-time based on session, risk, and trade count.',
+            'Your command center. Readiness score tells you if conditions are right. '
+            'New cards: weekly digest banner, news-impact warning, distance-from-bust drawdown gauge, weekly risk-budget meter.',
         action: () => _setActiveTab(0),
         actionLabel: 'Go to Dashboard',
       ),
@@ -106,17 +321,16 @@ class _TradingScreenState extends State<TradingScreen> {
         icon: Icons.edit_note,
         title: 'Journal',
         body:
-            'Log every trade immediately after execution. Violations are tracked '
-            'to build your discipline score over time.',
+            'Log every trade immediately after execution — or use the camera button to import a broker screenshot via on-device OCR. '
+            'Mood check-ins and post-trade reflections are captured here. Violations build your discipline score.',
         action: () => _setActiveTab(2),
         actionLabel: 'Open Journal',
       ),
       _WalkthroughStep(
         icon: Icons.insights_outlined,
-        title: 'Edge Map',
+        title: 'Edge Map & AI Coach',
         body:
-            'Your personal performance data. Shows which instruments, sessions, '
-            'and patterns actually make you money.',
+            'Your personal performance data plus a ruthless AI coach. Tap “Analyze Logged Edge” for strengths, leaks, and a harsh-truth verdict — or import an MT5 CSV for the same on broker data. Local-only mode is one toggle away.',
         action: () => _setActiveTab(3),
         actionLabel: 'View Edge',
       ),
@@ -124,8 +338,8 @@ class _TradingScreenState extends State<TradingScreen> {
         icon: Icons.tune,
         title: 'Settings',
         body:
-            'Configure your challenge parameters, export/import data, '
-            'and reset state when needed.',
+            'Configure prop-firm rules, weekly risk budget, news blackout, and privacy. '
+            'Export an encrypted backup to Drive/iCloud or a PDF tear sheet for accountants. Activity History shows every state change.',
         action: () => _setActiveTab(4),
         actionLabel: 'Open Settings',
       ),
@@ -189,14 +403,16 @@ class _TradingScreenState extends State<TradingScreen> {
                   const SizedBox(height: 16),
                   // Body
                   SizedBox(
-                    height: 100,
+                    height: 140,
                     child: PageView.builder(
                       controller: pageCtrl,
                       itemCount: steps.length,
                       onPageChanged: (i) => setS(() => current = i),
-                      itemBuilder: (_, i) => Text(
-                        steps[i].body,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      itemBuilder: (_, i) => SingleChildScrollView(
+                        child: Text(
+                          steps[i].body,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                       ),
                     ),
                   ),

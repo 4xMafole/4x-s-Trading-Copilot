@@ -81,6 +81,313 @@ class _JournalTabState extends State<_JournalTab> {
     return clean;
   }
 
+  /// Sprint 3.3 — Pre-trade streak warning modal.
+  /// Returns true if the trader chooses to proceed despite the streak.
+  Future<bool?> _showStreakWarningModal(
+    BuildContext parentCtx,
+    TradeStreak streak,
+  ) async {
+    final isWin = streak.kind == StreakKind.win;
+    final title = isWin
+        ? "You're on a ${streak.length}-win streak"
+        : "You're on a ${streak.length}-loss streak";
+    final body = isWin
+        ? "Statistically, the next trade after a hot streak underperforms by ~60%. Overconfidence is the most common cause of give-back. Consider reducing size or skipping today."
+        : "Revenge-trading after consecutive losses is the #1 account-killer. Your judgment is statistically impaired right now. Consider stopping for the day, or cutting size in half.";
+    final tone = isWin ? Colors.amber.shade700 : Colors.redAccent;
+
+    return showModalBottomSheet<bool>(
+      context: parentCtx,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: parentCtx.c.bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: ctx.c.border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(
+                      isWin ? Icons.local_fire_department : Icons.warning_amber,
+                      color: tone,
+                      size: 26,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  body,
+                  style: Theme.of(
+                    ctx,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Skip this trade'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(backgroundColor: tone),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Proceed anyway'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Mandatory 30-second post-trade reflection (Sprint 2.2).
+  /// Shown immediately after a real (non-hypothetical) trade is logged.
+  Future<void> _showPostTradeReflectionSheet(
+    BuildContext parentCtx,
+    TradingScreenViewModel c,
+    Trade trade,
+  ) async {
+    bool? followedPlan;
+    String? exitReason;
+    int emotionalState = 5;
+
+    final saved = await showModalBottomSheet<bool>(
+      context: parentCtx,
+      isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: parentCtx.c.bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (sheetCtx, setSheetState) {
+            final canSave = followedPlan != null && exitReason != null;
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 16,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.psychology_alt_outlined,
+                          color: AppTheme.accent,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '30-second reflection',
+                            style: Theme.of(sheetCtx).textTheme.titleMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Three taps. They build your behavioural edge over time.',
+                      style: TextStyle(
+                        color: parentCtx.c.textTertiary,
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      '1. Did you follow your plan?',
+                      style: TextStyle(
+                        color: parentCtx.c.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ReflectionChoiceBtn(
+                            label: 'Yes',
+                            icon: Icons.check_circle,
+                            tone: AppTheme.green,
+                            selected: followedPlan == true,
+                            onTap: () =>
+                                setSheetState(() => followedPlan = true),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _ReflectionChoiceBtn(
+                            label: 'No',
+                            icon: Icons.cancel,
+                            tone: AppTheme.red,
+                            selected: followedPlan == false,
+                            onTap: () =>
+                                setSheetState(() => followedPlan = false),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      '2. What ended the trade?',
+                      style: TextStyle(
+                        color: parentCtx.c.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: kExitReasons.map((r) {
+                        return ChoiceChip(
+                          label: Text(r),
+                          selected: exitReason == r,
+                          onSelected: (_) =>
+                              setSheetState(() => exitReason = r),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 18),
+                    Text(
+                      '3. Emotional state during the trade',
+                      style: TextStyle(
+                        color: parentCtx.c.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        Text(
+                          'Reactive',
+                          style: TextStyle(
+                            color: parentCtx.c.textTertiary,
+                            fontSize: 11,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '$emotionalState / 10',
+                          style: TextStyle(
+                            color: parentCtx.c.text,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          'Locked-in',
+                          style: TextStyle(
+                            color: parentCtx.c.textTertiary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Slider(
+                      value: emotionalState.toDouble(),
+                      min: 1,
+                      max: 10,
+                      divisions: 9,
+                      label: '$emotionalState',
+                      onChanged: (v) =>
+                          setSheetState(() => emotionalState = v.round()),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(sheetCtx, false),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text('Skip'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: canSave
+                                ? () => Navigator.pop(sheetCtx, true)
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.accent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text('Save reflection'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (saved == true && followedPlan != null && exitReason != null) {
+      await c.setReflection(
+        trade.id,
+        TradeReflection(
+          followedPlan: followedPlan!,
+          exitReason: exitReason!,
+          emotionalState: emotionalState,
+        ),
+      );
+    }
+  }
+
   Future<void> openLogTradeSheet() async {
     final c = widget.controller;
 
@@ -93,8 +400,11 @@ class _JournalTabState extends State<_JournalTab> {
     DateTime? sheetDate;
     TimeOfDay? sheetTime;
     bool sheetIsHypothetical = false;
+    String? sheetSetupQuality;
+    String? sheetTrigger;
     final sheetLotsCtrl = TextEditingController();
     final sheetPnlCtrl = TextEditingController();
+    final sheetPlannedRiskCtrl = TextEditingController();
     final sheetNoteCtrl = TextEditingController();
     final sheetTagsCtrl = TextEditingController();
 
@@ -231,6 +541,18 @@ class _JournalTabState extends State<_JournalTab> {
                             ),
                           ),
                           const SizedBox(height: 12),
+                          TextField(
+                            controller: sheetPlannedRiskCtrl,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
+                            decoration: const InputDecoration(
+                              labelText: 'Planned risk (USD)',
+                              hintText: 'From your calculator',
+                              prefixText: '\$ ',
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           Wrap(
                             spacing: 6,
                             runSpacing: 6,
@@ -300,6 +622,54 @@ class _JournalTabState extends State<_JournalTab> {
                               }).toList(),
                             ),
                           ],
+                          const SizedBox(height: 16),
+                          Text(
+                            'Setup Quality *',
+                            style: Theme.of(ctx).textTheme.labelLarge,
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: kSetupQualities.map((q) {
+                              final selected = sheetSetupQuality == q;
+                              return ChoiceChip(
+                                label: Text(q),
+                                selected: selected,
+                                onSelected: (_) =>
+                                    setSheetState(() => sheetSetupQuality = q),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Trigger *',
+                            style: Theme.of(ctx).textTheme.labelLarge,
+                          ),
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: kTradeTriggers.map((t) {
+                              final selected = sheetTrigger == t;
+                              return ChoiceChip(
+                                label: Text(t),
+                                selected: selected,
+                                onSelected: (_) =>
+                                    setSheetState(() => sheetTrigger = t),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Both fields are required. They power your edge analytics.',
+                            style: TextStyle(
+                              color: Theme.of(
+                                ctx,
+                              ).extension<AppColors>()!.textTertiary,
+                              fontSize: 11,
+                            ),
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'Backfill / Hypothetical (Optional)',
@@ -403,8 +773,84 @@ class _JournalTabState extends State<_JournalTab> {
                                   _snack(context, 'Enter valid P&L.');
                                   return;
                                 }
+                                if (sheetSetupQuality == null) {
+                                  _snack(
+                                    context,
+                                    'Pick a Setup Quality (A+/B/C).',
+                                  );
+                                  return;
+                                }
+                                if (sheetTrigger == null) {
+                                  _snack(
+                                    context,
+                                    'Pick a Trigger (Plan/FOMO/etc).',
+                                  );
+                                  return;
+                                }
 
-                                await c.addTrade(
+                                // Sprint 3.3 — pre-trade streak warning.
+                                if (!sheetIsHypothetical) {
+                                  final streak =
+                                      IntelligenceEngine.currentStreak(
+                                        c.state.allTrades,
+                                      );
+                                  if (streak.shouldWarn) {
+                                    final proceed =
+                                        await _showStreakWarningModal(
+                                          context,
+                                          streak,
+                                        );
+                                    if (proceed != true) return;
+                                  }
+                                }
+
+                                // Sprint 4.2 — weekly R-budget enforcement.
+                                // If exhausted, force the trade to be
+                                // logged as paper-only for the rest of week.
+                                var enforcedHypothetical = sheetIsHypothetical;
+                                if (!sheetIsHypothetical) {
+                                  final b = c.weeklyRiskBudget;
+                                  final lossUsd =
+                                      RiskBudgetEngine.weeklyLossUsd(
+                                        c.state.allTrades,
+                                        c.nowEAT,
+                                      );
+                                  if (RiskBudgetEngine.isExhausted(
+                                    lossUsd,
+                                    b,
+                                  )) {
+                                    enforcedHypothetical = true;
+                                    if (context.mounted) {
+                                      _snack(
+                                        context,
+                                        'Weekly R-budget exhausted — logged as paper-only.',
+                                      );
+                                    }
+                                  }
+                                }
+
+                                // Sprint 4.4 — high-impact news blackout.
+                                if (!sheetIsHypothetical &&
+                                    c.blockTradesAroundNews) {
+                                  final events = await EconomicCalendarService()
+                                      .getHighImpactEvents();
+                                  final inBlackout =
+                                      EconomicCalendarService.isInBlackout(
+                                        events,
+                                        DateTime.now(),
+                                      );
+                                  if (inBlackout) {
+                                    if (context.mounted) {
+                                      _snack(
+                                        context,
+                                        'Trade blocked: high-impact news within ±15 min.',
+                                      );
+                                    }
+                                    return;
+                                  }
+                                }
+
+                                final newTrade = await c.addTrade(
                                   sym: sheetSym,
                                   dir: sheetDir,
                                   lots:
@@ -424,10 +870,22 @@ class _JournalTabState extends State<_JournalTab> {
                                   time: sheetTime != null
                                       ? '${sheetTime!.hour.toString().padLeft(2, '0')}:${sheetTime!.minute.toString().padLeft(2, '0')} EAT'
                                       : null,
-                                  isHypothetical: sheetIsHypothetical,
+                                  isHypothetical: enforcedHypothetical,
+                                  setupQuality: sheetSetupQuality,
+                                  trigger: sheetTrigger,
+                                  plannedRisk: double.tryParse(
+                                    sheetPlannedRiskCtrl.text.trim(),
+                                  ),
                                 );
 
                                 if (ctx.mounted) Navigator.pop(ctx);
+                                if (!enforcedHypothetical && mounted) {
+                                  await _showPostTradeReflectionSheet(
+                                    context,
+                                    c,
+                                    newTrade,
+                                  );
+                                }
                                 if (mounted) {
                                   setState(() => selectedDate = null);
                                   _snack(context, 'Trade logged.');
@@ -452,6 +910,7 @@ class _JournalTabState extends State<_JournalTab> {
       Future.delayed(const Duration(milliseconds: 500), () {
         sheetLotsCtrl.dispose();
         sheetPnlCtrl.dispose();
+        sheetPlannedRiskCtrl.dispose();
         sheetNoteCtrl.dispose();
         sheetTagsCtrl.dispose();
       });
@@ -745,6 +1204,32 @@ class _JournalTabState extends State<_JournalTab> {
                                   fontSize: 12,
                                 ),
                               ),
+                              if (t.plannedRisk != null &&
+                                  t.plannedRisk! > 0 &&
+                                  t.pnl < 0) ...[
+                                const SizedBox(height: 4),
+                                Builder(
+                                  builder: (_) {
+                                    final actual = -t.pnl;
+                                    final delta = actual - t.plannedRisk!;
+                                    final pct = (delta / t.plannedRisk! * 100)
+                                        .round();
+                                    final overshoot = delta > 0;
+                                    return Text(
+                                      'Plan \$${t.plannedRisk!.toStringAsFixed(0)} · '
+                                      'Actual \$${actual.toStringAsFixed(0)} · '
+                                      '${overshoot ? "+" : ""}$pct%',
+                                      style: TextStyle(
+                                        color: overshoot
+                                            ? AppTheme.red
+                                            : AppTheme.green,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -952,6 +1437,57 @@ class _JournalTabState extends State<_JournalTab> {
         reverseTransitionDuration: const Duration(milliseconds: 220),
         pageBuilder: (ctx, anim, _) =>
             _ImageViewerScreen(path: path, heroTag: heroTag),
+      ),
+    );
+  }
+}
+
+class _ReflectionChoiceBtn extends StatelessWidget {
+  const _ReflectionChoiceBtn({
+    required this.label,
+    required this.icon,
+    required this.tone,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color tone;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.c;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? tone.withValues(alpha: 0.12) : c.surfaceRaised,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? tone : c.border,
+            width: selected ? 1.4 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: selected ? tone : c.textTertiary),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? tone : c.textSecondary,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -91,6 +91,10 @@ class _EdgeTab extends StatelessWidget {
           },
         ),
 
+        // ── Section: My Personal Edge (Sprint 3.1) ─────────────────
+        const SizedBox(height: 24),
+        _PersonalEdgeSection(allTrades: trades),
+
         // ── Section 1: Personal Account Overview ──────────────────
         const SizedBox(height: 24),
         _Card(
@@ -646,6 +650,351 @@ class _EdgeTab extends StatelessWidget {
 
 // ── Edge tab helper widgets ──────────────────────────────────────────
 
+/// Sprint 3.1 — Personal Edge: auto-calibrating performance lens.
+///
+/// Surfaces the trader's real hot zones / dead zones once they have at
+/// least [PersonalEdgeEngine.kMinTrades] real trades. Below that threshold
+/// the section explains how many more trades are needed.
+class _PersonalEdgeSection extends StatelessWidget {
+  const _PersonalEdgeSection({required this.allTrades});
+  final List<Trade> allTrades;
+
+  @override
+  Widget build(BuildContext context) {
+    final ready = PersonalEdgeEngine.isReady(allTrades);
+    final realCount = allTrades.where((t) => !t.isHypothetical).length;
+
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_graph, color: AppTheme.accent, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'My Personal Edge',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const Spacer(),
+              if (ready)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    'AUTO-CALIBRATED',
+                    style: TextStyle(
+                      color: AppTheme.accent,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Computed from your real trades — recalibrates with every entry.',
+            style: TextStyle(color: context.c.textTertiary, fontSize: 11),
+          ),
+          const SizedBox(height: 16),
+          if (!ready)
+            _PersonalEdgeColdStart(realCount: realCount)
+          else
+            _PersonalEdgeReady(allTrades: allTrades),
+        ],
+      ),
+    );
+  }
+}
+
+class _PersonalEdgeColdStart extends StatelessWidget {
+  const _PersonalEdgeColdStart({required this.realCount});
+  final int realCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = PersonalEdgeEngine.kMinTrades - realCount;
+    final progress = (realCount / PersonalEdgeEngine.kMinTrades).clamp(
+      0.0,
+      1.0,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            minHeight: 6,
+            value: progress,
+            backgroundColor: context.c.border,
+            valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.accent),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          '$realCount / ${PersonalEdgeEngine.kMinTrades} real trades logged.',
+          style: TextStyle(color: context.c.text, fontSize: 13),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Personal edge unlocks in $remaining more trade${remaining == 1 ? '' : 's'}. Hardcoded research stays in effect until then.',
+          style: TextStyle(color: context.c.textTertiary, fontSize: 12),
+        ),
+      ],
+    );
+  }
+}
+
+class _PersonalEdgeReady extends StatelessWidget {
+  const _PersonalEdgeReady({required this.allTrades});
+  final List<Trade> allTrades;
+
+  @override
+  Widget build(BuildContext context) {
+    final best = PersonalEdgeEngine.bestWindow(allTrades);
+    final dead = PersonalEdgeEngine.deadZone(allTrades);
+    final instruments = PersonalEdgeEngine.instrumentBuckets(allTrades);
+    final dows = PersonalEdgeEngine.dayOfWeekBuckets(allTrades);
+    final hours = PersonalEdgeEngine.hourlyBuckets(allTrades);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (best != null)
+          _PersonalEdgeCallout(
+            tone: AppTheme.green,
+            icon: Icons.trending_up,
+            title: 'Best window',
+            body:
+                '${best.label} EAT — ${(best.winRate * 100).round()}% WR over ${best.count} trades, +${best.totalPnl.toStringAsFixed(0)} USD.',
+          ),
+        if (dead != null) ...[
+          const SizedBox(height: 8),
+          _PersonalEdgeCallout(
+            tone: AppTheme.red,
+            icon: Icons.trending_down,
+            title: 'Personal dead zone',
+            body:
+                '${dead.label} EAT — ${dead.losses}L / ${dead.wins}W, ${dead.totalPnl.toStringAsFixed(0)} USD. Skip this window.',
+          ),
+        ],
+        if (best == null && dead == null)
+          Text(
+            'Performance is balanced across hours so far — no clear hot or dead zone yet.',
+            style: TextStyle(color: context.c.textSecondary, fontSize: 12),
+          ),
+        const SizedBox(height: 16),
+        Text(
+          'By instrument',
+          style: TextStyle(
+            color: context.c.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        for (final b in instruments.take(5)) _PersonalEdgeRow(bucket: b),
+        const SizedBox(height: 16),
+        Text(
+          'By day of week',
+          style: TextStyle(
+            color: context.c.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        for (final b in dows.where((b) => b.count > 0))
+          _PersonalEdgeRow(bucket: b),
+        const SizedBox(height: 16),
+        Text(
+          'Hourly heatmap (EAT)',
+          style: TextStyle(
+            color: context.c.textSecondary,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        _PersonalHourlyHeatmap(buckets: hours),
+      ],
+    );
+  }
+}
+
+class _PersonalEdgeCallout extends StatelessWidget {
+  const _PersonalEdgeCallout({
+    required this.tone,
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+  final Color tone;
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: tone.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: tone.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: tone, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: tone,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  style: TextStyle(
+                    color: context.c.text,
+                    fontSize: 13,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PersonalEdgeRow extends StatelessWidget {
+  const _PersonalEdgeRow({required this.bucket});
+  final EdgeBucket bucket;
+
+  @override
+  Widget build(BuildContext context) {
+    final winPct = (bucket.winRate * 100).round();
+    final tone = bucket.totalPnl > 0
+        ? AppTheme.green
+        : (bucket.totalPnl < 0 ? AppTheme.red : context.c.textSecondary);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 70,
+            child: Text(
+              bucket.label,
+              style: TextStyle(color: context.c.text, fontSize: 12),
+            ),
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                minHeight: 5,
+                value: bucket.winRate,
+                backgroundColor: context.c.border,
+                valueColor: AlwaysStoppedAnimation<Color>(tone),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 92,
+            child: Text(
+              '$winPct% · ${bucket.count}t · ${bucket.totalPnl >= 0 ? '+' : ''}${bucket.totalPnl.toStringAsFixed(0)}',
+              textAlign: TextAlign.right,
+              style: TextStyle(color: tone, fontSize: 11),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PersonalHourlyHeatmap extends StatelessWidget {
+  const _PersonalHourlyHeatmap({required this.buckets});
+  final List<EdgeBucket> buckets;
+
+  @override
+  Widget build(BuildContext context) {
+    final max = buckets.fold<double>(
+      0,
+      (s, b) => b.totalPnl.abs() > s ? b.totalPnl.abs() : s,
+    );
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        for (var h = 0; h < buckets.length; h++)
+          Container(
+            width: 32,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              color: _toneFor(buckets[h], max).withValues(
+                alpha: buckets[h].count == 0
+                    ? 0.05
+                    : 0.18 +
+                          (buckets[h].totalPnl.abs() / (max == 0 ? 1 : max)) *
+                              0.55,
+              ),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: _toneFor(buckets[h], max).withValues(alpha: 0.25),
+                width: 0.5,
+              ),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  h.toString().padLeft(2, '0'),
+                  style: TextStyle(
+                    color: context.c.text,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  buckets[h].count == 0 ? '–' : '${buckets[h].count}',
+                  style: TextStyle(color: context.c.textTertiary, fontSize: 9),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Color _toneFor(EdgeBucket b, double max) {
+    if (b.count == 0) return Colors.grey;
+    if (b.totalPnl > 0) return AppTheme.green;
+    if (b.totalPnl < 0) return AppTheme.red;
+    return Colors.grey;
+  }
+}
+
 Widget _sectionLabel(BuildContext context, String text) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 10),
@@ -1125,7 +1474,10 @@ class _AiCoachActionCard extends StatelessWidget {
               ),
               onPressed: () {
                 final trades = controller.state.allTrades;
-                context.read<AiCoachCubit>().analyzeEdge(trades);
+                context.read<AiCoachCubit>().analyzeEdge(
+                  trades,
+                  localOnly: controller.localOnlyAiMode,
+                );
               },
               child: const Text(
                 'Analyze Logged Edge',
@@ -1160,7 +1512,10 @@ class _AiCoachActionCard extends StatelessWidget {
 
                     if (importedTrades.isNotEmpty && context.mounted) {
                       // Analyze imported trades + existing local hypothetical trades (optional), or just imported trades
-                      context.read<AiCoachCubit>().analyzeEdge(importedTrades);
+                      context.read<AiCoachCubit>().analyzeEdge(
+                        importedTrades,
+                        localOnly: controller.localOnlyAiMode,
+                      );
                     } else if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -1189,8 +1544,243 @@ class _AiCoachActionCard extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.accent,
+                side: const BorderSide(color: AppTheme.accent),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () => _importFromScreenshot(context, controller),
+              icon: const Icon(Icons.photo_camera_outlined, size: 18),
+              label: const Text(
+                'Import from Screenshot',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
+    );
+  }
+
+  /// Pick a broker screenshot, run on-device OCR, parse candidate trades
+  /// and show a confirm sheet before persisting them to the journal.
+  Future<void> _importFromScreenshot(
+    BuildContext context,
+    TradingScreenViewModel c,
+  ) async {
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(source: ImageSource.gallery);
+      if (picked == null) return;
+
+      if (!context.mounted) return;
+      // Show a quick blocking spinner while ML Kit runs.
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      final lines = await ScreenshotOcrService.extractLines(File(picked.path));
+      final candidates = TradeExtractor.parseLines(lines);
+
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // dismiss spinner
+
+      if (candidates.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No trades detected. Try a clearer screenshot of your history page.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final eat = c.nowEAT;
+      final fallbackDate =
+          '${eat.toUtc().year.toString().padLeft(4, '0')}-${eat.toUtc().month.toString().padLeft(2, '0')}-${eat.toUtc().day.toString().padLeft(2, '0')}';
+      final fallbackTime =
+          '${eat.toUtc().hour.toString().padLeft(2, '0')}:${eat.toUtc().minute.toString().padLeft(2, '0')}';
+
+      await _showConfirmImportSheet(
+        context,
+        controller: c,
+        candidates: candidates,
+        fallbackDate: fallbackDate,
+        fallbackTime: fallbackTime,
+      );
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).maybePop();
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Screenshot import failed: $e')));
+      }
+    }
+  }
+
+  Future<void> _showConfirmImportSheet(
+    BuildContext context, {
+    required TradingScreenViewModel controller,
+    required List<TradeCandidate> candidates,
+    required String fallbackDate,
+    required String fallbackTime,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.c.bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.photo_camera_outlined,
+                      color: AppTheme.accent,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Found ${candidates.length} trade${candidates.length == 1 ? '' : 's'}',
+                      style: Theme.of(sheetCtx).textTheme.titleMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Review the extracted trades. Confirm to add them to your journal.',
+                  style: TextStyle(
+                    color: context.c.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: candidates.length,
+                    separatorBuilder: (_, __) =>
+                        Divider(color: context.c.border, height: 1),
+                    itemBuilder: (_, i) {
+                      final t = candidates[i];
+                      final positive = t.pnl >= 0;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        leading: CircleAvatar(
+                          radius: 14,
+                          backgroundColor: t.dir == 'buy'
+                              ? AppTheme.green.withValues(alpha: 0.15)
+                              : AppTheme.red.withValues(alpha: 0.15),
+                          child: Icon(
+                            t.dir == 'buy'
+                                ? Icons.arrow_upward
+                                : Icons.arrow_downward,
+                            color: t.dir == 'buy'
+                                ? AppTheme.green
+                                : AppTheme.red,
+                            size: 14,
+                          ),
+                        ),
+                        title: Text(
+                          '${t.sym}  ·  ${t.lots > 0 ? t.lots.toStringAsFixed(2) : '—'} lots',
+                          style: TextStyle(
+                            color: context.c.text,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${t.date ?? fallbackDate}  ${t.time ?? fallbackTime}',
+                          style: TextStyle(
+                            color: context.c.textTertiary,
+                            fontSize: 11,
+                          ),
+                        ),
+                        trailing: Text(
+                          '${positive ? '+' : ''}\$${t.pnl.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            color: positive ? AppTheme.green : AppTheme.red,
+                            fontWeight: FontWeight.w700,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(sheetCtx),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: context.c.textSecondary,
+                          side: BorderSide(color: context.c.border),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text('Cancel'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final trades = TradeExtractor.toTrades(
+                            candidates,
+                            fallbackDate: fallbackDate,
+                            fallbackTime: fallbackTime,
+                          );
+                          final added = await controller.addTradesBatch(trades);
+                          if (sheetCtx.mounted) {
+                            Navigator.pop(sheetCtx);
+                            ScaffoldMessenger.of(sheetCtx).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Imported $added trade${added == 1 ? '' : 's'} from screenshot.',
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.accent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        icon: const Icon(Icons.check, size: 18),
+                        label: const Text('Confirm import'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

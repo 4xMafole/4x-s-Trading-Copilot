@@ -1,12 +1,13 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models.dart';
 import '../../services/ai_service.dart';
+import '../local_insights_engine.dart';
 import 'ai_coach_state.dart';
 
 class AiCoachCubit extends Cubit<AiCoachState> {
   AiCoachCubit() : super(const AiCoachState.initial());
 
-  Future<void> analyzeEdge(List<Trade> trades) async {
+  Future<void> analyzeEdge(List<Trade> trades, {bool localOnly = false}) async {
     if (trades.isEmpty) {
       emit(
         const AiCoachState.error(
@@ -18,7 +19,9 @@ class AiCoachCubit extends Cubit<AiCoachState> {
 
     emit(const AiCoachState.loading());
     try {
-      final report = await AiService.generateEdgeReport(trades);
+      final report = localOnly
+          ? const LocalInsightsEngine().generateEdgeReport(trades)
+          : await AiService.generateEdgeReport(trades);
       emit(AiCoachState.success(report));
     } catch (e) {
       emit(AiCoachState.error(e.toString()));

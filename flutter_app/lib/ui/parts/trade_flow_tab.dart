@@ -157,19 +157,16 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
                     blocker =
                         '$remaining gate${remaining == 1 ? '' : 's'} still pending. Complete the checklist before sizing.';
                   } else if (step == 1 && risk > 125) {
-                    blocker =
-                        'Risk above 125 USD cap. Reduce SL or entries.';
+                    blocker = 'Risk above 125 USD cap. Reduce SL or entries.';
                   } else if (step == 2) {
                     final session = c.getSessionInfo();
                     final tradesToday = c.getTodayTrades().length;
                     if (c.state.lock) {
                       blocker = 'Account locked. No execution allowed.';
                     } else if (!session.ok) {
-                      blocker =
-                          'Outside execution window: ${session.detail}';
+                      blocker = 'Outside execution window: ${session.detail}';
                     } else if (tradesToday >= 2) {
-                      blocker =
-                          'Daily trade cap reached. Stop and review.';
+                      blocker = 'Daily trade cap reached. Stop and review.';
                     }
                   }
 
@@ -268,59 +265,128 @@ class _PlanStep extends StatelessWidget {
           final passed = gate.auto
               ? (autoChecks[gate.id] ?? false)
               : (controller.state.checks[gate.id] ?? false);
+          final proof = controller.state.gateProofs[gate.id] ?? '';
           return Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: _Card(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: gate.auto
-                        ? Icon(
-                            passed ? Icons.check_circle : Icons.cancel_outlined,
-                            size: 20,
-                            color: passed ? AppTheme.green : AppTheme.red,
-                          )
-                        : Checkbox(
-                            value: passed,
-                            onChanged: (_) => controller.toggleCheck(gate.id),
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                          ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          gate.label,
-                          style: TextStyle(
-                            color: passed
-                                ? context.c.text
-                                : context.c.textSecondary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: gate.auto
+                            ? Icon(
+                                passed
+                                    ? Icons.check_circle
+                                    : Icons.cancel_outlined,
+                                size: 20,
+                                color: passed ? AppTheme.green : AppTheme.red,
+                              )
+                            : InkWell(
+                                onTap: () => _showGateProofModal(
+                                  context,
+                                  controller,
+                                  gate,
+                                  proof,
+                                ),
+                                child: Icon(
+                                  passed
+                                      ? Icons.check_circle
+                                      : Icons.radio_button_unchecked,
+                                  size: 22,
+                                  color: passed
+                                      ? AppTheme.green
+                                      : context.c.textTertiary,
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: gate.auto
+                              ? null
+                              : () => _showGateProofModal(
+                                  context,
+                                  controller,
+                                  gate,
+                                  proof,
+                                ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                gate.label,
+                                style: TextStyle(
+                                  color: passed
+                                      ? context.c.text
+                                      : context.c.textSecondary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              Text(
+                                gate.sub,
+                                style: TextStyle(
+                                  color: context.c.textTertiary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Text(
-                          gate.sub,
-                          style: TextStyle(
-                            color: context.c.textTertiary,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      if (gate.auto)
+                        _Pill(
+                          label: passed ? 'Auto ✓' : 'Blocked',
+                          tone: passed ? AppTheme.green : AppTheme.red,
+                        )
+                      else if (!passed)
+                        _Pill(label: 'Add proof', tone: AppTheme.amber),
+                    ],
                   ),
-                  if (gate.auto)
-                    _Pill(
-                      label: passed ? 'Auto ✓' : 'Blocked',
-                      tone: passed ? AppTheme.green : AppTheme.red,
+                  if (!gate.auto && passed && proof.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.green.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppTheme.green.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(
+                            Icons.format_quote,
+                            size: 14,
+                            color: AppTheme.green,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              proof,
+                              style: TextStyle(
+                                color: context.c.textSecondary,
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                  ],
                 ],
               ),
             ),
@@ -328,6 +394,125 @@ class _PlanStep extends StatelessWidget {
         }),
       ],
     );
+  }
+
+  /// Modal that demands the trader writes (or attaches) proof before the gate
+  /// turns green. Empty text un-passes the gate.
+  Future<void> _showGateProofModal(
+    BuildContext context,
+    TradingScreenViewModel controller,
+    Gate gate,
+    String existingProof,
+  ) async {
+    final ctrl = TextEditingController(text: existingProof);
+    final saved = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.c.bg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(sheetCtx).viewInsets.bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(gate.label, style: Theme.of(sheetCtx).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                gate.sub,
+                style: TextStyle(color: context.c.textTertiary, fontSize: 12),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'Write your evidence',
+                style: TextStyle(
+                  color: context.c.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                maxLines: 4,
+                minLines: 2,
+                textInputAction: TextInputAction.done,
+                style: TextStyle(color: context.c.text, fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'e.g. HTF bearish per Daily H&S; M5 BOS at 2398.40',
+                  hintStyle: TextStyle(
+                    color: context.c.textTertiary,
+                    fontSize: 12,
+                  ),
+                  filled: true,
+                  fillColor: context.c.surfaceRaised,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: context.c.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: context.c.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: AppTheme.accent),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'No empty ticks. Type one line of proof or clear it to un-pass this gate.',
+                style: TextStyle(color: context.c.textTertiary, fontSize: 11),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(sheetCtx, false),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.c.textSecondary,
+                        side: BorderSide(color: context.c.border),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(sheetCtx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.accent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Save'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (saved == true) {
+      HapticFeedback.selectionClick();
+      await controller.setGateProof(gate.id, ctrl.text);
+    }
+    ctrl.dispose();
   }
 }
 

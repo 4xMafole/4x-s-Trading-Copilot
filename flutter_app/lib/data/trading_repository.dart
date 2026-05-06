@@ -17,7 +17,7 @@ class TradingRepository {
   static const String _sessionAlertsEnabledKey = 'session_alerts_enabled_v1';
   static const String _biometricLockKey = 'biometric_lock_enabled_v1';
   static const String _sessionAlertTimesKey = 'session_alert_times_v1';
-  static const String _walkthroughKey = 'walkthrough_v2';
+  static const String _walkthroughKey = 'walkthrough_v3';
 
   // Secure-storage entries.
   static const String _ssAesKey = 'hive_aes_key_v1';

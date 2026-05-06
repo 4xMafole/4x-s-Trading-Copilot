@@ -58,7 +58,7 @@ class TradingScreenViewModel {
     priorPnl: priorPnl,
   );
 
-  Future<void> addTrade({
+  Future<Trade> addTrade({
     required String sym,
     required String dir,
     required double lots,
@@ -71,6 +71,9 @@ class TradingScreenViewModel {
     String? date,
     String? time,
     bool isHypothetical = false,
+    String? setupQuality,
+    String? trigger,
+    double? plannedRisk,
   }) => trading.addTrade(
     sym: sym,
     dir: dir,
@@ -84,16 +87,80 @@ class TradingScreenViewModel {
     date: date,
     time: time,
     isHypothetical: isHypothetical,
+    setupQuality: setupQuality,
+    trigger: trigger,
+    plannedRisk: plannedRisk,
   );
+
+  Future<void> setReflection(String tradeId, TradeReflection r) =>
+      trading.setReflection(tradeId, r);
+
+  DailyMood? getTodayMood() => trading.getTodayMood();
+  Future<void> setTodayMood(String mood, {String note = ''}) =>
+      trading.setTodayMood(mood, note: note);
+
+  WeeklyDigest? latestUnseenDigest() => trading.latestUnseenDigest();
+  Future<WeeklyDigest?> generateWeeklyDigestIfDue() =>
+      trading.generateWeeklyDigestIfDue();
+  Future<void> markLatestDigestSeen() => trading.markLatestDigestSeen();
+
+  PropFirmRules get propFirmRules => trading.state.appState.propFirmRules;
+  Future<void> setPropFirmRules(PropFirmRules r) => trading.setPropFirmRules(r);
+
+  WeeklyRiskBudget get weeklyRiskBudget =>
+      trading.state.appState.weeklyRiskBudget;
+  Future<void> setWeeklyRiskBudget(WeeklyRiskBudget b) =>
+      trading.setWeeklyRiskBudget(b);
+
+  bool get blockTradesAroundNews =>
+      trading.state.appState.blockTradesAroundNews;
+  Future<void> setBlockTradesAroundNews(bool v) =>
+      trading.setBlockTradesAroundNews(v);
+
+  bool get localOnlyAiMode => trading.state.appState.localOnlyAiMode;
+  Future<void> setLocalOnlyAiMode(bool v) => trading.setLocalOnlyAiMode(v);
+
+  int get dailyTradeCap => trading.state.appState.dailyTradeCap;
+  Future<void> setDailyTradeCap(int v) => trading.setDailyTradeCap(v);
+
+  Future<void> setNotificationPrefs(NotificationPrefs prefs) =>
+      trading.setNotificationPrefs(prefs);
+
+  // Sprint 6.5 — Multi-account.
+  List<TradingAccount> get accounts => trading.state.appState.accounts;
+  String? get activeAccountId => trading.state.appState.activeAccountId;
+  TradingAccount? get activeAccount {
+    final id = activeAccountId;
+    if (id == null) return null;
+    final match = accounts.where((a) => a.id == id);
+    return match.isEmpty ? null : match.first;
+  }
+
+  Future<void> createAccount(String name) => trading.createAccount(name);
+  Future<void> switchAccount(String id) => trading.switchAccount(id);
+  Future<void> renameAccount(String id, String name) =>
+      trading.renameAccount(id, name);
+  Future<void> deleteAccount(String id) => trading.deleteAccount(id);
+
+  Future<void> restoreFromBackup(AppState restored) =>
+      trading.restoreFromBackup(restored);
 
   Future<void> deleteTrade(String id) => trading.deleteTrade(id);
   Future<void> updateTrade(Trade updated) => trading.updateTrade(updated);
   Future<void> restoreTrade(Trade trade) => trading.restoreTrade(trade);
   Future<void> toggleCheck(String id) => trading.toggleCheck(id);
+  Future<void> setGateProof(String gateId, String proof) =>
+      trading.setGateProof(gateId, proof);
   Future<void> resetChecks(List<String> gateIds) =>
       trading.resetChecks(gateIds);
   Future<void> resetToday() => trading.resetToday();
   Future<void> resetAll() => trading.resetAll();
+
+  bool isInResetCooldown() => trading.isInResetCooldown();
+  int resetCooldownRemainingMs() => trading.resetCooldownRemainingMs();
+  int recentResetCount({Duration window = const Duration(days: 30)}) =>
+      trading.recentResetCount(window: window);
+  List<IntegrityEvent> get integrityLog => trading.state.appState.integrityLog;
 
   Future<ImportResult> importJsonData(
     String data, {
@@ -106,6 +173,10 @@ class TradingScreenViewModel {
     bool merge = false,
     bool dryRun = false,
   }) => trading.importCsvData(data, merge: merge, dryRun: dryRun);
+
+  /// Add a batch of trades extracted from an on-device screenshot import.
+  Future<int> addTradesBatch(List<Trade> trades) =>
+      trading.addTradesBatch(trades);
 
   // ── Settings passthroughs ────────────────────────────────────────────────
   ThemeMode get themeMode => settings.themeMode;

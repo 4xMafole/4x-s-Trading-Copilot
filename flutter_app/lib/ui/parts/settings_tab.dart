@@ -362,212 +362,10 @@ class _SettingsTabState extends State<_SettingsTab> {
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      children: [
-        Text(
-          'Settings',
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontSize: 24),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Challenge configuration & data',
-          style: TextStyle(color: context.c.textSecondary, fontSize: 13),
-        ),
-        const SizedBox(height: 20),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Appearance',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 12),
-              _ThemeModeSelector(controller: c),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Challenge', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 14),
-              TextField(
-                controller: balanceCtrl,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(
-                  labelText: 'Starting balance',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: startCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Start date (YYYY-MM-DD)',
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: priorCtrl,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: const InputDecoration(labelText: 'Prior P&L (USD)'),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => c.updateState(
-                    balance:
-                        double.tryParse(balanceCtrl.text) ?? c.state.balance,
-                    startDate: startCtrl.text.trim().isEmpty
-                        ? c.state.startDate
-                        : startCtrl.text.trim(),
-                    priorPnl:
-                        double.tryParse(priorCtrl.text) ?? c.state.priorPnl,
-                  ),
-                  child: const Text('Save'),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        _Card(
-          tone: context.c.positive,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.shield_outlined,
-                    color: context.c.positive,
-                    size: 20,
-                  ),
-                  const SizedBox(width: Spacing.sm),
-                  Text(
-                    'Security',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const Spacer(),
-                  _Pill(
-                    label: c.encryptionEnabled ? 'AES-256' : 'OFF',
-                    tone: c.encryptionEnabled
-                        ? context.c.positive
-                        : context.c.negative,
-                    dense: true,
-                  ),
-                ],
-              ),
-              const SizedBox(height: Spacing.sm),
-              Text(
-                c.encryptionEnabled
-                    ? 'Trade history is encrypted at rest. The key is stored in the device keychain (Keystore on Android).'
-                    : 'Encryption is unavailable. Data is stored in plaintext.',
-                style: TextStyle(
-                  color: context.c.textSecondary,
-                  fontSize: 13,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: Spacing.md),
-              Row(
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: c.encryptionEnabled
-                        ? () => _confirmRotateKey(context, c)
-                        : null,
-                    icon: const Icon(Icons.refresh, size: 16),
-                    label: const Text('Reset encryption key'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: Spacing.xs),
-              Text(
-                'Trade screenshots remain stored in app-private storage and are protected by device encryption.',
-                style: TextStyle(
-                  color: context.c.textTertiary,
-                  fontSize: 11,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Data', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => _guardedResetToday(context, c),
-                    child: const Text('Reset today'),
-                  ),
-                  OutlinedButton(
-                    onPressed: () => _guardedResetAll(context, c),
-                    child: const Text('Full reset'),
-                  ),
-                  OutlinedButton(
-                    onPressed: () => _exportData('json', c),
-                    child: const Text('Export JSON'),
-                  ),
-                  OutlinedButton(
-                    onPressed: () => _exportData('csv', c),
-                    child: const Text('Export CSV'),
-                  ),
-                  OutlinedButton(
-                    onPressed: () async {
-                      final result = await _importDialog(context, c);
-                      if (!context.mounted || result == null) return;
-                      await _showImportReportDialog(context, result);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(result.message)));
-                    },
-                    child: const Text('Import JSON/CSV'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        _IntegrityLogCard(controller: c),
-        const SizedBox(height: 12),
-        _AccountsCard(controller: c),
-        const SizedBox(height: 12),
-        _PropFirmRulesCard(controller: c),
-        const SizedBox(height: 12),
-        _WeeklyRiskBudgetSettingsCard(controller: c),
-        const SizedBox(height: 12),
-        _NewsBlackoutCard(controller: c),
-        const SizedBox(height: 12),
-        _CloudBackupCard(controller: c),
-        const SizedBox(height: 12),
-        _LocalOnlyAiCard(controller: c),
-        const SizedBox(height: 12),
-        _DailyTradeCapCard(controller: c),
-        const SizedBox(height: 12),
-        _NotificationsCard(controller: c),
-        const SizedBox(height: 12),
-        _TearSheetCard(controller: c),
-      ],
+    return Navigator(
+      onGenerateRoute: (_) => MaterialPageRoute(
+        builder: (_) => _SettingsHub(parent: this, controller: c),
+      ),
     );
   }
 
@@ -726,6 +524,476 @@ class _SettingsTabState extends State<_SettingsTab> {
     if (h > 0) return '${h}h ${m}m';
     if (m > 0) return '${m}m';
     return '<1m';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SETTINGS HUB — grouped navigation tiles
+// ═══════════════════════════════════════════════════════════════════════
+
+class _SettingsHub extends StatelessWidget {
+  const _SettingsHub({required this.parent, required this.controller});
+  final _SettingsTabState parent;
+  final TradingScreenViewModel controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      children: [
+        Text(
+          'Settings',
+          style: Theme.of(
+            context,
+          ).textTheme.headlineMedium?.copyWith(fontSize: 24),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Configure your trading copilot',
+          style: TextStyle(color: context.c.textSecondary, fontSize: 13),
+        ),
+        const SizedBox(height: 20),
+        _SettingsGroup(
+          icon: Icons.palette_outlined,
+          title: 'General',
+          subtitle: 'Appearance & challenge setup',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  _GeneralSubPage(parent: parent, controller: controller),
+            ),
+          ),
+        ),
+        _SettingsGroup(
+          icon: Icons.shield_outlined,
+          title: 'Risk Management',
+          subtitle: 'Prop firm rules, risk budget, trade cap, news blackout',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => _RiskManagementSubPage(controller: controller),
+            ),
+          ),
+        ),
+        _SettingsGroup(
+          icon: Icons.lock_outlined,
+          title: 'Security & Privacy',
+          subtitle: 'Encryption, local-only AI',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => _SecurityPrivacySubPage(
+                parent: parent,
+                controller: controller,
+              ),
+            ),
+          ),
+        ),
+        _SettingsGroup(
+          icon: Icons.cloud_upload_outlined,
+          title: 'Data & Backup',
+          subtitle: 'Import, export, encrypted backup, tear sheet',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) =>
+                  _DataBackupSubPage(parent: parent, controller: controller),
+            ),
+          ),
+        ),
+        _SettingsGroup(
+          icon: Icons.notifications_active_outlined,
+          title: 'Notifications',
+          subtitle: 'Push alerts & reminders',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => _NotificationsSubPage(controller: controller),
+            ),
+          ),
+        ),
+        _SettingsGroup(
+          icon: Icons.account_balance_wallet_outlined,
+          title: 'Accounts',
+          subtitle: 'Multi-account management',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => _AccountsSubPage(controller: controller),
+            ),
+          ),
+        ),
+        _SettingsGroup(
+          icon: Icons.history,
+          title: 'Activity History',
+          subtitle: 'Permanent audit trail',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => _ActivityHistorySubPage(controller: controller),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SettingsGroup extends StatelessWidget {
+  const _SettingsGroup({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: _Card(
+        padding: EdgeInsets.zero,
+        child: ListTile(
+          leading: Icon(icon, color: context.c.textSecondary),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(color: context.c.textSecondary, fontSize: 12),
+          ),
+          trailing: Icon(Icons.chevron_right, color: context.c.textTertiary),
+          onTap: onTap,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 4,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  SUB-PAGES
+// ═══════════════════════════════════════════════════════════════════════
+
+class _SubPageScaffold extends StatelessWidget {
+  const _SubPageScaffold({required this.title, required this.children});
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      appBar: AppBar(
+        title: Text(title),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        children: children,
+      ),
+    );
+  }
+}
+
+// ── General ───────────────────────────────────────────────────────────
+class _GeneralSubPage extends StatelessWidget {
+  const _GeneralSubPage({required this.parent, required this.controller});
+  final _SettingsTabState parent;
+  final TradingScreenViewModel controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SubPageScaffold(
+      title: 'General',
+      children: [
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Appearance',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 12),
+              _ThemeModeSelector(controller: controller),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Challenge', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 14),
+              TextField(
+                controller: parent.balanceCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Starting balance',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: parent.startCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Start date (YYYY-MM-DD)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: parent.priorCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(labelText: 'Prior P&L (USD)'),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => controller.updateState(
+                    balance:
+                        double.tryParse(parent.balanceCtrl.text) ??
+                        controller.state.balance,
+                    startDate: parent.startCtrl.text.trim().isEmpty
+                        ? controller.state.startDate
+                        : parent.startCtrl.text.trim(),
+                    priorPnl:
+                        double.tryParse(parent.priorCtrl.text) ??
+                        controller.state.priorPnl,
+                  ),
+                  child: const Text('Save'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Risk Management ───────────────────────────────────────────────────
+class _RiskManagementSubPage extends StatelessWidget {
+  const _RiskManagementSubPage({required this.controller});
+  final TradingScreenViewModel controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SubPageScaffold(
+      title: 'Risk Management',
+      children: [
+        _PropFirmRulesCard(controller: controller),
+        const SizedBox(height: 12),
+        _RiskCapCard(controller: controller),
+        const SizedBox(height: 12),
+        _WeeklyRiskBudgetSettingsCard(controller: controller),
+        const SizedBox(height: 12),
+        _DailyTradeCapCard(controller: controller),
+        const SizedBox(height: 12),
+        _NewsBlackoutCard(controller: controller),
+      ],
+    );
+  }
+}
+
+// ── Security & Privacy ────────────────────────────────────────────────
+class _SecurityPrivacySubPage extends StatelessWidget {
+  const _SecurityPrivacySubPage({
+    required this.parent,
+    required this.controller,
+  });
+  final _SettingsTabState parent;
+  final TradingScreenViewModel controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SubPageScaffold(
+      title: 'Security & Privacy',
+      children: [
+        _Card(
+          tone: context.c.positive,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.shield_outlined,
+                    color: context.c.positive,
+                    size: 20,
+                  ),
+                  const SizedBox(width: Spacing.sm),
+                  Text(
+                    'Encryption',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const Spacer(),
+                  _Pill(
+                    label: controller.encryptionEnabled ? 'AES-256' : 'OFF',
+                    tone: controller.encryptionEnabled
+                        ? context.c.positive
+                        : context.c.negative,
+                    dense: true,
+                  ),
+                ],
+              ),
+              const SizedBox(height: Spacing.sm),
+              Text(
+                controller.encryptionEnabled
+                    ? 'Trade history is encrypted at rest. The key is stored in the device keychain (Keystore on Android).'
+                    : 'Encryption is unavailable. Data is stored in plaintext.',
+                style: TextStyle(
+                  color: context.c.textSecondary,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: Spacing.md),
+              Row(
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: controller.encryptionEnabled
+                        ? () => parent._confirmRotateKey(context, controller)
+                        : null,
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('Reset encryption key'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Spacing.xs),
+              Text(
+                'Trade screenshots remain stored in app-private storage and are protected by device encryption.',
+                style: TextStyle(
+                  color: context.c.textTertiary,
+                  fontSize: 11,
+                  height: 1.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _LocalOnlyAiCard(controller: controller),
+      ],
+    );
+  }
+}
+
+// ── Data & Backup ─────────────────────────────────────────────────────
+class _DataBackupSubPage extends StatelessWidget {
+  const _DataBackupSubPage({required this.parent, required this.controller});
+  final _SettingsTabState parent;
+  final TradingScreenViewModel controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SubPageScaffold(
+      title: 'Data & Backup',
+      children: [
+        _Card(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Data', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton(
+                    onPressed: () =>
+                        parent._guardedResetToday(context, controller),
+                    child: const Text('Reset today'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () =>
+                        parent._guardedResetAll(context, controller),
+                    child: const Text('Full reset'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => parent._exportData('json', controller),
+                    child: const Text('Export JSON'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () => parent._exportData('csv', controller),
+                    child: const Text('Export CSV'),
+                  ),
+                  OutlinedButton(
+                    onPressed: () async {
+                      final result = await parent._importDialog(
+                        context,
+                        controller,
+                      );
+                      if (!context.mounted || result == null) return;
+                      await parent._showImportReportDialog(context, result);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(result.message)));
+                    },
+                    child: const Text('Import JSON/CSV'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        _CloudBackupCard(controller: controller),
+        const SizedBox(height: 12),
+        _TearSheetCard(controller: controller),
+      ],
+    );
+  }
+}
+
+// ── Notifications ─────────────────────────────────────────────────────
+class _NotificationsSubPage extends StatelessWidget {
+  const _NotificationsSubPage({required this.controller});
+  final TradingScreenViewModel controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SubPageScaffold(
+      title: 'Notifications',
+      children: [_NotificationsCard(controller: controller)],
+    );
+  }
+}
+
+// ── Accounts ──────────────────────────────────────────────────────────
+class _AccountsSubPage extends StatelessWidget {
+  const _AccountsSubPage({required this.controller});
+  final TradingScreenViewModel controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SubPageScaffold(
+      title: 'Accounts',
+      children: [_AccountsCard(controller: controller)],
+    );
+  }
+}
+
+// ── Activity History ──────────────────────────────────────────────────
+class _ActivityHistorySubPage extends StatelessWidget {
+  const _ActivityHistorySubPage({required this.controller});
+  final TradingScreenViewModel controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SubPageScaffold(
+      title: 'Activity History',
+      children: [_IntegrityLogCard(controller: controller)],
+    );
   }
 }
 
@@ -1733,6 +2001,111 @@ class _TearSheetCardState extends State<_TearSheetCard> {
                   : const Icon(Icons.ios_share, size: 16),
               label: Text(_busy ? 'Generating…' : 'Export tear sheet'),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Configurable per-trade USD risk cap. Drives lot/risk math in the Trade
+/// Flow wizard and the lot-size auto-gate (G9).
+class _RiskCapCard extends StatefulWidget {
+  const _RiskCapCard({required this.controller});
+  final TradingScreenViewModel controller;
+
+  @override
+  State<_RiskCapCard> createState() => _RiskCapCardState();
+}
+
+class _RiskCapCardState extends State<_RiskCapCard> {
+  late double _value;
+
+  @override
+  void initState() {
+    super.initState();
+    _value = widget.controller.riskCapUsd;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.shield_outlined,
+                color: context.c.textSecondary,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Per-Trade Risk Cap',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                '\$${_value.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  color: AppTheme.accent,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Maximum USD you allow yourself to risk on any single trade. '
+            'Drives the lot-size calculator in Trade Flow → Size and the '
+            'risk-cap auto-gate. Adjust as your account grows.',
+            style: TextStyle(color: context.c.textSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+          Slider(
+            value: _value.clamp(25, 1000),
+            min: 25,
+            max: 1000,
+            divisions: 39, // 25 USD increments
+            label: '\$${_value.toStringAsFixed(0)}',
+            activeColor: AppTheme.accent,
+            onChanged: (v) => setState(() => _value = v),
+            onChangeEnd: (v) async {
+              await widget.controller.setRiskCapUsd(v);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Risk cap set to \$${v.toStringAsFixed(0)}.',
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '\$25',
+                style: TextStyle(
+                  color: context.c.textTertiary,
+                  fontSize: 11,
+                ),
+              ),
+              Text(
+                '\$1,000',
+                style: TextStyle(
+                  color: context.c.textTertiary,
+                  fontSize: 11,
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -36,6 +36,37 @@ abstract class Trade with _$Trade {
     /// Sprint 4.3 — planned $ risk at entry (from calculator). Nullable
     /// so older trades still deserialize.
     double? plannedRisk,
+
+    // ── Rich broker fields (from MT5/CSV import) — all optional so older
+    //    trades and manually-logged trades still deserialize cleanly.
+
+    /// Broker ticket / position number (e.g. MT5 position id).
+    String? ticketId,
+
+    /// Open date (yyyy-MM-dd) when distinct from `date` (which is the
+    /// close date used for daily grouping).
+    String? openDate,
+
+    /// Open time (HH:mm) when distinct from `time`.
+    String? openTime,
+
+    /// Entry price.
+    double? openPrice,
+
+    /// Exit price.
+    double? closePrice,
+
+    /// Stop-loss price at trade open.
+    double? stopLoss,
+
+    /// Take-profit price at trade open.
+    double? takeProfit,
+
+    /// Broker commission (typically negative).
+    double? commission,
+
+    /// Overnight swap fees (positive or negative).
+    double? swap,
   }) = _Trade;
 
   factory Trade.fromJson(Map<String, dynamic> json) => _$TradeFromJson(json);
@@ -57,6 +88,29 @@ abstract class TradeReflection with _$TradeReflection {
 
   factory TradeReflection.fromJson(Map<String, dynamic> json) =>
       _$TradeReflectionFromJson(json);
+}
+
+/// In-flight trade-flow wizard state. Persisted on AppState so the user
+/// can leave the Trade tab and come back without losing their inputs.
+@freezed
+abstract class WizardDraft with _$WizardDraft {
+  const factory WizardDraft({
+    @Default(0) int step,
+    @Default('XAUUSD') String instrument,
+    @Default('7') String stopLoss,
+    @Default('1') String entries,
+
+    /// Planned take-profit, expressed in the same units as [stopLoss]
+    /// (i.e. price-move/pips per the instrument). Optional.
+    String? takeProfit,
+
+    /// Optional path to a pre-trade chart screenshot the trader attached
+    /// during the Plan step.
+    String? planImagePath,
+  }) = _WizardDraft;
+
+  factory WizardDraft.fromJson(Map<String, dynamic> json) =>
+      _$WizardDraftFromJson(json);
 }
 
 /// 1-tap mood check-in captured on first app open of the day.
@@ -237,6 +291,15 @@ abstract class AppState with _$AppState {
 
     /// Post-Tier-1 — per-category local-notification toggles.
     @Default(NotificationPrefs()) NotificationPrefs notificationPrefs,
+
+    /// Configurable risk cap in USD per single trade. Drives lot/risk
+    /// calculation in Trade Flow → Size step. Default 125 USD.
+    @Default(125.0) double riskCapUsd,
+
+    /// In-flight wizard draft so the Trade Flow tab can be left and
+    /// returned to without losing inputs. Cleared after the trade is
+    /// logged successfully.
+    WizardDraft? wizardDraft,
   }) = _AppState;
 
   factory AppState.defaults() => const AppState();
@@ -288,12 +351,24 @@ class Gate {
     required this.auto,
     required this.label,
     required this.sub,
+    this.symbols,
   });
 
   final String id;
   final bool auto;
   final String label;
   final String sub;
+
+  /// Optional whitelist of symbols this gate applies to. `null` means the
+  /// gate is universal (shows for every instrument).
+  final List<String>? symbols;
+
+  /// True when this gate should be evaluated for [sym].
+  bool appliesTo(String sym) {
+    final s = symbols;
+    if (s == null || s.isEmpty) return true;
+    return s.contains(sym);
+  }
 }
 
 const List<Gate> kGates = <Gate>[
@@ -314,6 +389,7 @@ const List<Gate> kGates = <Gate>[
     auto: true,
     label: 'Outside blackout zone',
     sub: 'Must be outside 15:00-16:30 EAT (coin-flip results)',
+    symbols: ['XAUUSD'],
   ),
   Gate(
     id: 'g4',

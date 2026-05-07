@@ -10,6 +10,7 @@ import '../../data/schema_migration.dart';
 import '../../data/trading_repository.dart';
 import '../../services/device_widget_bridge.dart';
 import '../../services/live_activity_bridge.dart';
+import '../../services/mt5_parser.dart';
 import '../../services/notification_center.dart';
 import '../../services/weekly_digest_service.dart';
 import '../drawdown_engine.dart';
@@ -535,6 +536,22 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
   Future<void> setDailyTradeCap(int v) async {
     if (v < 1 || v > 10) return;
     await _save(state.appState.copyWith(dailyTradeCap: v));
+  }
+
+  /// Updates the per-trade USD risk cap. Min 25, max 1000.
+  Future<void> setRiskCapUsd(double v) async {
+    final clamped = v.clamp(25.0, 1000.0).toDouble();
+    await _save(state.appState.copyWith(riskCapUsd: clamped));
+  }
+
+  /// Persists / replaces the in-flight wizard draft.
+  Future<void> updateWizardDraft(WizardDraft draft) async {
+    await _save(state.appState.copyWith(wizardDraft: draft));
+  }
+
+  /// Clears the wizard draft (called after a trade is logged).
+  Future<void> clearWizardDraft() async {
+    await _save(state.appState.copyWith(wizardDraft: null));
   }
 
   /// Updates the per-category notification preferences. Caller is
@@ -1083,6 +1100,13 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
     bool dryRun = false,
   }) async {
     try {
+      // Auto-detect MT5 ReportHistory.csv format and route to the rich
+      // MT5 parser (extracts ticket, S/L, T/P, open/close prices,
+      // commission, swap, etc).
+      if (MT5Parser.looksLikeMT5(data)) {
+        return _importMt5Csv(data, merge: merge, dryRun: dryRun);
+      }
+
       final lines = const LineSplitter()
           .convert(data)
           .where((l) => l.trim().isNotEmpty)
@@ -1245,6 +1269,82 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
     } catch (e) {
       return ImportResult(ok: false, message: 'CSV import failed: $e');
     }
+  }
+
+  /// Imports an MT5 ReportHistory.csv (rich format with ticket/SL/TP/open
+  /// price/close price/commission/swap). Used internally by [importCsvData]
+  /// when the header is detected.
+  Future<ImportResult> _importMt5Csv(
+    String data, {
+    bool merge = false,
+    bool dryRun = false,
+  }) async {
+    final parsed = MT5Parser.parseString(data);
+
+    // Deduplicate by ticket id within the import to avoid double counts.
+    final seen = <String>{};
+    final imported = <Trade>[];
+    var skipped = 0;
+    for (final t in parsed) {
+      final key = t.ticketId ?? t.id;
+      if (!seen.add(key)) {
+        skipped++;
+        continue;
+      }
+      imported.add(t);
+    }
+
+    final preview = _buildImportPreview(
+      format: 'mt5',
+      merge: merge,
+      current: state.appState.allTrades,
+      incoming: imported,
+      skippedCount: skipped,
+    );
+
+    if (dryRun) {
+      return ImportResult(
+        ok: true,
+        message: _buildPreviewMessage('MT5 CSV', preview),
+        importedCount: preview.importedCount,
+        skippedCount: preview.skippedCount,
+        preview: preview,
+        dryRun: true,
+      );
+    }
+
+    if (imported.isEmpty) {
+      return ImportResult(
+        ok: false,
+        message: 'No valid MT5 rows found in CSV.',
+        skippedCount: skipped,
+      );
+    }
+
+    final finalTrades = merge
+        ? _mergeTrades(state.appState.allTrades, imported)
+        : imported;
+
+    await _save(
+      state.appState.copyWith(
+        allTrades: _sortedTradesDesc(finalTrades),
+        preloaded: true,
+        schemaVersion: kCurrentSchemaVersion,
+      ),
+    );
+    await checkLock();
+
+    var msg = 'MT5 import successful (${preview.importedCount} trades)';
+    if (preview.skippedCount > 0) {
+      msg += ', ${preview.skippedCount} skipped';
+    }
+    return ImportResult(
+      ok: true,
+      message: '$msg.',
+      importedCount: preview.importedCount,
+      skippedCount: preview.skippedCount,
+      preview: preview,
+    );
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────

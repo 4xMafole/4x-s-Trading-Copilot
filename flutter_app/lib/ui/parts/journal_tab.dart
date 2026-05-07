@@ -81,6 +81,38 @@ class _JournalTabState extends State<_JournalTab> {
     return clean;
   }
 
+  /// Computes the suggested lot text for the log sheet based on a wizard
+  /// draft (instrument + SL pips + entries against the configured risk cap).
+  String _prefillLotText(
+    TradingScreenViewModel c,
+    WizardDraft? d,
+  ) {
+    if (d == null) return '';
+    final sl = double.tryParse(d.stopLoss) ?? 0;
+    final entries = int.tryParse(d.entries) ?? 1;
+    final meta = kInstruments[d.instrument];
+    if (meta == null || sl <= 0 || meta.pipVal <= 0 || entries <= 0) return '';
+    final cap = c.riskCapUsd;
+    final lot = (cap / entries) / (sl * meta.pipVal * 10);
+    return lot.toStringAsFixed(2);
+  }
+
+  /// Computes the suggested planned-risk text from a wizard draft.
+  String _prefillRiskText(
+    TradingScreenViewModel c,
+    WizardDraft? d,
+  ) {
+    if (d == null) return '';
+    final sl = double.tryParse(d.stopLoss) ?? 0;
+    final entries = int.tryParse(d.entries) ?? 1;
+    final meta = kInstruments[d.instrument];
+    if (meta == null || sl <= 0 || meta.pipVal <= 0 || entries <= 0) return '';
+    final cap = c.riskCapUsd;
+    final lot = (cap / entries) / (sl * meta.pipVal * 10);
+    final risk = (lot * entries * sl * meta.pipVal * 10).clamp(0, cap);
+    return risk.toStringAsFixed(0);
+  }
+
   /// Sprint 3.3 — Pre-trade streak warning modal.
   /// Returns true if the trader chooses to proceed despite the streak.
   Future<bool?> _showStreakWarningModal(
@@ -388,23 +420,27 @@ class _JournalTabState extends State<_JournalTab> {
     }
   }
 
-  Future<void> openLogTradeSheet() async {
+  Future<void> openLogTradeSheet({WizardDraft? prefill}) async {
     final c = widget.controller;
 
-    var sheetSym = 'XAUUSD';
+    var sheetSym = prefill?.instrument ?? 'XAUUSD';
     var sheetDir = 'buy';
     final sheetViolations = <String>{};
     final sheetTags = <String>{};
-    String? sheetHtfImagePath;
+    String? sheetHtfImagePath = prefill?.planImagePath;
     String? sheetLtfImagePath;
     DateTime? sheetDate;
     TimeOfDay? sheetTime;
     bool sheetIsHypothetical = false;
     String? sheetSetupQuality;
     String? sheetTrigger;
-    final sheetLotsCtrl = TextEditingController();
+    final sheetLotsCtrl = TextEditingController(
+      text: _prefillLotText(c, prefill),
+    );
     final sheetPnlCtrl = TextEditingController();
-    final sheetPlannedRiskCtrl = TextEditingController();
+    final sheetPlannedRiskCtrl = TextEditingController(
+      text: _prefillRiskText(c, prefill),
+    );
     final sheetNoteCtrl = TextEditingController();
     final sheetTagsCtrl = TextEditingController();
 
@@ -879,6 +915,9 @@ class _JournalTabState extends State<_JournalTab> {
                                 );
 
                                 if (ctx.mounted) Navigator.pop(ctx);
+                                // Clear the in-flight wizard draft so the
+                                // Trade tab resets after a successful log.
+                                await c.clearWizardDraft();
                                 if (!enforcedHypothetical && mounted) {
                                   await _showPostTradeReflectionSheet(
                                     context,

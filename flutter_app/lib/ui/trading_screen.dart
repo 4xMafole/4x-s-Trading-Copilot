@@ -13,7 +13,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/models.dart';
-import '../services/mt5_parser.dart';
 import '../services/screenshot_ocr_service.dart';
 import '../services/trade_extractor.dart';
 import '../services/notification_center.dart';
@@ -30,6 +29,7 @@ import '../logic/cubits/ai_coach_state.dart';
 import '../services/ai_service.dart';
 import '../logic/intelligence_engine.dart';
 import '../logic/personal_edge_engine.dart';
+import '../logic/personal_edge_analytics.dart';
 import '../logic/drawdown_engine.dart';
 import '../logic/risk_budget_engine.dart';
 import 'app_theme.dart';
@@ -71,7 +71,18 @@ class _TradingScreenState extends State<TradingScreen> {
     settings: context.read<SettingsCubit>(),
     activeTab: _activeTab,
     setActiveTab: _setActiveTab,
+    requestLogTrade: _requestLogTrade,
   );
+
+  void _requestLogTrade(WizardDraft? draft) {
+    if (!mounted) return;
+    setState(() => _activeTab = 2);
+    // Wait for the journal tab to mount, then open the log sheet.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _journalTabKey.currentState?.openLogTradeSheet(prefill: draft);
+    });
+  }
 
   @override
   void initState() {
@@ -569,7 +580,7 @@ class _TradingScreenState extends State<TradingScreen> {
                 NavigationDestination(
                   icon: Icon(Icons.tune_outlined),
                   selectedIcon: Icon(Icons.tune),
-                  label: 'Setup',
+                  label: 'Settings',
                 ),
               ],
             ),

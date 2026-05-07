@@ -1,19 +1,118 @@
-// GENERATED-BY-SPLIT - do not import this file directly.
+﻿// GENERATED-BY-SPLIT - do not import this file directly.
 part of '../trading_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════════════
 //  TAB 3: EDGE MAP
 // ═══════════════════════════════════════════════════════════════════════
 
-class _EdgeTab extends StatelessWidget {
+class _EdgeTab extends StatefulWidget {
   const _EdgeTab({required this.controller});
   final TradingScreenViewModel controller;
 
   @override
+  State<_EdgeTab> createState() => _EdgeTabState();
+}
+
+class _EdgeTabState extends State<_EdgeTab>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  TradingScreenViewModel get controller => widget.controller;
+
+  @override
   Widget build(BuildContext context) {
     final trades = controller.state.allTrades;
-    final realTrades = controller.getRealTradesDesc();
+    final overview = PersonalEdgeAnalytics.overview(trades);
 
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Header ─────────────────────────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Edge Map',
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineMedium?.copyWith(fontSize: 24),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'What actually makes you money',
+                style: TextStyle(
+                  color: context.c.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+
+        // ── Sub-tab bar ────────────────────────────────────────
+        TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          labelColor: AppTheme.accent,
+          unselectedLabelColor: context.c.textSecondary,
+          indicatorColor: AppTheme.accent,
+          indicatorWeight: 2,
+          dividerColor: context.c.border,
+          labelStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+          tabs: const [
+            Tab(text: 'Overview'),
+            Tab(text: 'Symbols'),
+            Tab(text: 'Timing'),
+            Tab(text: 'Behavior'),
+          ],
+        ),
+
+        // ── Sub-tab views ──────────────────────────────────────
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildOverviewView(context, trades, overview),
+              _buildSymbolsView(context, trades, overview),
+              _buildTimingView(context, trades, overview),
+              _buildBehaviorView(context, trades, overview),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Sub-tab: Overview (AI coach + account/live/hypothetical) ─
+  Widget _buildOverviewView(
+    BuildContext context,
+    List<Trade> trades,
+    OverviewStats overview,
+  ) {
+    final realTrades = controller.getRealTradesDesc();
     final live = _LiveStats.compute(realTrades);
     final theoretical = _LiveStats.compute(
       trades.where((t) => t.isHypothetical).toList(),
@@ -22,20 +121,7 @@ class _EdgeTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
       children: [
-        Text(
-          'Edge Map',
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontSize: 24),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'What actually makes you money',
-          style: TextStyle(color: context.c.textSecondary, fontSize: 13),
-        ),
-
-        // ── AI Analysis Section ──────────────────────────────
-        const SizedBox(height: 24),
+        // AI Analysis card
         BlocBuilder<AiCoachCubit, AiCoachState>(
           builder: (context, aiState) {
             return aiState.when(
@@ -90,560 +176,599 @@ class _EdgeTab extends StatelessWidget {
             );
           },
         ),
-
-        // ── Section: My Personal Edge (Sprint 3.1) ─────────────────
-        const SizedBox(height: 24),
-        _PersonalEdgeSection(allTrades: trades),
-
-        // ── Section 1: Personal Account Overview ──────────────────
-        const SizedBox(height: 24),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Personal account overview — 572 trades · Jul 2025 – Mar 2026',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 14),
-              _statGrid(const [
-                _StatBox(
-                  label: 'Total trades',
-                  value: '572',
-                  tone: AppTheme.accent,
-                ),
-                _StatBox(
-                  label: 'Net P&L',
-                  value: '+\$301.06',
-                  tone: AppTheme.green,
-                ),
-                _StatBox(
-                  label: 'Overall win rate',
-                  value: '32.4%',
-                  tone: AppTheme.amber,
-                ),
-                _StatBox(
-                  label: 'Avg R:R achieved',
-                  value: '2.71',
-                  tone: AppTheme.green,
-                ),
-                _StatBox(
-                  label: 'Avg win',
-                  value: '+\$38.48',
-                  tone: AppTheme.green,
-                ),
-                _StatBox(
-                  label: 'Avg loss',
-                  value: '-\$14.19',
-                  tone: AppTheme.red,
-                ),
-              ]),
-              const SizedBox(height: 14),
-              _AlertBox(
-                tone: AppTheme.accent,
-                title: 'THE PARADOX',
-                body:
-                    '32.4% win rate but still net profitable. Your average win (\$38.48) is 2.71× your average loss (\$14.19). The system has positive expectancy — it only needs discipline applied on top.',
-              ),
-            ],
-          ),
-        ),
-
-        // ── Section 1b: Live Challenge Stats ──────────────────────
+        if (overview.hasData) ...[
+          const SizedBox(height: 16),
+          _buildOverviewCard(context, overview),
+        ],
         if (realTrades.isNotEmpty) ...[
           const SizedBox(height: 12),
-          _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Live challenge — ${live.total} trades',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 14),
-                _statGrid([
-                  _StatBox(
-                    label: 'Trades',
-                    value: '${live.total}',
-                    tone: AppTheme.accent,
-                  ),
-                  _StatBox(
-                    label: 'Net P&L',
-                    value: _signed(live.netPnl),
-                    tone: live.netPnl >= 0 ? AppTheme.green : AppTheme.red,
-                  ),
-                  _StatBox(
-                    label: 'Win rate',
-                    value: '${live.winRate.toStringAsFixed(1)}%',
-                    tone: live.winRate >= 40 ? AppTheme.green : AppTheme.amber,
-                  ),
-                  _StatBox(
-                    label: 'Avg win',
-                    value: live.avgWin > 0
-                        ? '+\$${live.avgWin.toStringAsFixed(2)}'
-                        : '—',
-                    tone: AppTheme.green,
-                  ),
-                  _StatBox(
-                    label: 'Avg loss',
-                    value: live.avgLoss < 0
-                        ? '\$${live.avgLoss.toStringAsFixed(2)}'
-                        : '—',
-                    tone: AppTheme.red,
-                  ),
-                ]),
-                // Equity curve preview + win/loss split bar.
-                if (realTrades.length >= 2) ...[
-                  const SizedBox(height: Spacing.lg),
-                  Text(
-                    'EQUITY CURVE',
-                    style: TextStyle(
-                      color: context.c.textTertiary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: Spacing.sm),
-                  _Sparkline(
-                    values: realTrades.map((t) => t.pnl).toList(),
-                    color: live.netPnl >= 0
-                        ? context.c.positive
-                        : context.c.negative,
-                    height: 56,
-                  ),
-                  const SizedBox(height: Spacing.md),
-                  _WinLossBar(
-                    winRate: live.winRate / 100,
-                    tradeCount: live.total,
-                  ),
-                  const SizedBox(height: Spacing.xs),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'WINS  ${(live.winRate).toStringAsFixed(0)}%',
-                        style: TextStyle(
-                          color: context.c.positive,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                      Text(
-                        '${(100 - live.winRate).toStringAsFixed(0)}%  LOSSES',
-                        style: TextStyle(
-                          color: context.c.negative,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                if (live.total >= 5) ...[
-                  const SizedBox(height: 14),
-                  // Per-symbol breakdown
-                  ...live.bySymbol.entries.map((e) {
-                    final s = e.value;
-                    return _EdgeRow(
-                      label: e.key,
-                      sub: '${s.total} trades',
-                      val: '${s.winRate.toStringAsFixed(1)}% WR',
-                      valSub: _signed(s.netPnl),
-                      valColor: s.netPnl >= 0 ? AppTheme.green : AppTheme.red,
-                      percent: s.winRate,
-                    );
-                  }),
-                ],
-              ],
-            ),
-          ),
+          _buildLiveChallengeCard(context, live, realTrades),
         ],
-
-        // ── Section 1c: Theoretical (Hypothetical) Stats ──────────────────────
         if (theoretical.total > 0) ...[
           const SizedBox(height: 12),
-          _Card(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hypothetical Backlog — ${theoretical.total} trades',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: AppTheme.accent),
-                ),
-                const SizedBox(height: Spacing.sm),
-                _statGrid([
-                  _StatBox(
-                    label: 'Trades',
-                    value: '${theoretical.total}',
-                    tone: AppTheme.accent,
-                  ),
-                  _StatBox(
-                    label: 'Net P&L',
-                    value: _signed(theoretical.netPnl),
-                    tone: theoretical.netPnl >= 0
-                        ? AppTheme.green
-                        : AppTheme.red,
-                  ),
-                  _StatBox(
-                    label: 'Win rate',
-                    value: '${theoretical.winRate.toStringAsFixed(1)}%',
-                    tone: theoretical.winRate >= 40
-                        ? AppTheme.green
-                        : AppTheme.amber,
-                  ),
-                ]),
-              ],
+          _buildHypotheticalCard(context, theoretical),
+        ],
+        if (!overview.hasData) ...[
+          const SizedBox(height: 16),
+          _emptyState(
+            context,
+            'No trades yet',
+            'Import your broker history or log trades to see personalized stats.',
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ── Sub-tab: Symbols (per-symbol performance + deep dive) ────
+  Widget _buildSymbolsView(
+    BuildContext context,
+    List<Trade> trades,
+    OverviewStats overview,
+  ) {
+    if (!overview.hasData) {
+      return _emptyView(
+        context,
+        'No symbol data',
+        'Import or log trades to see which instruments make you money.',
+      );
+    }
+    final deepSym = PersonalEdgeAnalytics.deepDiveSymbol(trades);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      children: [
+        _buildSymbolPerformanceCard(context, trades),
+        if (deepSym != null) ...[
+          const SizedBox(height: 12),
+          _buildDeepDiveCard(context, trades, deepSym),
+        ],
+      ],
+    );
+  }
+
+  // ── Sub-tab: Timing (session/hour-of-day buckets) ────────────
+  Widget _buildTimingView(
+    BuildContext context,
+    List<Trade> trades,
+    OverviewStats overview,
+  ) {
+    if (!overview.hasData) {
+      return _emptyView(
+        context,
+        'No timing data',
+        'Once you have trades, this tab will show your best/worst trading hours.',
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      children: [_buildSessionTimingCard(context, trades)],
+    );
+  }
+
+  // ── Sub-tab: Behavior (personal edge + stacking + flags) ─────
+  Widget _buildBehaviorView(
+    BuildContext context,
+    List<Trade> trades,
+    OverviewStats overview,
+  ) {
+    final stacking = PersonalEdgeAnalytics.stackingAnalysis(trades);
+    final flags = PersonalEdgeAnalytics.behaviorFlags(trades);
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      children: [
+        _PersonalEdgeSection(allTrades: trades),
+        if (overview.hasData && stacking.hasData) ...[
+          const SizedBox(height: 12),
+          _buildStackingCard(context, stacking),
+        ],
+        if (overview.hasData && flags.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildBehaviorFlagsCard(context, flags),
+        ],
+      ],
+    );
+  }
+
+  Widget _emptyView(BuildContext context, String title, String body) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40),
+        child: _emptyState(context, title, body),
+      ),
+    );
+  }
+
+  Widget _emptyState(BuildContext context, String title, String body) {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            body,
+            style: TextStyle(
+              color: context.c.textSecondary,
+              fontSize: 13,
+              height: 1.4,
             ),
           ),
         ],
+      ),
+    );
+  }
 
-        // ── Section 2: Symbol Performance ─────────────────────────
-        const SizedBox(height: 12),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Symbol performance — where your edge lives',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 16),
-              _sectionLabel(context, 'Your top instruments'),
-              const _EdgeRow(
-                label: 'XAUUSD',
-                sub: '19 trades · Primary instrument',
-                val: '47% WR',
-                valSub: '+\$406.90',
-                valColor: AppTheme.green,
-                percent: 47,
-              ),
-              const _EdgeRow(
-                label: 'NQ100',
-                sub: '16 trades · Secondary instrument',
-                val: '44% WR',
-                valSub: '+\$49.10',
-                valColor: AppTheme.green,
-                percent: 44,
-              ),
-              const _EdgeRow(
-                label: 'EURUSD',
-                sub: '40 trades · Conditional only',
-                val: '25% WR',
-                valSub: '+\$50.70',
-                valColor: AppTheme.amber,
-                percent: 25,
-              ),
-              const SizedBox(height: 20),
-              _sectionLabel(context, 'Avoid completely'),
-              const _EdgeRow(
-                label: 'XAGUSD',
-                sub: '3 trades',
-                val: '0% WR',
-                valSub: '-\$179.05',
-                valColor: AppTheme.red,
-                percent: 0,
-              ),
-              const _EdgeRow(
-                label: 'BTCUSD / ETHUSD',
-                sub: '11 trades combined',
-                val: '18% WR',
-                valSub: '-\$55.56',
-                valColor: AppTheme.red,
-                percent: 18,
-              ),
-              const _EdgeRow(
-                label: 'GBPUSD',
-                sub: '15 trades',
-                val: '33% WR',
-                valSub: '-\$60.22',
-                valColor: AppTheme.red,
-                percent: 33,
-              ),
-            ],
+  Widget _buildOverviewCard(BuildContext context, OverviewStats o) {
+    final period = o.periodLabel;
+    final headerSuffix = period == null ? '' : ' · $period';
+    final pf = o.profitFactor.isInfinite || o.profitFactor.isNaN
+        ? '—'
+        : o.profitFactor.toStringAsFixed(2);
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Account overview — ${o.total} trades$headerSuffix',
+            style: Theme.of(context).textTheme.titleMedium,
           ),
-        ),
+          const SizedBox(height: 14),
+          _statGrid([
+            _StatBox(
+              label: 'Total trades',
+              value: '${o.total}',
+              tone: AppTheme.accent,
+            ),
+            _StatBox(
+              label: 'Net P&L',
+              value: _signed(o.netPnl),
+              tone: o.netPnl >= 0 ? AppTheme.green : AppTheme.red,
+            ),
+            _StatBox(
+              label: 'Overall win rate',
+              value: '${o.winRate.toStringAsFixed(1)}%',
+              tone: o.winRate >= 40 ? AppTheme.green : AppTheme.amber,
+            ),
+            _StatBox(
+              label: 'Avg R:R achieved',
+              value: o.avgRR > 0 ? o.avgRR.toStringAsFixed(2) : '—',
+              tone: o.avgRR >= 1.5 ? AppTheme.green : AppTheme.amber,
+            ),
+            _StatBox(
+              label: 'Avg win',
+              value: o.avgWin > 0 ? '+\$${o.avgWin.toStringAsFixed(2)}' : '—',
+              tone: AppTheme.green,
+            ),
+            _StatBox(
+              label: 'Avg loss',
+              value: o.avgLoss < 0 ? '\$${o.avgLoss.toStringAsFixed(2)}' : '—',
+              tone: AppTheme.red,
+            ),
+          ]),
+          if (o.netPnl > 0 && o.winRate < 50 && o.avgRR > 1.5) ...[
+            const SizedBox(height: 14),
+            _AlertBox(
+              tone: AppTheme.accent,
+              title: 'THE PARADOX',
+              body:
+                  '${o.winRate.toStringAsFixed(1)}% win rate but still net profitable. '
+                  'Your average win is ${o.avgRR.toStringAsFixed(2)}× your average loss '
+                  '(profit factor $pf). The system has positive expectancy — discipline '
+                  'is the only multiplier left.',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
-        // ── Section 3: Session Timing ─────────────────────────────
-        const SizedBox(height: 12),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Session timing — your confirmed windows (EAT)',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 16),
-              const _EdgeRow(
-                label: '09:00–10:30 EAT — dead zone',
-                labelColor: AppTheme.red,
-                sub: 'EURUSD: 24 trades, 23 straight losses',
-                val: '4.2% WR',
-                valSub: '-\$71.17',
-                valColor: AppTheme.red,
-                active: true,
-              ),
-              const _EdgeRow(
-                label: '10:30–13:00 EAT — mid London',
-                sub: 'EU sells valid. Small sample but promising',
-                val: '66.7% WR',
-                valSub: '+\$15.27',
-                valColor: AppTheme.green,
-              ),
-              const _EdgeRow(
-                label: '13:00–15:00 EAT — late London',
-                sub: 'All three instruments. Best EU + XAUUSD zone',
-                val: 'Prime window',
-                valColor: AppTheme.green,
-              ),
-              const _EdgeRow(
-                label: '15:00–16:30 EAT — blackout',
-                labelColor: AppTheme.red,
-                sub: 'XAUUSD: identical WR inside and outside — coin flip',
-                val: '45.5% WR',
-                valSub: 'No edge',
-                valColor: AppTheme.red,
-                active: true,
-              ),
-              const _EdgeRow(
-                label: '16:30–18:30 EAT — NY open',
-                sub: 'NQ primary. XAUUSD continuation',
-                val: 'Prime window',
-                valColor: AppTheme.green,
-              ),
-              const _EdgeRow(
-                label: '20:00+ EAT — NY late',
-                labelColor: AppTheme.red,
-                sub: 'Thin liquidity, asymmetric losses',
-                val: '50% WR',
-                valSub: '-\$29.60',
-                valColor: AppTheme.red,
-                active: true,
-              ),
-            ],
+  Widget _buildLiveChallengeCard(
+    BuildContext context,
+    _LiveStats live,
+    List<Trade> realTrades,
+  ) {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Live challenge — ${live.total} trades',
+            style: Theme.of(context).textTheme.titleMedium,
           ),
-        ),
-
-        // ── Section 4: EURUSD Deep Dive ──────────────────────────
-        const SizedBox(height: 12),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'EURUSD deep dive — direction bias confirmed',
-                style: Theme.of(context).textTheme.titleMedium,
+          const SizedBox(height: 14),
+          _statGrid([
+            _StatBox(
+              label: 'Trades',
+              value: '${live.total}',
+              tone: AppTheme.accent,
+            ),
+            _StatBox(
+              label: 'Net P&L',
+              value: _signed(live.netPnl),
+              tone: live.netPnl >= 0 ? AppTheme.green : AppTheme.red,
+            ),
+            _StatBox(
+              label: 'Win rate',
+              value: '${live.winRate.toStringAsFixed(1)}%',
+              tone: live.winRate >= 40 ? AppTheme.green : AppTheme.amber,
+            ),
+            _StatBox(
+              label: 'Avg win',
+              value: live.avgWin > 0
+                  ? '+\$${live.avgWin.toStringAsFixed(2)}'
+                  : '—',
+              tone: AppTheme.green,
+            ),
+            _StatBox(
+              label: 'Avg loss',
+              value: live.avgLoss < 0
+                  ? '\$${live.avgLoss.toStringAsFixed(2)}'
+                  : '—',
+              tone: AppTheme.red,
+            ),
+          ]),
+          if (realTrades.length >= 2) ...[
+            const SizedBox(height: Spacing.lg),
+            Text(
+              'EQUITY CURVE',
+              style: TextStyle(
+                color: context.c.textTertiary,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
               ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _BiasCard(
-                      title: 'Buying EURUSD',
-                      tone: AppTheme.red,
-                      trades: '29 trades',
-                      wr: '13.8% WR',
-                      net: 'Net: -\$6.05',
-                      footnote: '25 of 29 buys hit SL',
-                    ),
+            ),
+            const SizedBox(height: Spacing.sm),
+            _Sparkline(
+              values: realTrades.map((t) => t.pnl).toList(),
+              color: live.netPnl >= 0 ? context.c.positive : context.c.negative,
+              height: 56,
+            ),
+            const SizedBox(height: Spacing.md),
+            _WinLossBar(winRate: live.winRate / 100, tradeCount: live.total),
+            const SizedBox(height: Spacing.xs),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'WINS  ${live.winRate.toStringAsFixed(0)}%',
+                  style: TextStyle(
+                    color: context.c.positive,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _BiasCard(
-                      title: 'Selling EURUSD',
-                      tone: AppTheme.green,
-                      trades: '11 trades',
-                      wr: '54.5% WR',
-                      net: 'Net: +\$56.75',
-                      footnote: 'Your real EU edge',
-                    ),
+                ),
+                Text(
+                  '${(100 - live.winRate).toStringAsFixed(0)}%  LOSSES',
+                  style: TextStyle(
+                    color: context.c.negative,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              _sectionLabel(context, 'EU day-of-week breakdown'),
-              const _EdgeRow(
-                label: 'Thursday',
-                sub: '9 trades',
-                val: '44.4% WR · +\$72.07',
-                valColor: AppTheme.green,
-                percent: 44,
-              ),
-              const _EdgeRow(
-                label: 'Monday',
-                sub: '5 trades',
-                val: '20% WR · +\$41.22',
-                valColor: AppTheme.green,
-                percent: 20,
-              ),
-              const _EdgeRow(
-                label: 'Tuesday',
-                sub: '19 trades',
-                val: '26.3% WR · +\$20.61',
-                valColor: AppTheme.amber,
-                percent: 26,
-              ),
-              const _EdgeRow(
-                label: 'Wednesday',
-                labelColor: AppTheme.red,
-                sub: '5 trades',
-                val: '0% WR · -\$44.30',
-                valColor: AppTheme.red,
-                percent: 0,
-                active: true,
-              ),
-              const _EdgeRow(
-                label: 'Friday',
-                labelColor: AppTheme.red,
-                sub: '2 trades',
-                val: '0% WR · -\$38.90',
-                valColor: AppTheme.red,
-                percent: 0,
-                active: true,
-              ),
-              const SizedBox(height: 14),
-              const _AlertBox(
-                tone: AppTheme.amber,
-                title: 'EU ENTRY RULE — ALL 4 REQUIRED',
-                body:
-                    'Thursday or Monday · 13:00–16:30 EAT · HTF bearish (sell only) · Single entry only. Missing even one condition = no trade.',
-              ),
-            ],
-          ),
-        ),
+                ),
+              ],
+            ),
+          ],
+          if (live.total >= 5) ...[
+            const SizedBox(height: 14),
+            ...live.bySymbol.entries.map((e) {
+              final s = e.value;
+              return _EdgeRow(
+                label: e.key,
+                sub: '${s.total} trades',
+                val: '${s.winRate.toStringAsFixed(1)}% WR',
+                valSub: _signed(s.netPnl),
+                valColor: s.netPnl >= 0 ? AppTheme.green : AppTheme.red,
+                percent: s.winRate,
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
 
-        // ── Section 5: Stacking vs Single Entry ──────────────────
-        const SizedBox(height: 12),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Stacking vs single entry — the definitive case',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _BiasCard(
-                      title: 'Single entry days',
-                      tone: AppTheme.green,
-                      trades: '',
-                      wr: '50% WR',
-                      net: '+\$103.61 · 16 days',
-                      footnote: 'One entry with conviction — the math works',
-                    ),
+  Widget _buildHypotheticalCard(BuildContext context, _LiveStats theo) {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hypothetical Backlog — ${theo.total} trades',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppTheme.accent),
+          ),
+          const SizedBox(height: Spacing.sm),
+          _statGrid([
+            _StatBox(
+              label: 'Trades',
+              value: '${theo.total}',
+              tone: AppTheme.accent,
+            ),
+            _StatBox(
+              label: 'Net P&L',
+              value: _signed(theo.netPnl),
+              tone: theo.netPnl >= 0 ? AppTheme.green : AppTheme.red,
+            ),
+            _StatBox(
+              label: 'Win rate',
+              value: '${theo.winRate.toStringAsFixed(1)}%',
+              tone: theo.winRate >= 40 ? AppTheme.green : AppTheme.amber,
+            ),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSymbolPerformanceCard(BuildContext context, List<Trade> trades) {
+    final top = PersonalEdgeAnalytics.topPerformers(trades);
+    final bottom = PersonalEdgeAnalytics.underperformers(trades);
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Symbol performance — where your edge lives',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 16),
+          if (top.isNotEmpty) ...[
+            _sectionLabel(context, 'Your top instruments'),
+            ...top
+                .take(5)
+                .map(
+                  (s) => _EdgeRow(
+                    label: s.symbol,
+                    sub: '${s.total} trade${s.total == 1 ? '' : 's'}',
+                    val: '${s.winRate.toStringAsFixed(0)}% WR',
+                    valSub: _signed(s.netPnl),
+                    valColor: s.winRate >= 40 ? AppTheme.green : AppTheme.amber,
+                    percent: s.winRate,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _BiasCard(
-                      title: 'Stacked days',
-                      tone: AppTheme.red,
-                      trades: '',
-                      wr: '8.3% WR',
-                      net: '-\$52.91 · 6 days',
-                      footnote:
-                          'Re-entering after loss — not finding new setups',
-                    ),
+                ),
+          ],
+          if (bottom.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            _sectionLabel(context, 'Avoid completely'),
+            ...bottom
+                .take(5)
+                .map(
+                  (s) => _EdgeRow(
+                    label: s.symbol,
+                    sub: '${s.total} trade${s.total == 1 ? '' : 's'}',
+                    val: '${s.winRate.toStringAsFixed(0)}% WR',
+                    valSub: _signed(s.netPnl),
+                    valColor: AppTheme.red,
+                    percent: s.winRate,
                   ),
-                ],
-              ),
-            ],
-          ),
-        ),
+                ),
+          ],
+          if (top.isEmpty && bottom.isEmpty)
+            Text(
+              'Not enough trades on any single symbol yet (need ≥3 per symbol).',
+              style: TextStyle(color: context.c.textTertiary, fontSize: 12),
+            ),
+        ],
+      ),
+    );
+  }
 
-        // ── Section 6: Behavioural Flags ─────────────────────────
-        const SizedBox(height: 12),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Behavioural flags — confirmed patterns',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 14),
-              const _AlertBox(
-                tone: AppTheme.red,
-                title: 'STACKING (CRITICAL)',
-                body:
-                    'Personal account: 3–56 trades per day. EU stacked days: 8.3% WR. Single entry days: 50% WR. After any losing trade, wait 60 minutes minimum before re-entry on same instrument.',
-              ),
-              const SizedBox(height: 10),
-              const _AlertBox(
-                tone: AppTheme.red,
-                title: 'EARLY LONDON EXECUTION',
-                body:
-                    '09:00–10:30 EAT: 23 consecutive EURUSD losses. 4.2% WR. Hard no-trade zone — treat it as a second blackout.',
-              ),
-              const SizedBox(height: 10),
-              const _AlertBox(
-                tone: AppTheme.amber,
-                title: 'EU BUY BIAS',
-                body:
-                    '29 buys → 13.8% WR · 11 sells → 54.5% WR. Default to sells until macro structure shifts bullish on H4/Daily.',
-              ),
-              const SizedBox(height: 10),
-              const _AlertBox(
-                tone: AppTheme.amber,
-                title: 'LOT SIZE INCONSISTENCY',
-                body:
-                    'Personal account: 0.01 to 1.8 lots with no formula. Use the Calculator tab before every trade — 30 seconds, no exceptions.',
-              ),
-            ],
-          ),
+  Widget _buildSessionTimingCard(BuildContext context, List<Trade> trades) {
+    final buckets = PersonalEdgeAnalytics.hourlyBuckets(trades);
+    if (buckets.isEmpty) {
+      return _Card(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Session timing — your trading windows',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Need more trades with timestamps to compute timing edge.',
+              style: TextStyle(color: context.c.textTertiary, fontSize: 12),
+            ),
+          ],
         ),
+      );
+    }
 
-        // ── Section 7: XAUUSD Blackout Zone ──────────────────────
-        const SizedBox(height: 12),
-        _Card(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    final best = PersonalEdgeAnalytics.bestTimeWindow(trades);
+    final worst = PersonalEdgeAnalytics.worstTimeWindow(trades);
+
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Session timing — your trading windows',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 16),
+          ...buckets.where((b) => b.total >= 2).map((b) {
+            final isWorst = worst != null && b.startHour == worst.startHour;
+            final isBest = best != null && b.startHour == best.startHour;
+            final tone = isWorst
+                ? AppTheme.red
+                : (isBest ? AppTheme.green : AppTheme.amber);
+            final tag = isWorst
+                ? ' — dead zone'
+                : (isBest ? ' — prime window' : '');
+            return _EdgeRow(
+              label: '${b.label}$tag',
+              labelColor: isWorst ? AppTheme.red : null,
+              sub: '${b.total} trade${b.total == 1 ? '' : 's'}',
+              val: '${b.winRate.toStringAsFixed(0)}% WR',
+              valSub: _signed(b.netPnl),
+              valColor: tone,
+              percent: b.winRate,
+              active: isWorst,
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeepDiveCard(
+    BuildContext context,
+    List<Trade> trades,
+    String symbol,
+  ) {
+    final bias = PersonalEdgeAnalytics.directionBias(trades, symbol);
+    final dow = PersonalEdgeAnalytics.dayOfWeekBreakdown(trades, symbol);
+
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$symbol deep dive — your top instrument',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          if (bias != null && bias.hasMeaningfulSplit) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: _BiasCard(
+                    title: 'Buying $symbol',
+                    tone: bias.buyNet >= 0 ? AppTheme.green : AppTheme.red,
+                    trades: '${bias.buyTotal} trades',
+                    wr: '${bias.buyWinRate.toStringAsFixed(1)}% WR',
+                    net: 'Net: ${_signed(bias.buyNet)}',
+                    footnote: bias.buyWins > 0
+                        ? '${bias.buyWins} winners'
+                        : 'No winners yet',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _BiasCard(
+                    title: 'Selling $symbol',
+                    tone: bias.sellNet >= 0 ? AppTheme.green : AppTheme.red,
+                    trades: '${bias.sellTotal} trades',
+                    wr: '${bias.sellWinRate.toStringAsFixed(1)}% WR',
+                    net: 'Net: ${_signed(bias.sellNet)}',
+                    footnote: bias.sellWins > 0
+                        ? '${bias.sellWins} winners'
+                        : 'No winners yet',
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (dow.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            _sectionLabel(context, '$symbol day-of-week breakdown'),
+            ...dow.map((d) {
+              final tone = d.netPnl >= 0
+                  ? (d.winRate >= 40 ? AppTheme.green : AppTheme.amber)
+                  : AppTheme.red;
+              return _EdgeRow(
+                label: d.label,
+                labelColor: d.netPnl < 0 ? AppTheme.red : null,
+                sub: '${d.total} trade${d.total == 1 ? '' : 's'}',
+                val:
+                    '${d.winRate.toStringAsFixed(0)}% WR · ${_signed(d.netPnl)}',
+                valColor: tone,
+                percent: d.winRate,
+                active: d.netPnl < 0,
+              );
+            }),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStackingCard(BuildContext context, StackingAnalysis s) {
+    final stackedTone = s.stackedNet >= 0 ? AppTheme.green : AppTheme.red;
+    final singleTone = s.singleNet >= 0 ? AppTheme.green : AppTheme.red;
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Stacking vs single entry',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 14),
+          Row(
             children: [
-              Text(
-                'XAUUSD blackout zone — the confirmed verdict',
-                style: Theme.of(context).textTheme.titleMedium,
+              Expanded(
+                child: _BiasCard(
+                  title: 'Single entry days',
+                  tone: singleTone,
+                  trades: '',
+                  wr: '${s.singleWinRate.toStringAsFixed(1)}% WR',
+                  net:
+                      '${_signed(s.singleNet)} · ${s.singleDayCount} day${s.singleDayCount == 1 ? '' : 's'}',
+                  footnote: s.singleTotal == 0
+                      ? 'No single-entry days yet'
+                      : 'One entry with conviction',
+                ),
               ),
-              const SizedBox(height: 14),
-              _statGrid(const [
-                _StatBox(
-                  label: 'WR inside blackout',
-                  value: '45.5%',
-                  tone: AppTheme.amber,
+              const SizedBox(width: 10),
+              Expanded(
+                child: _BiasCard(
+                  title: 'Stacked days (3+)',
+                  tone: stackedTone,
+                  trades: '',
+                  wr: '${s.stackedWinRate.toStringAsFixed(1)}% WR',
+                  net:
+                      '${_signed(s.stackedNet)} · ${s.stackedDayCount} day${s.stackedDayCount == 1 ? '' : 's'}',
+                  footnote: s.stackedTotal == 0
+                      ? 'No stacking detected'
+                      : 'Re-entering same instrument',
                 ),
-                _StatBox(
-                  label: 'WR after blackout',
-                  value: '45.5%',
-                  tone: AppTheme.amber,
-                ),
-                _StatBox(
-                  label: 'Net inside (raw)',
-                  value: '+\$259',
-                  tone: AppTheme.amber,
-                ),
-                _StatBox(
-                  label: 'Net (remove outlier)',
-                  value: '-\$67.19',
-                  tone: AppTheme.red,
-                ),
-              ]),
-              const SizedBox(height: 14),
-              const _AlertBox(
-                tone: AppTheme.red,
-                title: 'THE +\$192.60 OUTLIER',
-                body:
-                    'The entire positive P&L inside the blackout is carried by one trade on Jan 20. Remove it and the window returns -\$67 on 10 trades. That is not an edge — it is lottery trading. The blackout stands.',
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBehaviorFlagsCard(
+    BuildContext context,
+    List<BehaviorFlag> flags,
+  ) {
+    return _Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Behavioural flags — patterns in your data',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 14),
+          ...flags.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _AlertBox(
+                tone: f.severity == BehaviorSeverity.critical
+                    ? AppTheme.red
+                    : AppTheme.amber,
+                title:
+                    f.title +
+                    (f.severity == BehaviorSeverity.critical
+                        ? ' (CRITICAL)'
+                        : ''),
+                body: f.body,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1508,28 +1633,48 @@ class _AiCoachActionCard extends StatelessWidget {
 
                   if (result != null && result.files.single.path != null) {
                     final file = File(result.files.single.path!);
-                    final importedTrades = await MT5Parser.parseCsv(file);
+                    final csvString = await file.readAsString();
 
-                    if (importedTrades.isNotEmpty && context.mounted) {
-                      // Analyze imported trades + existing local hypothetical trades (optional), or just imported trades
-                      context.read<AiCoachCubit>().analyzeEdge(
-                        importedTrades,
-                        localOnly: controller.localOnlyAiMode,
-                      );
-                    } else if (context.mounted) {
+                    // Persist the imported trades into state so they power
+                    // the live edge sections (merge with existing history).
+                    final importResult = await controller.importCsvData(
+                      csvString,
+                      merge: true,
+                    );
+
+                    if (!context.mounted) return;
+
+                    if (!importResult.ok || importResult.importedCount == 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                            'No recognized trades found in file. Ensure it is a valid MT5 export.',
+                            importResult.message.isEmpty
+                                ? 'No recognized trades found in file. Ensure it is a valid MT5 export.'
+                                : importResult.message,
                           ),
                         ),
+                      );
+                      return;
+                    }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(importResult.message)),
+                    );
+
+                    // Run AI analysis over the now-persisted history so the
+                    // user gets a fresh edge readout immediately.
+                    final realTrades = controller.getRealTradesDesc();
+                    if (realTrades.isNotEmpty) {
+                      context.read<AiCoachCubit>().analyzeEdge(
+                        realTrades,
+                        localOnly: controller.localOnlyAiMode,
                       );
                     }
                   }
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error reading file: \$e')),
+                      SnackBar(content: Text('Error reading file: $e')),
                     );
                   }
                 }

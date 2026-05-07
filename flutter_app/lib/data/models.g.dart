@@ -32,6 +32,15 @@ _Trade _$TradeFromJson(Map<String, dynamic> json) => _Trade(
       ? null
       : TradeReflection.fromJson(json['reflection'] as Map<String, dynamic>),
   plannedRisk: (json['plannedRisk'] as num?)?.toDouble(),
+  ticketId: json['ticketId'] as String?,
+  openDate: json['openDate'] as String?,
+  openTime: json['openTime'] as String?,
+  openPrice: (json['openPrice'] as num?)?.toDouble(),
+  closePrice: (json['closePrice'] as num?)?.toDouble(),
+  stopLoss: (json['stopLoss'] as num?)?.toDouble(),
+  takeProfit: (json['takeProfit'] as num?)?.toDouble(),
+  commission: (json['commission'] as num?)?.toDouble(),
+  swap: (json['swap'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$TradeToJson(_Trade instance) => <String, dynamic>{
@@ -52,6 +61,15 @@ Map<String, dynamic> _$TradeToJson(_Trade instance) => <String, dynamic>{
   'trigger': instance.trigger,
   'reflection': instance.reflection?.toJson(),
   'plannedRisk': instance.plannedRisk,
+  'ticketId': instance.ticketId,
+  'openDate': instance.openDate,
+  'openTime': instance.openTime,
+  'openPrice': instance.openPrice,
+  'closePrice': instance.closePrice,
+  'stopLoss': instance.stopLoss,
+  'takeProfit': instance.takeProfit,
+  'commission': instance.commission,
+  'swap': instance.swap,
 };
 
 _TradeReflection _$TradeReflectionFromJson(Map<String, dynamic> json) =>
@@ -66,6 +84,25 @@ Map<String, dynamic> _$TradeReflectionToJson(_TradeReflection instance) =>
       'followedPlan': instance.followedPlan,
       'exitReason': instance.exitReason,
       'emotionalState': instance.emotionalState,
+    };
+
+_WizardDraft _$WizardDraftFromJson(Map<String, dynamic> json) => _WizardDraft(
+  step: (json['step'] as num?)?.toInt() ?? 0,
+  instrument: json['instrument'] as String? ?? 'XAUUSD',
+  stopLoss: json['stopLoss'] as String? ?? '7',
+  entries: json['entries'] as String? ?? '1',
+  takeProfit: json['takeProfit'] as String?,
+  planImagePath: json['planImagePath'] as String?,
+);
+
+Map<String, dynamic> _$WizardDraftToJson(_WizardDraft instance) =>
+    <String, dynamic>{
+      'step': instance.step,
+      'instrument': instance.instrument,
+      'stopLoss': instance.stopLoss,
+      'entries': instance.entries,
+      'takeProfit': instance.takeProfit,
+      'planImagePath': instance.planImagePath,
     };
 
 _DailyMood _$DailyMoodFromJson(Map<String, dynamic> json) => _DailyMood(
@@ -277,6 +314,10 @@ _AppState _$AppStateFromJson(Map<String, dynamic> json) => _AppState(
       : NotificationPrefs.fromJson(
           json['notificationPrefs'] as Map<String, dynamic>,
         ),
+  riskCapUsd: (json['riskCapUsd'] as num?)?.toDouble() ?? 125.0,
+  wizardDraft: json['wizardDraft'] == null
+      ? null
+      : WizardDraft.fromJson(json['wizardDraft'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$AppStateToJson(_AppState instance) => <String, dynamic>{
@@ -302,4 +343,6 @@ Map<String, dynamic> _$AppStateToJson(_AppState instance) => <String, dynamic>{
   'accounts': instance.accounts.map((e) => e.toJson()).toList(),
   'activeAccountId': instance.activeAccountId,
   'notificationPrefs': instance.notificationPrefs.toJson(),
+  'riskCapUsd': instance.riskCapUsd,
+  'wizardDraft': instance.wizardDraft?.toJson(),
 };

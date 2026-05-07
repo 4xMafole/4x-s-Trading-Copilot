@@ -82,6 +82,15 @@ class TradeExtractor {
     r'([+\-−–]?)\s*\$?\s*(\d{1,3}(?:[,\.\s]\d{3})*(?:[\.,]\d{1,2})?)',
   );
 
+  /// Match parenthesized loss notation: (120.50) or ($120.50)
+  static final RegExp _parenLossRegex = RegExp(
+    r'\(\s*\$?\s*(\d{1,3}(?:[,\.\s]\d{3})*(?:[\.,]\d{1,2})?)\s*\)',
+  );
+
+  /// Match a broker price (3–5 decimal places, e.g. 1.08432 or 2350.50).
+  /// Used to infer P&L sign from direction + price movement.
+  static final RegExp _priceRegex = RegExp(r'\b(\d{1,5}\.\d{2,5})\b');
+
   /// Match a typical lot size (0.01 – 99.99). Restrict to two decimals so we
   /// don't accidentally pick up prices like "1.08423".
   static final RegExp _lotsRegex = RegExp(r'\b(\d{1,3}\.\d{2})\b');
@@ -134,8 +143,16 @@ class TradeExtractor {
       ].join(' ');
 
       final lots = _detectLots(window);
-      final pnl = _detectPnl(window);
+      var pnl = _detectPnl(window);
       final dateTime = _detectDateTime(window);
+
+      // If P&L is positive and unsigned, use price-based inference to
+      // detect losses (brokers show losses in red without a minus sign,
+      // which OCR can't distinguish from profits).
+      if (pnl > 0 && !_hasExplicitSign(window)) {
+        final inferredSign = _inferSignFromPrices(window, dir);
+        if (inferredSign < 0) pnl = -pnl;
+      }
 
       final candidate = TradeCandidate(
         sym: sym,
@@ -209,6 +226,17 @@ class TradeExtractor {
   }
 
   static double _detectPnl(String window) {
+    // First check for parenthesized loss notation: (120.50) = loss.
+    final parenMatch = _parenLossRegex.firstMatch(window);
+    if (parenMatch != null) {
+      final numRaw = (parenMatch.group(1) ?? '')
+          .replaceAll(',', '.')
+          .replaceAll(' ', '');
+      final cleaned = _normalizeNumber(numRaw);
+      final v = double.tryParse(cleaned);
+      if (v != null && v > 0) return -v;
+    }
+
     // Prefer the LAST money value on the row — most platforms put profit
     // at the far right of the row.
     final matches = _moneyRegex.allMatches(window).toList();
@@ -232,11 +260,63 @@ class TradeExtractor {
       // signed). 1.08432 isn't a P/L; -45.32 obviously is.
       if (signRaw.isEmpty && v > 5000) continue;
 
+      // Skip values that look like broker prices (have 3+ decimal places).
+      final fullMatch = m.group(0) ?? '';
+      if (signRaw.isEmpty && RegExp(r'\.\d{3,}').hasMatch(fullMatch)) continue;
+
       final signed = signRaw == '-' ? -v : v;
       // Demand non-zero — a line of zeros is almost always a header.
       if (signed != 0) return signed;
     }
     return 0.0;
+  }
+
+  /// Returns true if the window contains an explicitly signed money value
+  /// (i.e. the P&L had a -, +, −, or – prefix).
+  static bool _hasExplicitSign(String window) {
+    final matches = _moneyRegex.allMatches(window).toList();
+    for (final m in matches.reversed) {
+      final signRaw = (m.group(1) ?? '')
+          .replaceAll('−', '-')
+          .replaceAll('–', '-');
+      if (signRaw == '-' || signRaw == '+') return true;
+    }
+    // Also check for parenthesized notation.
+    return _parenLossRegex.hasMatch(window);
+  }
+
+  /// Infer the P&L sign from open/close prices and trade direction.
+  /// Returns -1 if the trade was a loss, +1 if profit, 0 if can't determine.
+  ///
+  /// Logic:
+  ///   BUY:  close < open → loss
+  ///   SELL: close > open → loss
+  ///
+  /// Assumes the first price-like value is the open and the second is close,
+  /// which matches MT4/MT5/cTrader column layouts.
+  static int _inferSignFromPrices(String window, String dir) {
+    final priceMatches = _priceRegex.allMatches(window).toList();
+    if (priceMatches.length < 2) return 0;
+
+    // Collect prices that look like real broker prices (≥3 decimal places
+    // or typical forex 4-5 digit quotes, or metals/indices 2-digit quotes).
+    final prices = <double>[];
+    for (final pm in priceMatches) {
+      final v = double.tryParse(pm.group(1) ?? '');
+      if (v != null && v > 0) prices.add(v);
+    }
+    if (prices.length < 2) return 0;
+
+    // Use the first two prices as open/close (MT4/MT5 standard order).
+    final open = prices[0];
+    final close = prices[1];
+    if (open == close) return 0;
+
+    if (dir == 'buy') {
+      return close < open ? -1 : 1;
+    } else {
+      return close > open ? -1 : 1;
+    }
   }
 
   static String _normalizeNumber(String raw) {

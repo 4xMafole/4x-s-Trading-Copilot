@@ -22,7 +22,19 @@ mixin _$Trade {
  String? get trigger;/// Optional 30-second post-trade reflection (Sprint 2.2).
  TradeReflection? get reflection;/// Sprint 4.3 — planned $ risk at entry (from calculator). Nullable
 /// so older trades still deserialize.
- double? get plannedRisk;
+ double? get plannedRisk;// ── Rich broker fields (from MT5/CSV import) — all optional so older
+//    trades and manually-logged trades still deserialize cleanly.
+/// Broker ticket / position number (e.g. MT5 position id).
+ String? get ticketId;/// Open date (yyyy-MM-dd) when distinct from `date` (which is the
+/// close date used for daily grouping).
+ String? get openDate;/// Open time (HH:mm) when distinct from `time`.
+ String? get openTime;/// Entry price.
+ double? get openPrice;/// Exit price.
+ double? get closePrice;/// Stop-loss price at trade open.
+ double? get stopLoss;/// Take-profit price at trade open.
+ double? get takeProfit;/// Broker commission (typically negative).
+ double? get commission;/// Overnight swap fees (positive or negative).
+ double? get swap;
 /// Create a copy of Trade
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -35,16 +47,16 @@ $TradeCopyWith<Trade> get copyWith => _$TradeCopyWithImpl<Trade>(this as Trade, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Trade&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.time, time) || other.time == time)&&(identical(other.sym, sym) || other.sym == sym)&&(identical(other.dir, dir) || other.dir == dir)&&(identical(other.lots, lots) || other.lots == lots)&&(identical(other.pnl, pnl) || other.pnl == pnl)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.violations, violations)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.htfImage, htfImage) || other.htfImage == htfImage)&&(identical(other.ltfImage, ltfImage) || other.ltfImage == ltfImage)&&(identical(other.isHypothetical, isHypothetical) || other.isHypothetical == isHypothetical)&&(identical(other.setupQuality, setupQuality) || other.setupQuality == setupQuality)&&(identical(other.trigger, trigger) || other.trigger == trigger)&&(identical(other.reflection, reflection) || other.reflection == reflection)&&(identical(other.plannedRisk, plannedRisk) || other.plannedRisk == plannedRisk));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Trade&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.time, time) || other.time == time)&&(identical(other.sym, sym) || other.sym == sym)&&(identical(other.dir, dir) || other.dir == dir)&&(identical(other.lots, lots) || other.lots == lots)&&(identical(other.pnl, pnl) || other.pnl == pnl)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other.violations, violations)&&const DeepCollectionEquality().equals(other.tags, tags)&&(identical(other.htfImage, htfImage) || other.htfImage == htfImage)&&(identical(other.ltfImage, ltfImage) || other.ltfImage == ltfImage)&&(identical(other.isHypothetical, isHypothetical) || other.isHypothetical == isHypothetical)&&(identical(other.setupQuality, setupQuality) || other.setupQuality == setupQuality)&&(identical(other.trigger, trigger) || other.trigger == trigger)&&(identical(other.reflection, reflection) || other.reflection == reflection)&&(identical(other.plannedRisk, plannedRisk) || other.plannedRisk == plannedRisk)&&(identical(other.ticketId, ticketId) || other.ticketId == ticketId)&&(identical(other.openDate, openDate) || other.openDate == openDate)&&(identical(other.openTime, openTime) || other.openTime == openTime)&&(identical(other.openPrice, openPrice) || other.openPrice == openPrice)&&(identical(other.closePrice, closePrice) || other.closePrice == closePrice)&&(identical(other.stopLoss, stopLoss) || other.stopLoss == stopLoss)&&(identical(other.takeProfit, takeProfit) || other.takeProfit == takeProfit)&&(identical(other.commission, commission) || other.commission == commission)&&(identical(other.swap, swap) || other.swap == swap));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,date,time,sym,dir,lots,pnl,note,const DeepCollectionEquality().hash(violations),const DeepCollectionEquality().hash(tags),htfImage,ltfImage,isHypothetical,setupQuality,trigger,reflection,plannedRisk);
+int get hashCode => Object.hashAll([runtimeType,id,date,time,sym,dir,lots,pnl,note,const DeepCollectionEquality().hash(violations),const DeepCollectionEquality().hash(tags),htfImage,ltfImage,isHypothetical,setupQuality,trigger,reflection,plannedRisk,ticketId,openDate,openTime,openPrice,closePrice,stopLoss,takeProfit,commission,swap]);
 
 @override
 String toString() {
-  return 'Trade(id: $id, date: $date, time: $time, sym: $sym, dir: $dir, lots: $lots, pnl: $pnl, note: $note, violations: $violations, tags: $tags, htfImage: $htfImage, ltfImage: $ltfImage, isHypothetical: $isHypothetical, setupQuality: $setupQuality, trigger: $trigger, reflection: $reflection, plannedRisk: $plannedRisk)';
+  return 'Trade(id: $id, date: $date, time: $time, sym: $sym, dir: $dir, lots: $lots, pnl: $pnl, note: $note, violations: $violations, tags: $tags, htfImage: $htfImage, ltfImage: $ltfImage, isHypothetical: $isHypothetical, setupQuality: $setupQuality, trigger: $trigger, reflection: $reflection, plannedRisk: $plannedRisk, ticketId: $ticketId, openDate: $openDate, openTime: $openTime, openPrice: $openPrice, closePrice: $closePrice, stopLoss: $stopLoss, takeProfit: $takeProfit, commission: $commission, swap: $swap)';
 }
 
 
@@ -55,7 +67,7 @@ abstract mixin class $TradeCopyWith<$Res>  {
   factory $TradeCopyWith(Trade value, $Res Function(Trade) _then) = _$TradeCopyWithImpl;
 @useResult
 $Res call({
- String id, String date, String time, String sym, String dir, double lots, double pnl, String note, List<String> violations, List<String> tags, String? htfImage, String? ltfImage, bool isHypothetical, String? setupQuality, String? trigger, TradeReflection? reflection, double? plannedRisk
+ String id, String date, String time, String sym, String dir, double lots, double pnl, String note, List<String> violations, List<String> tags, String? htfImage, String? ltfImage, bool isHypothetical, String? setupQuality, String? trigger, TradeReflection? reflection, double? plannedRisk, String? ticketId, String? openDate, String? openTime, double? openPrice, double? closePrice, double? stopLoss, double? takeProfit, double? commission, double? swap
 });
 
 
@@ -72,7 +84,7 @@ class _$TradeCopyWithImpl<$Res>
 
 /// Create a copy of Trade
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? date = null,Object? time = null,Object? sym = null,Object? dir = null,Object? lots = null,Object? pnl = null,Object? note = null,Object? violations = null,Object? tags = null,Object? htfImage = freezed,Object? ltfImage = freezed,Object? isHypothetical = null,Object? setupQuality = freezed,Object? trigger = freezed,Object? reflection = freezed,Object? plannedRisk = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? date = null,Object? time = null,Object? sym = null,Object? dir = null,Object? lots = null,Object? pnl = null,Object? note = null,Object? violations = null,Object? tags = null,Object? htfImage = freezed,Object? ltfImage = freezed,Object? isHypothetical = null,Object? setupQuality = freezed,Object? trigger = freezed,Object? reflection = freezed,Object? plannedRisk = freezed,Object? ticketId = freezed,Object? openDate = freezed,Object? openTime = freezed,Object? openPrice = freezed,Object? closePrice = freezed,Object? stopLoss = freezed,Object? takeProfit = freezed,Object? commission = freezed,Object? swap = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
@@ -91,6 +103,15 @@ as bool,setupQuality: freezed == setupQuality ? _self.setupQuality : setupQualit
 as String?,trigger: freezed == trigger ? _self.trigger : trigger // ignore: cast_nullable_to_non_nullable
 as String?,reflection: freezed == reflection ? _self.reflection : reflection // ignore: cast_nullable_to_non_nullable
 as TradeReflection?,plannedRisk: freezed == plannedRisk ? _self.plannedRisk : plannedRisk // ignore: cast_nullable_to_non_nullable
+as double?,ticketId: freezed == ticketId ? _self.ticketId : ticketId // ignore: cast_nullable_to_non_nullable
+as String?,openDate: freezed == openDate ? _self.openDate : openDate // ignore: cast_nullable_to_non_nullable
+as String?,openTime: freezed == openTime ? _self.openTime : openTime // ignore: cast_nullable_to_non_nullable
+as String?,openPrice: freezed == openPrice ? _self.openPrice : openPrice // ignore: cast_nullable_to_non_nullable
+as double?,closePrice: freezed == closePrice ? _self.closePrice : closePrice // ignore: cast_nullable_to_non_nullable
+as double?,stopLoss: freezed == stopLoss ? _self.stopLoss : stopLoss // ignore: cast_nullable_to_non_nullable
+as double?,takeProfit: freezed == takeProfit ? _self.takeProfit : takeProfit // ignore: cast_nullable_to_non_nullable
+as double?,commission: freezed == commission ? _self.commission : commission // ignore: cast_nullable_to_non_nullable
+as double?,swap: freezed == swap ? _self.swap : swap // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }
@@ -188,10 +209,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical,  String? setupQuality,  String? trigger,  TradeReflection? reflection,  double? plannedRisk)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical,  String? setupQuality,  String? trigger,  TradeReflection? reflection,  double? plannedRisk,  String? ticketId,  String? openDate,  String? openTime,  double? openPrice,  double? closePrice,  double? stopLoss,  double? takeProfit,  double? commission,  double? swap)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Trade() when $default != null:
-return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical,_that.setupQuality,_that.trigger,_that.reflection,_that.plannedRisk);case _:
+return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical,_that.setupQuality,_that.trigger,_that.reflection,_that.plannedRisk,_that.ticketId,_that.openDate,_that.openTime,_that.openPrice,_that.closePrice,_that.stopLoss,_that.takeProfit,_that.commission,_that.swap);case _:
   return orElse();
 
 }
@@ -209,10 +230,10 @@ return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical,  String? setupQuality,  String? trigger,  TradeReflection? reflection,  double? plannedRisk)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical,  String? setupQuality,  String? trigger,  TradeReflection? reflection,  double? plannedRisk,  String? ticketId,  String? openDate,  String? openTime,  double? openPrice,  double? closePrice,  double? stopLoss,  double? takeProfit,  double? commission,  double? swap)  $default,) {final _that = this;
 switch (_that) {
 case _Trade():
-return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical,_that.setupQuality,_that.trigger,_that.reflection,_that.plannedRisk);case _:
+return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical,_that.setupQuality,_that.trigger,_that.reflection,_that.plannedRisk,_that.ticketId,_that.openDate,_that.openTime,_that.openPrice,_that.closePrice,_that.stopLoss,_that.takeProfit,_that.commission,_that.swap);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -229,10 +250,10 @@ return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical,  String? setupQuality,  String? trigger,  TradeReflection? reflection,  double? plannedRisk)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String date,  String time,  String sym,  String dir,  double lots,  double pnl,  String note,  List<String> violations,  List<String> tags,  String? htfImage,  String? ltfImage,  bool isHypothetical,  String? setupQuality,  String? trigger,  TradeReflection? reflection,  double? plannedRisk,  String? ticketId,  String? openDate,  String? openTime,  double? openPrice,  double? closePrice,  double? stopLoss,  double? takeProfit,  double? commission,  double? swap)?  $default,) {final _that = this;
 switch (_that) {
 case _Trade() when $default != null:
-return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical,_that.setupQuality,_that.trigger,_that.reflection,_that.plannedRisk);case _:
+return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_that.pnl,_that.note,_that.violations,_that.tags,_that.htfImage,_that.ltfImage,_that.isHypothetical,_that.setupQuality,_that.trigger,_that.reflection,_that.plannedRisk,_that.ticketId,_that.openDate,_that.openTime,_that.openPrice,_that.closePrice,_that.stopLoss,_that.takeProfit,_that.commission,_that.swap);case _:
   return null;
 
 }
@@ -244,7 +265,7 @@ return $default(_that.id,_that.date,_that.time,_that.sym,_that.dir,_that.lots,_t
 @JsonSerializable()
 
 class _Trade implements Trade {
-  const _Trade({required this.id, required this.date, required this.time, this.sym = 'XAUUSD', this.dir = 'buy', this.lots = 0.0, this.pnl = 0.0, this.note = '', final  List<String> violations = const [], final  List<String> tags = const [], this.htfImage, this.ltfImage, this.isHypothetical = false, this.setupQuality, this.trigger, this.reflection, this.plannedRisk}): _violations = violations,_tags = tags;
+  const _Trade({required this.id, required this.date, required this.time, this.sym = 'XAUUSD', this.dir = 'buy', this.lots = 0.0, this.pnl = 0.0, this.note = '', final  List<String> violations = const [], final  List<String> tags = const [], this.htfImage, this.ltfImage, this.isHypothetical = false, this.setupQuality, this.trigger, this.reflection, this.plannedRisk, this.ticketId, this.openDate, this.openTime, this.openPrice, this.closePrice, this.stopLoss, this.takeProfit, this.commission, this.swap}): _violations = violations,_tags = tags;
   factory _Trade.fromJson(Map<String, dynamic> json) => _$TradeFromJson(json);
 
 @override final  String id;
@@ -283,6 +304,27 @@ class _Trade implements Trade {
 /// Sprint 4.3 — planned $ risk at entry (from calculator). Nullable
 /// so older trades still deserialize.
 @override final  double? plannedRisk;
+// ── Rich broker fields (from MT5/CSV import) — all optional so older
+//    trades and manually-logged trades still deserialize cleanly.
+/// Broker ticket / position number (e.g. MT5 position id).
+@override final  String? ticketId;
+/// Open date (yyyy-MM-dd) when distinct from `date` (which is the
+/// close date used for daily grouping).
+@override final  String? openDate;
+/// Open time (HH:mm) when distinct from `time`.
+@override final  String? openTime;
+/// Entry price.
+@override final  double? openPrice;
+/// Exit price.
+@override final  double? closePrice;
+/// Stop-loss price at trade open.
+@override final  double? stopLoss;
+/// Take-profit price at trade open.
+@override final  double? takeProfit;
+/// Broker commission (typically negative).
+@override final  double? commission;
+/// Overnight swap fees (positive or negative).
+@override final  double? swap;
 
 /// Create a copy of Trade
 /// with the given fields replaced by the non-null parameter values.
@@ -297,16 +339,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Trade&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.time, time) || other.time == time)&&(identical(other.sym, sym) || other.sym == sym)&&(identical(other.dir, dir) || other.dir == dir)&&(identical(other.lots, lots) || other.lots == lots)&&(identical(other.pnl, pnl) || other.pnl == pnl)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other._violations, _violations)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.htfImage, htfImage) || other.htfImage == htfImage)&&(identical(other.ltfImage, ltfImage) || other.ltfImage == ltfImage)&&(identical(other.isHypothetical, isHypothetical) || other.isHypothetical == isHypothetical)&&(identical(other.setupQuality, setupQuality) || other.setupQuality == setupQuality)&&(identical(other.trigger, trigger) || other.trigger == trigger)&&(identical(other.reflection, reflection) || other.reflection == reflection)&&(identical(other.plannedRisk, plannedRisk) || other.plannedRisk == plannedRisk));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Trade&&(identical(other.id, id) || other.id == id)&&(identical(other.date, date) || other.date == date)&&(identical(other.time, time) || other.time == time)&&(identical(other.sym, sym) || other.sym == sym)&&(identical(other.dir, dir) || other.dir == dir)&&(identical(other.lots, lots) || other.lots == lots)&&(identical(other.pnl, pnl) || other.pnl == pnl)&&(identical(other.note, note) || other.note == note)&&const DeepCollectionEquality().equals(other._violations, _violations)&&const DeepCollectionEquality().equals(other._tags, _tags)&&(identical(other.htfImage, htfImage) || other.htfImage == htfImage)&&(identical(other.ltfImage, ltfImage) || other.ltfImage == ltfImage)&&(identical(other.isHypothetical, isHypothetical) || other.isHypothetical == isHypothetical)&&(identical(other.setupQuality, setupQuality) || other.setupQuality == setupQuality)&&(identical(other.trigger, trigger) || other.trigger == trigger)&&(identical(other.reflection, reflection) || other.reflection == reflection)&&(identical(other.plannedRisk, plannedRisk) || other.plannedRisk == plannedRisk)&&(identical(other.ticketId, ticketId) || other.ticketId == ticketId)&&(identical(other.openDate, openDate) || other.openDate == openDate)&&(identical(other.openTime, openTime) || other.openTime == openTime)&&(identical(other.openPrice, openPrice) || other.openPrice == openPrice)&&(identical(other.closePrice, closePrice) || other.closePrice == closePrice)&&(identical(other.stopLoss, stopLoss) || other.stopLoss == stopLoss)&&(identical(other.takeProfit, takeProfit) || other.takeProfit == takeProfit)&&(identical(other.commission, commission) || other.commission == commission)&&(identical(other.swap, swap) || other.swap == swap));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,date,time,sym,dir,lots,pnl,note,const DeepCollectionEquality().hash(_violations),const DeepCollectionEquality().hash(_tags),htfImage,ltfImage,isHypothetical,setupQuality,trigger,reflection,plannedRisk);
+int get hashCode => Object.hashAll([runtimeType,id,date,time,sym,dir,lots,pnl,note,const DeepCollectionEquality().hash(_violations),const DeepCollectionEquality().hash(_tags),htfImage,ltfImage,isHypothetical,setupQuality,trigger,reflection,plannedRisk,ticketId,openDate,openTime,openPrice,closePrice,stopLoss,takeProfit,commission,swap]);
 
 @override
 String toString() {
-  return 'Trade(id: $id, date: $date, time: $time, sym: $sym, dir: $dir, lots: $lots, pnl: $pnl, note: $note, violations: $violations, tags: $tags, htfImage: $htfImage, ltfImage: $ltfImage, isHypothetical: $isHypothetical, setupQuality: $setupQuality, trigger: $trigger, reflection: $reflection, plannedRisk: $plannedRisk)';
+  return 'Trade(id: $id, date: $date, time: $time, sym: $sym, dir: $dir, lots: $lots, pnl: $pnl, note: $note, violations: $violations, tags: $tags, htfImage: $htfImage, ltfImage: $ltfImage, isHypothetical: $isHypothetical, setupQuality: $setupQuality, trigger: $trigger, reflection: $reflection, plannedRisk: $plannedRisk, ticketId: $ticketId, openDate: $openDate, openTime: $openTime, openPrice: $openPrice, closePrice: $closePrice, stopLoss: $stopLoss, takeProfit: $takeProfit, commission: $commission, swap: $swap)';
 }
 
 
@@ -317,7 +359,7 @@ abstract mixin class _$TradeCopyWith<$Res> implements $TradeCopyWith<$Res> {
   factory _$TradeCopyWith(_Trade value, $Res Function(_Trade) _then) = __$TradeCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String date, String time, String sym, String dir, double lots, double pnl, String note, List<String> violations, List<String> tags, String? htfImage, String? ltfImage, bool isHypothetical, String? setupQuality, String? trigger, TradeReflection? reflection, double? plannedRisk
+ String id, String date, String time, String sym, String dir, double lots, double pnl, String note, List<String> violations, List<String> tags, String? htfImage, String? ltfImage, bool isHypothetical, String? setupQuality, String? trigger, TradeReflection? reflection, double? plannedRisk, String? ticketId, String? openDate, String? openTime, double? openPrice, double? closePrice, double? stopLoss, double? takeProfit, double? commission, double? swap
 });
 
 
@@ -334,7 +376,7 @@ class __$TradeCopyWithImpl<$Res>
 
 /// Create a copy of Trade
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? date = null,Object? time = null,Object? sym = null,Object? dir = null,Object? lots = null,Object? pnl = null,Object? note = null,Object? violations = null,Object? tags = null,Object? htfImage = freezed,Object? ltfImage = freezed,Object? isHypothetical = null,Object? setupQuality = freezed,Object? trigger = freezed,Object? reflection = freezed,Object? plannedRisk = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? date = null,Object? time = null,Object? sym = null,Object? dir = null,Object? lots = null,Object? pnl = null,Object? note = null,Object? violations = null,Object? tags = null,Object? htfImage = freezed,Object? ltfImage = freezed,Object? isHypothetical = null,Object? setupQuality = freezed,Object? trigger = freezed,Object? reflection = freezed,Object? plannedRisk = freezed,Object? ticketId = freezed,Object? openDate = freezed,Object? openTime = freezed,Object? openPrice = freezed,Object? closePrice = freezed,Object? stopLoss = freezed,Object? takeProfit = freezed,Object? commission = freezed,Object? swap = freezed,}) {
   return _then(_Trade(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
@@ -353,6 +395,15 @@ as bool,setupQuality: freezed == setupQuality ? _self.setupQuality : setupQualit
 as String?,trigger: freezed == trigger ? _self.trigger : trigger // ignore: cast_nullable_to_non_nullable
 as String?,reflection: freezed == reflection ? _self.reflection : reflection // ignore: cast_nullable_to_non_nullable
 as TradeReflection?,plannedRisk: freezed == plannedRisk ? _self.plannedRisk : plannedRisk // ignore: cast_nullable_to_non_nullable
+as double?,ticketId: freezed == ticketId ? _self.ticketId : ticketId // ignore: cast_nullable_to_non_nullable
+as String?,openDate: freezed == openDate ? _self.openDate : openDate // ignore: cast_nullable_to_non_nullable
+as String?,openTime: freezed == openTime ? _self.openTime : openTime // ignore: cast_nullable_to_non_nullable
+as String?,openPrice: freezed == openPrice ? _self.openPrice : openPrice // ignore: cast_nullable_to_non_nullable
+as double?,closePrice: freezed == closePrice ? _self.closePrice : closePrice // ignore: cast_nullable_to_non_nullable
+as double?,stopLoss: freezed == stopLoss ? _self.stopLoss : stopLoss // ignore: cast_nullable_to_non_nullable
+as double?,takeProfit: freezed == takeProfit ? _self.takeProfit : takeProfit // ignore: cast_nullable_to_non_nullable
+as double?,commission: freezed == commission ? _self.commission : commission // ignore: cast_nullable_to_non_nullable
+as double?,swap: freezed == swap ? _self.swap : swap // ignore: cast_nullable_to_non_nullable
 as double?,
   ));
 }
@@ -639,6 +690,292 @@ followedPlan: null == followedPlan ? _self.followedPlan : followedPlan // ignore
 as bool,exitReason: null == exitReason ? _self.exitReason : exitReason // ignore: cast_nullable_to_non_nullable
 as String,emotionalState: null == emotionalState ? _self.emotionalState : emotionalState // ignore: cast_nullable_to_non_nullable
 as int,
+  ));
+}
+
+
+}
+
+
+/// @nodoc
+mixin _$WizardDraft {
+
+ int get step; String get instrument; String get stopLoss; String get entries;/// Planned take-profit, expressed in the same units as [stopLoss]
+/// (i.e. price-move/pips per the instrument). Optional.
+ String? get takeProfit;/// Optional path to a pre-trade chart screenshot the trader attached
+/// during the Plan step.
+ String? get planImagePath;
+/// Create a copy of WizardDraft
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$WizardDraftCopyWith<WizardDraft> get copyWith => _$WizardDraftCopyWithImpl<WizardDraft>(this as WizardDraft, _$identity);
+
+  /// Serializes this WizardDraft to a JSON map.
+  Map<String, dynamic> toJson();
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is WizardDraft&&(identical(other.step, step) || other.step == step)&&(identical(other.instrument, instrument) || other.instrument == instrument)&&(identical(other.stopLoss, stopLoss) || other.stopLoss == stopLoss)&&(identical(other.entries, entries) || other.entries == entries)&&(identical(other.takeProfit, takeProfit) || other.takeProfit == takeProfit)&&(identical(other.planImagePath, planImagePath) || other.planImagePath == planImagePath));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,step,instrument,stopLoss,entries,takeProfit,planImagePath);
+
+@override
+String toString() {
+  return 'WizardDraft(step: $step, instrument: $instrument, stopLoss: $stopLoss, entries: $entries, takeProfit: $takeProfit, planImagePath: $planImagePath)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $WizardDraftCopyWith<$Res>  {
+  factory $WizardDraftCopyWith(WizardDraft value, $Res Function(WizardDraft) _then) = _$WizardDraftCopyWithImpl;
+@useResult
+$Res call({
+ int step, String instrument, String stopLoss, String entries, String? takeProfit, String? planImagePath
+});
+
+
+
+
+}
+/// @nodoc
+class _$WizardDraftCopyWithImpl<$Res>
+    implements $WizardDraftCopyWith<$Res> {
+  _$WizardDraftCopyWithImpl(this._self, this._then);
+
+  final WizardDraft _self;
+  final $Res Function(WizardDraft) _then;
+
+/// Create a copy of WizardDraft
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? step = null,Object? instrument = null,Object? stopLoss = null,Object? entries = null,Object? takeProfit = freezed,Object? planImagePath = freezed,}) {
+  return _then(_self.copyWith(
+step: null == step ? _self.step : step // ignore: cast_nullable_to_non_nullable
+as int,instrument: null == instrument ? _self.instrument : instrument // ignore: cast_nullable_to_non_nullable
+as String,stopLoss: null == stopLoss ? _self.stopLoss : stopLoss // ignore: cast_nullable_to_non_nullable
+as String,entries: null == entries ? _self.entries : entries // ignore: cast_nullable_to_non_nullable
+as String,takeProfit: freezed == takeProfit ? _self.takeProfit : takeProfit // ignore: cast_nullable_to_non_nullable
+as String?,planImagePath: freezed == planImagePath ? _self.planImagePath : planImagePath // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [WizardDraft].
+extension WizardDraftPatterns on WizardDraft {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _WizardDraft value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _WizardDraft() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _WizardDraft value)  $default,){
+final _that = this;
+switch (_that) {
+case _WizardDraft():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _WizardDraft value)?  $default,){
+final _that = this;
+switch (_that) {
+case _WizardDraft() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int step,  String instrument,  String stopLoss,  String entries,  String? takeProfit,  String? planImagePath)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _WizardDraft() when $default != null:
+return $default(_that.step,_that.instrument,_that.stopLoss,_that.entries,_that.takeProfit,_that.planImagePath);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int step,  String instrument,  String stopLoss,  String entries,  String? takeProfit,  String? planImagePath)  $default,) {final _that = this;
+switch (_that) {
+case _WizardDraft():
+return $default(_that.step,_that.instrument,_that.stopLoss,_that.entries,_that.takeProfit,_that.planImagePath);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int step,  String instrument,  String stopLoss,  String entries,  String? takeProfit,  String? planImagePath)?  $default,) {final _that = this;
+switch (_that) {
+case _WizardDraft() when $default != null:
+return $default(_that.step,_that.instrument,_that.stopLoss,_that.entries,_that.takeProfit,_that.planImagePath);case _:
+  return null;
+
+}
+}
+
+}
+
+/// @nodoc
+@JsonSerializable()
+
+class _WizardDraft implements WizardDraft {
+  const _WizardDraft({this.step = 0, this.instrument = 'XAUUSD', this.stopLoss = '7', this.entries = '1', this.takeProfit, this.planImagePath});
+  factory _WizardDraft.fromJson(Map<String, dynamic> json) => _$WizardDraftFromJson(json);
+
+@override@JsonKey() final  int step;
+@override@JsonKey() final  String instrument;
+@override@JsonKey() final  String stopLoss;
+@override@JsonKey() final  String entries;
+/// Planned take-profit, expressed in the same units as [stopLoss]
+/// (i.e. price-move/pips per the instrument). Optional.
+@override final  String? takeProfit;
+/// Optional path to a pre-trade chart screenshot the trader attached
+/// during the Plan step.
+@override final  String? planImagePath;
+
+/// Create a copy of WizardDraft
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$WizardDraftCopyWith<_WizardDraft> get copyWith => __$WizardDraftCopyWithImpl<_WizardDraft>(this, _$identity);
+
+@override
+Map<String, dynamic> toJson() {
+  return _$WizardDraftToJson(this, );
+}
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _WizardDraft&&(identical(other.step, step) || other.step == step)&&(identical(other.instrument, instrument) || other.instrument == instrument)&&(identical(other.stopLoss, stopLoss) || other.stopLoss == stopLoss)&&(identical(other.entries, entries) || other.entries == entries)&&(identical(other.takeProfit, takeProfit) || other.takeProfit == takeProfit)&&(identical(other.planImagePath, planImagePath) || other.planImagePath == planImagePath));
+}
+
+@JsonKey(includeFromJson: false, includeToJson: false)
+@override
+int get hashCode => Object.hash(runtimeType,step,instrument,stopLoss,entries,takeProfit,planImagePath);
+
+@override
+String toString() {
+  return 'WizardDraft(step: $step, instrument: $instrument, stopLoss: $stopLoss, entries: $entries, takeProfit: $takeProfit, planImagePath: $planImagePath)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$WizardDraftCopyWith<$Res> implements $WizardDraftCopyWith<$Res> {
+  factory _$WizardDraftCopyWith(_WizardDraft value, $Res Function(_WizardDraft) _then) = __$WizardDraftCopyWithImpl;
+@override @useResult
+$Res call({
+ int step, String instrument, String stopLoss, String entries, String? takeProfit, String? planImagePath
+});
+
+
+
+
+}
+/// @nodoc
+class __$WizardDraftCopyWithImpl<$Res>
+    implements _$WizardDraftCopyWith<$Res> {
+  __$WizardDraftCopyWithImpl(this._self, this._then);
+
+  final _WizardDraft _self;
+  final $Res Function(_WizardDraft) _then;
+
+/// Create a copy of WizardDraft
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? step = null,Object? instrument = null,Object? stopLoss = null,Object? entries = null,Object? takeProfit = freezed,Object? planImagePath = freezed,}) {
+  return _then(_WizardDraft(
+step: null == step ? _self.step : step // ignore: cast_nullable_to_non_nullable
+as int,instrument: null == instrument ? _self.instrument : instrument // ignore: cast_nullable_to_non_nullable
+as String,stopLoss: null == stopLoss ? _self.stopLoss : stopLoss // ignore: cast_nullable_to_non_nullable
+as String,entries: null == entries ? _self.entries : entries // ignore: cast_nullable_to_non_nullable
+as String,takeProfit: freezed == takeProfit ? _self.takeProfit : takeProfit // ignore: cast_nullable_to_non_nullable
+as String?,planImagePath: freezed == planImagePath ? _self.planImagePath : planImagePath // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -2673,7 +3010,12 @@ mixin _$AppState {
 /// above; switching packs current values into `accounts` and unpacks
 /// the target snapshot in their place.
  List<TradingAccount> get accounts; String? get activeAccountId;/// Post-Tier-1 — per-category local-notification toggles.
- NotificationPrefs get notificationPrefs;
+ NotificationPrefs get notificationPrefs;/// Configurable risk cap in USD per single trade. Drives lot/risk
+/// calculation in Trade Flow → Size step. Default 125 USD.
+ double get riskCapUsd;/// In-flight wizard draft so the Trade Flow tab can be left and
+/// returned to without losing inputs. Cleared after the trade is
+/// logged successfully.
+ WizardDraft? get wizardDraft;
 /// Create a copy of AppState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -2686,16 +3028,16 @@ $AppStateCopyWith<AppState> get copyWith => _$AppStateCopyWithImpl<AppState>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppState&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.priorPnl, priorPnl) || other.priorPnl == priorPnl)&&const DeepCollectionEquality().equals(other.checks, checks)&&const DeepCollectionEquality().equals(other.gateProofs, gateProofs)&&const DeepCollectionEquality().equals(other.allTrades, allTrades)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.lockUntil, lockUntil) || other.lockUntil == lockUntil)&&(identical(other.preloaded, preloaded) || other.preloaded == preloaded)&&const DeepCollectionEquality().equals(other.integrityLog, integrityLog)&&(identical(other.lastResetAt, lastResetAt) || other.lastResetAt == lastResetAt)&&const DeepCollectionEquality().equals(other.dailyMoods, dailyMoods)&&const DeepCollectionEquality().equals(other.weeklyDigests, weeklyDigests)&&(identical(other.propFirmRules, propFirmRules) || other.propFirmRules == propFirmRules)&&(identical(other.weeklyRiskBudget, weeklyRiskBudget) || other.weeklyRiskBudget == weeklyRiskBudget)&&(identical(other.blockTradesAroundNews, blockTradesAroundNews) || other.blockTradesAroundNews == blockTradesAroundNews)&&(identical(other.localOnlyAiMode, localOnlyAiMode) || other.localOnlyAiMode == localOnlyAiMode)&&(identical(other.dailyTradeCap, dailyTradeCap) || other.dailyTradeCap == dailyTradeCap)&&const DeepCollectionEquality().equals(other.accounts, accounts)&&(identical(other.activeAccountId, activeAccountId) || other.activeAccountId == activeAccountId)&&(identical(other.notificationPrefs, notificationPrefs) || other.notificationPrefs == notificationPrefs));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppState&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.priorPnl, priorPnl) || other.priorPnl == priorPnl)&&const DeepCollectionEquality().equals(other.checks, checks)&&const DeepCollectionEquality().equals(other.gateProofs, gateProofs)&&const DeepCollectionEquality().equals(other.allTrades, allTrades)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.lockUntil, lockUntil) || other.lockUntil == lockUntil)&&(identical(other.preloaded, preloaded) || other.preloaded == preloaded)&&const DeepCollectionEquality().equals(other.integrityLog, integrityLog)&&(identical(other.lastResetAt, lastResetAt) || other.lastResetAt == lastResetAt)&&const DeepCollectionEquality().equals(other.dailyMoods, dailyMoods)&&const DeepCollectionEquality().equals(other.weeklyDigests, weeklyDigests)&&(identical(other.propFirmRules, propFirmRules) || other.propFirmRules == propFirmRules)&&(identical(other.weeklyRiskBudget, weeklyRiskBudget) || other.weeklyRiskBudget == weeklyRiskBudget)&&(identical(other.blockTradesAroundNews, blockTradesAroundNews) || other.blockTradesAroundNews == blockTradesAroundNews)&&(identical(other.localOnlyAiMode, localOnlyAiMode) || other.localOnlyAiMode == localOnlyAiMode)&&(identical(other.dailyTradeCap, dailyTradeCap) || other.dailyTradeCap == dailyTradeCap)&&const DeepCollectionEquality().equals(other.accounts, accounts)&&(identical(other.activeAccountId, activeAccountId) || other.activeAccountId == activeAccountId)&&(identical(other.notificationPrefs, notificationPrefs) || other.notificationPrefs == notificationPrefs)&&(identical(other.riskCapUsd, riskCapUsd) || other.riskCapUsd == riskCapUsd)&&(identical(other.wizardDraft, wizardDraft) || other.wizardDraft == wizardDraft));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,schemaVersion,balance,startDate,priorPnl,const DeepCollectionEquality().hash(checks),const DeepCollectionEquality().hash(gateProofs),const DeepCollectionEquality().hash(allTrades),lock,lockUntil,preloaded,const DeepCollectionEquality().hash(integrityLog),lastResetAt,const DeepCollectionEquality().hash(dailyMoods),const DeepCollectionEquality().hash(weeklyDigests),propFirmRules,weeklyRiskBudget,blockTradesAroundNews,localOnlyAiMode,dailyTradeCap,const DeepCollectionEquality().hash(accounts),activeAccountId,notificationPrefs]);
+int get hashCode => Object.hashAll([runtimeType,schemaVersion,balance,startDate,priorPnl,const DeepCollectionEquality().hash(checks),const DeepCollectionEquality().hash(gateProofs),const DeepCollectionEquality().hash(allTrades),lock,lockUntil,preloaded,const DeepCollectionEquality().hash(integrityLog),lastResetAt,const DeepCollectionEquality().hash(dailyMoods),const DeepCollectionEquality().hash(weeklyDigests),propFirmRules,weeklyRiskBudget,blockTradesAroundNews,localOnlyAiMode,dailyTradeCap,const DeepCollectionEquality().hash(accounts),activeAccountId,notificationPrefs,riskCapUsd,wizardDraft]);
 
 @override
 String toString() {
-  return 'AppState(schemaVersion: $schemaVersion, balance: $balance, startDate: $startDate, priorPnl: $priorPnl, checks: $checks, gateProofs: $gateProofs, allTrades: $allTrades, lock: $lock, lockUntil: $lockUntil, preloaded: $preloaded, integrityLog: $integrityLog, lastResetAt: $lastResetAt, dailyMoods: $dailyMoods, weeklyDigests: $weeklyDigests, propFirmRules: $propFirmRules, weeklyRiskBudget: $weeklyRiskBudget, blockTradesAroundNews: $blockTradesAroundNews, localOnlyAiMode: $localOnlyAiMode, dailyTradeCap: $dailyTradeCap, accounts: $accounts, activeAccountId: $activeAccountId, notificationPrefs: $notificationPrefs)';
+  return 'AppState(schemaVersion: $schemaVersion, balance: $balance, startDate: $startDate, priorPnl: $priorPnl, checks: $checks, gateProofs: $gateProofs, allTrades: $allTrades, lock: $lock, lockUntil: $lockUntil, preloaded: $preloaded, integrityLog: $integrityLog, lastResetAt: $lastResetAt, dailyMoods: $dailyMoods, weeklyDigests: $weeklyDigests, propFirmRules: $propFirmRules, weeklyRiskBudget: $weeklyRiskBudget, blockTradesAroundNews: $blockTradesAroundNews, localOnlyAiMode: $localOnlyAiMode, dailyTradeCap: $dailyTradeCap, accounts: $accounts, activeAccountId: $activeAccountId, notificationPrefs: $notificationPrefs, riskCapUsd: $riskCapUsd, wizardDraft: $wizardDraft)';
 }
 
 
@@ -2706,11 +3048,11 @@ abstract mixin class $AppStateCopyWith<$Res>  {
   factory $AppStateCopyWith(AppState value, $Res Function(AppState) _then) = _$AppStateCopyWithImpl;
 @useResult
 $Res call({
- int schemaVersion, double balance, String startDate, double priorPnl, Map<String, bool> checks, Map<String, String> gateProofs, List<Trade> allTrades, bool lock, int? lockUntil, bool preloaded, List<IntegrityEvent> integrityLog, int? lastResetAt, Map<String, DailyMood> dailyMoods, List<WeeklyDigest> weeklyDigests, PropFirmRules propFirmRules, WeeklyRiskBudget weeklyRiskBudget, bool blockTradesAroundNews, bool localOnlyAiMode, int dailyTradeCap, List<TradingAccount> accounts, String? activeAccountId, NotificationPrefs notificationPrefs
+ int schemaVersion, double balance, String startDate, double priorPnl, Map<String, bool> checks, Map<String, String> gateProofs, List<Trade> allTrades, bool lock, int? lockUntil, bool preloaded, List<IntegrityEvent> integrityLog, int? lastResetAt, Map<String, DailyMood> dailyMoods, List<WeeklyDigest> weeklyDigests, PropFirmRules propFirmRules, WeeklyRiskBudget weeklyRiskBudget, bool blockTradesAroundNews, bool localOnlyAiMode, int dailyTradeCap, List<TradingAccount> accounts, String? activeAccountId, NotificationPrefs notificationPrefs, double riskCapUsd, WizardDraft? wizardDraft
 });
 
 
-$PropFirmRulesCopyWith<$Res> get propFirmRules;$WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget;$NotificationPrefsCopyWith<$Res> get notificationPrefs;
+$PropFirmRulesCopyWith<$Res> get propFirmRules;$WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget;$NotificationPrefsCopyWith<$Res> get notificationPrefs;$WizardDraftCopyWith<$Res>? get wizardDraft;
 
 }
 /// @nodoc
@@ -2723,7 +3065,7 @@ class _$AppStateCopyWithImpl<$Res>
 
 /// Create a copy of AppState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? schemaVersion = null,Object? balance = null,Object? startDate = null,Object? priorPnl = null,Object? checks = null,Object? gateProofs = null,Object? allTrades = null,Object? lock = null,Object? lockUntil = freezed,Object? preloaded = null,Object? integrityLog = null,Object? lastResetAt = freezed,Object? dailyMoods = null,Object? weeklyDigests = null,Object? propFirmRules = null,Object? weeklyRiskBudget = null,Object? blockTradesAroundNews = null,Object? localOnlyAiMode = null,Object? dailyTradeCap = null,Object? accounts = null,Object? activeAccountId = freezed,Object? notificationPrefs = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? schemaVersion = null,Object? balance = null,Object? startDate = null,Object? priorPnl = null,Object? checks = null,Object? gateProofs = null,Object? allTrades = null,Object? lock = null,Object? lockUntil = freezed,Object? preloaded = null,Object? integrityLog = null,Object? lastResetAt = freezed,Object? dailyMoods = null,Object? weeklyDigests = null,Object? propFirmRules = null,Object? weeklyRiskBudget = null,Object? blockTradesAroundNews = null,Object? localOnlyAiMode = null,Object? dailyTradeCap = null,Object? accounts = null,Object? activeAccountId = freezed,Object? notificationPrefs = null,Object? riskCapUsd = null,Object? wizardDraft = freezed,}) {
   return _then(_self.copyWith(
 schemaVersion: null == schemaVersion ? _self.schemaVersion : schemaVersion // ignore: cast_nullable_to_non_nullable
 as int,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
@@ -2747,7 +3089,9 @@ as bool,dailyTradeCap: null == dailyTradeCap ? _self.dailyTradeCap : dailyTradeC
 as int,accounts: null == accounts ? _self.accounts : accounts // ignore: cast_nullable_to_non_nullable
 as List<TradingAccount>,activeAccountId: freezed == activeAccountId ? _self.activeAccountId : activeAccountId // ignore: cast_nullable_to_non_nullable
 as String?,notificationPrefs: null == notificationPrefs ? _self.notificationPrefs : notificationPrefs // ignore: cast_nullable_to_non_nullable
-as NotificationPrefs,
+as NotificationPrefs,riskCapUsd: null == riskCapUsd ? _self.riskCapUsd : riskCapUsd // ignore: cast_nullable_to_non_nullable
+as double,wizardDraft: freezed == wizardDraft ? _self.wizardDraft : wizardDraft // ignore: cast_nullable_to_non_nullable
+as WizardDraft?,
   ));
 }
 /// Create a copy of AppState
@@ -2776,6 +3120,18 @@ $NotificationPrefsCopyWith<$Res> get notificationPrefs {
   
   return $NotificationPrefsCopyWith<$Res>(_self.notificationPrefs, (value) {
     return _then(_self.copyWith(notificationPrefs: value));
+  });
+}/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$WizardDraftCopyWith<$Res>? get wizardDraft {
+    if (_self.wizardDraft == null) {
+    return null;
+  }
+
+  return $WizardDraftCopyWith<$Res>(_self.wizardDraft!, (value) {
+    return _then(_self.copyWith(wizardDraft: value));
   });
 }
 }
@@ -2859,10 +3215,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  Map<String, String> gateProofs,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded,  List<IntegrityEvent> integrityLog,  int? lastResetAt,  Map<String, DailyMood> dailyMoods,  List<WeeklyDigest> weeklyDigests,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  bool blockTradesAroundNews,  bool localOnlyAiMode,  int dailyTradeCap,  List<TradingAccount> accounts,  String? activeAccountId,  NotificationPrefs notificationPrefs)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  Map<String, String> gateProofs,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded,  List<IntegrityEvent> integrityLog,  int? lastResetAt,  Map<String, DailyMood> dailyMoods,  List<WeeklyDigest> weeklyDigests,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  bool blockTradesAroundNews,  bool localOnlyAiMode,  int dailyTradeCap,  List<TradingAccount> accounts,  String? activeAccountId,  NotificationPrefs notificationPrefs,  double riskCapUsd,  WizardDraft? wizardDraft)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppState() when $default != null:
-return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.gateProofs,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded,_that.integrityLog,_that.lastResetAt,_that.dailyMoods,_that.weeklyDigests,_that.propFirmRules,_that.weeklyRiskBudget,_that.blockTradesAroundNews,_that.localOnlyAiMode,_that.dailyTradeCap,_that.accounts,_that.activeAccountId,_that.notificationPrefs);case _:
+return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.gateProofs,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded,_that.integrityLog,_that.lastResetAt,_that.dailyMoods,_that.weeklyDigests,_that.propFirmRules,_that.weeklyRiskBudget,_that.blockTradesAroundNews,_that.localOnlyAiMode,_that.dailyTradeCap,_that.accounts,_that.activeAccountId,_that.notificationPrefs,_that.riskCapUsd,_that.wizardDraft);case _:
   return orElse();
 
 }
@@ -2880,10 +3236,10 @@ return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  Map<String, String> gateProofs,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded,  List<IntegrityEvent> integrityLog,  int? lastResetAt,  Map<String, DailyMood> dailyMoods,  List<WeeklyDigest> weeklyDigests,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  bool blockTradesAroundNews,  bool localOnlyAiMode,  int dailyTradeCap,  List<TradingAccount> accounts,  String? activeAccountId,  NotificationPrefs notificationPrefs)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  Map<String, String> gateProofs,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded,  List<IntegrityEvent> integrityLog,  int? lastResetAt,  Map<String, DailyMood> dailyMoods,  List<WeeklyDigest> weeklyDigests,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  bool blockTradesAroundNews,  bool localOnlyAiMode,  int dailyTradeCap,  List<TradingAccount> accounts,  String? activeAccountId,  NotificationPrefs notificationPrefs,  double riskCapUsd,  WizardDraft? wizardDraft)  $default,) {final _that = this;
 switch (_that) {
 case _AppState():
-return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.gateProofs,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded,_that.integrityLog,_that.lastResetAt,_that.dailyMoods,_that.weeklyDigests,_that.propFirmRules,_that.weeklyRiskBudget,_that.blockTradesAroundNews,_that.localOnlyAiMode,_that.dailyTradeCap,_that.accounts,_that.activeAccountId,_that.notificationPrefs);case _:
+return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.gateProofs,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded,_that.integrityLog,_that.lastResetAt,_that.dailyMoods,_that.weeklyDigests,_that.propFirmRules,_that.weeklyRiskBudget,_that.blockTradesAroundNews,_that.localOnlyAiMode,_that.dailyTradeCap,_that.accounts,_that.activeAccountId,_that.notificationPrefs,_that.riskCapUsd,_that.wizardDraft);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -2900,10 +3256,10 @@ return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  Map<String, String> gateProofs,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded,  List<IntegrityEvent> integrityLog,  int? lastResetAt,  Map<String, DailyMood> dailyMoods,  List<WeeklyDigest> weeklyDigests,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  bool blockTradesAroundNews,  bool localOnlyAiMode,  int dailyTradeCap,  List<TradingAccount> accounts,  String? activeAccountId,  NotificationPrefs notificationPrefs)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int schemaVersion,  double balance,  String startDate,  double priorPnl,  Map<String, bool> checks,  Map<String, String> gateProofs,  List<Trade> allTrades,  bool lock,  int? lockUntil,  bool preloaded,  List<IntegrityEvent> integrityLog,  int? lastResetAt,  Map<String, DailyMood> dailyMoods,  List<WeeklyDigest> weeklyDigests,  PropFirmRules propFirmRules,  WeeklyRiskBudget weeklyRiskBudget,  bool blockTradesAroundNews,  bool localOnlyAiMode,  int dailyTradeCap,  List<TradingAccount> accounts,  String? activeAccountId,  NotificationPrefs notificationPrefs,  double riskCapUsd,  WizardDraft? wizardDraft)?  $default,) {final _that = this;
 switch (_that) {
 case _AppState() when $default != null:
-return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.gateProofs,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded,_that.integrityLog,_that.lastResetAt,_that.dailyMoods,_that.weeklyDigests,_that.propFirmRules,_that.weeklyRiskBudget,_that.blockTradesAroundNews,_that.localOnlyAiMode,_that.dailyTradeCap,_that.accounts,_that.activeAccountId,_that.notificationPrefs);case _:
+return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl,_that.checks,_that.gateProofs,_that.allTrades,_that.lock,_that.lockUntil,_that.preloaded,_that.integrityLog,_that.lastResetAt,_that.dailyMoods,_that.weeklyDigests,_that.propFirmRules,_that.weeklyRiskBudget,_that.blockTradesAroundNews,_that.localOnlyAiMode,_that.dailyTradeCap,_that.accounts,_that.activeAccountId,_that.notificationPrefs,_that.riskCapUsd,_that.wizardDraft);case _:
   return null;
 
 }
@@ -2915,7 +3271,7 @@ return $default(_that.schemaVersion,_that.balance,_that.startDate,_that.priorPnl
 @JsonSerializable()
 
 class _AppState extends AppState {
-  const _AppState({this.schemaVersion = kCurrentSchemaVersion, this.balance = 25000.0, this.startDate = '2026-04-20', this.priorPnl = 0.0, final  Map<String, bool> checks = const {}, final  Map<String, String> gateProofs = const {}, final  List<Trade> allTrades = const [], this.lock = false, this.lockUntil, this.preloaded = false, final  List<IntegrityEvent> integrityLog = const [], this.lastResetAt, final  Map<String, DailyMood> dailyMoods = const {}, final  List<WeeklyDigest> weeklyDigests = const [], this.propFirmRules = const PropFirmRules(), this.weeklyRiskBudget = const WeeklyRiskBudget(), this.blockTradesAroundNews = false, this.localOnlyAiMode = false, this.dailyTradeCap = 2, final  List<TradingAccount> accounts = const [], this.activeAccountId, this.notificationPrefs = const NotificationPrefs()}): _checks = checks,_gateProofs = gateProofs,_allTrades = allTrades,_integrityLog = integrityLog,_dailyMoods = dailyMoods,_weeklyDigests = weeklyDigests,_accounts = accounts,super._();
+  const _AppState({this.schemaVersion = kCurrentSchemaVersion, this.balance = 25000.0, this.startDate = '2026-04-20', this.priorPnl = 0.0, final  Map<String, bool> checks = const {}, final  Map<String, String> gateProofs = const {}, final  List<Trade> allTrades = const [], this.lock = false, this.lockUntil, this.preloaded = false, final  List<IntegrityEvent> integrityLog = const [], this.lastResetAt, final  Map<String, DailyMood> dailyMoods = const {}, final  List<WeeklyDigest> weeklyDigests = const [], this.propFirmRules = const PropFirmRules(), this.weeklyRiskBudget = const WeeklyRiskBudget(), this.blockTradesAroundNews = false, this.localOnlyAiMode = false, this.dailyTradeCap = 2, final  List<TradingAccount> accounts = const [], this.activeAccountId, this.notificationPrefs = const NotificationPrefs(), this.riskCapUsd = 125.0, this.wizardDraft}): _checks = checks,_gateProofs = gateProofs,_allTrades = allTrades,_integrityLog = integrityLog,_dailyMoods = dailyMoods,_weeklyDigests = weeklyDigests,_accounts = accounts,super._();
   factory _AppState.fromJson(Map<String, dynamic> json) => _$AppStateFromJson(json);
 
 @override@JsonKey() final  int schemaVersion;
@@ -3002,6 +3358,13 @@ class _AppState extends AppState {
 @override final  String? activeAccountId;
 /// Post-Tier-1 — per-category local-notification toggles.
 @override@JsonKey() final  NotificationPrefs notificationPrefs;
+/// Configurable risk cap in USD per single trade. Drives lot/risk
+/// calculation in Trade Flow → Size step. Default 125 USD.
+@override@JsonKey() final  double riskCapUsd;
+/// In-flight wizard draft so the Trade Flow tab can be left and
+/// returned to without losing inputs. Cleared after the trade is
+/// logged successfully.
+@override final  WizardDraft? wizardDraft;
 
 /// Create a copy of AppState
 /// with the given fields replaced by the non-null parameter values.
@@ -3016,16 +3379,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppState&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.priorPnl, priorPnl) || other.priorPnl == priorPnl)&&const DeepCollectionEquality().equals(other._checks, _checks)&&const DeepCollectionEquality().equals(other._gateProofs, _gateProofs)&&const DeepCollectionEquality().equals(other._allTrades, _allTrades)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.lockUntil, lockUntil) || other.lockUntil == lockUntil)&&(identical(other.preloaded, preloaded) || other.preloaded == preloaded)&&const DeepCollectionEquality().equals(other._integrityLog, _integrityLog)&&(identical(other.lastResetAt, lastResetAt) || other.lastResetAt == lastResetAt)&&const DeepCollectionEquality().equals(other._dailyMoods, _dailyMoods)&&const DeepCollectionEquality().equals(other._weeklyDigests, _weeklyDigests)&&(identical(other.propFirmRules, propFirmRules) || other.propFirmRules == propFirmRules)&&(identical(other.weeklyRiskBudget, weeklyRiskBudget) || other.weeklyRiskBudget == weeklyRiskBudget)&&(identical(other.blockTradesAroundNews, blockTradesAroundNews) || other.blockTradesAroundNews == blockTradesAroundNews)&&(identical(other.localOnlyAiMode, localOnlyAiMode) || other.localOnlyAiMode == localOnlyAiMode)&&(identical(other.dailyTradeCap, dailyTradeCap) || other.dailyTradeCap == dailyTradeCap)&&const DeepCollectionEquality().equals(other._accounts, _accounts)&&(identical(other.activeAccountId, activeAccountId) || other.activeAccountId == activeAccountId)&&(identical(other.notificationPrefs, notificationPrefs) || other.notificationPrefs == notificationPrefs));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppState&&(identical(other.schemaVersion, schemaVersion) || other.schemaVersion == schemaVersion)&&(identical(other.balance, balance) || other.balance == balance)&&(identical(other.startDate, startDate) || other.startDate == startDate)&&(identical(other.priorPnl, priorPnl) || other.priorPnl == priorPnl)&&const DeepCollectionEquality().equals(other._checks, _checks)&&const DeepCollectionEquality().equals(other._gateProofs, _gateProofs)&&const DeepCollectionEquality().equals(other._allTrades, _allTrades)&&(identical(other.lock, lock) || other.lock == lock)&&(identical(other.lockUntil, lockUntil) || other.lockUntil == lockUntil)&&(identical(other.preloaded, preloaded) || other.preloaded == preloaded)&&const DeepCollectionEquality().equals(other._integrityLog, _integrityLog)&&(identical(other.lastResetAt, lastResetAt) || other.lastResetAt == lastResetAt)&&const DeepCollectionEquality().equals(other._dailyMoods, _dailyMoods)&&const DeepCollectionEquality().equals(other._weeklyDigests, _weeklyDigests)&&(identical(other.propFirmRules, propFirmRules) || other.propFirmRules == propFirmRules)&&(identical(other.weeklyRiskBudget, weeklyRiskBudget) || other.weeklyRiskBudget == weeklyRiskBudget)&&(identical(other.blockTradesAroundNews, blockTradesAroundNews) || other.blockTradesAroundNews == blockTradesAroundNews)&&(identical(other.localOnlyAiMode, localOnlyAiMode) || other.localOnlyAiMode == localOnlyAiMode)&&(identical(other.dailyTradeCap, dailyTradeCap) || other.dailyTradeCap == dailyTradeCap)&&const DeepCollectionEquality().equals(other._accounts, _accounts)&&(identical(other.activeAccountId, activeAccountId) || other.activeAccountId == activeAccountId)&&(identical(other.notificationPrefs, notificationPrefs) || other.notificationPrefs == notificationPrefs)&&(identical(other.riskCapUsd, riskCapUsd) || other.riskCapUsd == riskCapUsd)&&(identical(other.wizardDraft, wizardDraft) || other.wizardDraft == wizardDraft));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hashAll([runtimeType,schemaVersion,balance,startDate,priorPnl,const DeepCollectionEquality().hash(_checks),const DeepCollectionEquality().hash(_gateProofs),const DeepCollectionEquality().hash(_allTrades),lock,lockUntil,preloaded,const DeepCollectionEquality().hash(_integrityLog),lastResetAt,const DeepCollectionEquality().hash(_dailyMoods),const DeepCollectionEquality().hash(_weeklyDigests),propFirmRules,weeklyRiskBudget,blockTradesAroundNews,localOnlyAiMode,dailyTradeCap,const DeepCollectionEquality().hash(_accounts),activeAccountId,notificationPrefs]);
+int get hashCode => Object.hashAll([runtimeType,schemaVersion,balance,startDate,priorPnl,const DeepCollectionEquality().hash(_checks),const DeepCollectionEquality().hash(_gateProofs),const DeepCollectionEquality().hash(_allTrades),lock,lockUntil,preloaded,const DeepCollectionEquality().hash(_integrityLog),lastResetAt,const DeepCollectionEquality().hash(_dailyMoods),const DeepCollectionEquality().hash(_weeklyDigests),propFirmRules,weeklyRiskBudget,blockTradesAroundNews,localOnlyAiMode,dailyTradeCap,const DeepCollectionEquality().hash(_accounts),activeAccountId,notificationPrefs,riskCapUsd,wizardDraft]);
 
 @override
 String toString() {
-  return 'AppState(schemaVersion: $schemaVersion, balance: $balance, startDate: $startDate, priorPnl: $priorPnl, checks: $checks, gateProofs: $gateProofs, allTrades: $allTrades, lock: $lock, lockUntil: $lockUntil, preloaded: $preloaded, integrityLog: $integrityLog, lastResetAt: $lastResetAt, dailyMoods: $dailyMoods, weeklyDigests: $weeklyDigests, propFirmRules: $propFirmRules, weeklyRiskBudget: $weeklyRiskBudget, blockTradesAroundNews: $blockTradesAroundNews, localOnlyAiMode: $localOnlyAiMode, dailyTradeCap: $dailyTradeCap, accounts: $accounts, activeAccountId: $activeAccountId, notificationPrefs: $notificationPrefs)';
+  return 'AppState(schemaVersion: $schemaVersion, balance: $balance, startDate: $startDate, priorPnl: $priorPnl, checks: $checks, gateProofs: $gateProofs, allTrades: $allTrades, lock: $lock, lockUntil: $lockUntil, preloaded: $preloaded, integrityLog: $integrityLog, lastResetAt: $lastResetAt, dailyMoods: $dailyMoods, weeklyDigests: $weeklyDigests, propFirmRules: $propFirmRules, weeklyRiskBudget: $weeklyRiskBudget, blockTradesAroundNews: $blockTradesAroundNews, localOnlyAiMode: $localOnlyAiMode, dailyTradeCap: $dailyTradeCap, accounts: $accounts, activeAccountId: $activeAccountId, notificationPrefs: $notificationPrefs, riskCapUsd: $riskCapUsd, wizardDraft: $wizardDraft)';
 }
 
 
@@ -3036,11 +3399,11 @@ abstract mixin class _$AppStateCopyWith<$Res> implements $AppStateCopyWith<$Res>
   factory _$AppStateCopyWith(_AppState value, $Res Function(_AppState) _then) = __$AppStateCopyWithImpl;
 @override @useResult
 $Res call({
- int schemaVersion, double balance, String startDate, double priorPnl, Map<String, bool> checks, Map<String, String> gateProofs, List<Trade> allTrades, bool lock, int? lockUntil, bool preloaded, List<IntegrityEvent> integrityLog, int? lastResetAt, Map<String, DailyMood> dailyMoods, List<WeeklyDigest> weeklyDigests, PropFirmRules propFirmRules, WeeklyRiskBudget weeklyRiskBudget, bool blockTradesAroundNews, bool localOnlyAiMode, int dailyTradeCap, List<TradingAccount> accounts, String? activeAccountId, NotificationPrefs notificationPrefs
+ int schemaVersion, double balance, String startDate, double priorPnl, Map<String, bool> checks, Map<String, String> gateProofs, List<Trade> allTrades, bool lock, int? lockUntil, bool preloaded, List<IntegrityEvent> integrityLog, int? lastResetAt, Map<String, DailyMood> dailyMoods, List<WeeklyDigest> weeklyDigests, PropFirmRules propFirmRules, WeeklyRiskBudget weeklyRiskBudget, bool blockTradesAroundNews, bool localOnlyAiMode, int dailyTradeCap, List<TradingAccount> accounts, String? activeAccountId, NotificationPrefs notificationPrefs, double riskCapUsd, WizardDraft? wizardDraft
 });
 
 
-@override $PropFirmRulesCopyWith<$Res> get propFirmRules;@override $WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget;@override $NotificationPrefsCopyWith<$Res> get notificationPrefs;
+@override $PropFirmRulesCopyWith<$Res> get propFirmRules;@override $WeeklyRiskBudgetCopyWith<$Res> get weeklyRiskBudget;@override $NotificationPrefsCopyWith<$Res> get notificationPrefs;@override $WizardDraftCopyWith<$Res>? get wizardDraft;
 
 }
 /// @nodoc
@@ -3053,7 +3416,7 @@ class __$AppStateCopyWithImpl<$Res>
 
 /// Create a copy of AppState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? schemaVersion = null,Object? balance = null,Object? startDate = null,Object? priorPnl = null,Object? checks = null,Object? gateProofs = null,Object? allTrades = null,Object? lock = null,Object? lockUntil = freezed,Object? preloaded = null,Object? integrityLog = null,Object? lastResetAt = freezed,Object? dailyMoods = null,Object? weeklyDigests = null,Object? propFirmRules = null,Object? weeklyRiskBudget = null,Object? blockTradesAroundNews = null,Object? localOnlyAiMode = null,Object? dailyTradeCap = null,Object? accounts = null,Object? activeAccountId = freezed,Object? notificationPrefs = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? schemaVersion = null,Object? balance = null,Object? startDate = null,Object? priorPnl = null,Object? checks = null,Object? gateProofs = null,Object? allTrades = null,Object? lock = null,Object? lockUntil = freezed,Object? preloaded = null,Object? integrityLog = null,Object? lastResetAt = freezed,Object? dailyMoods = null,Object? weeklyDigests = null,Object? propFirmRules = null,Object? weeklyRiskBudget = null,Object? blockTradesAroundNews = null,Object? localOnlyAiMode = null,Object? dailyTradeCap = null,Object? accounts = null,Object? activeAccountId = freezed,Object? notificationPrefs = null,Object? riskCapUsd = null,Object? wizardDraft = freezed,}) {
   return _then(_AppState(
 schemaVersion: null == schemaVersion ? _self.schemaVersion : schemaVersion // ignore: cast_nullable_to_non_nullable
 as int,balance: null == balance ? _self.balance : balance // ignore: cast_nullable_to_non_nullable
@@ -3077,7 +3440,9 @@ as bool,dailyTradeCap: null == dailyTradeCap ? _self.dailyTradeCap : dailyTradeC
 as int,accounts: null == accounts ? _self._accounts : accounts // ignore: cast_nullable_to_non_nullable
 as List<TradingAccount>,activeAccountId: freezed == activeAccountId ? _self.activeAccountId : activeAccountId // ignore: cast_nullable_to_non_nullable
 as String?,notificationPrefs: null == notificationPrefs ? _self.notificationPrefs : notificationPrefs // ignore: cast_nullable_to_non_nullable
-as NotificationPrefs,
+as NotificationPrefs,riskCapUsd: null == riskCapUsd ? _self.riskCapUsd : riskCapUsd // ignore: cast_nullable_to_non_nullable
+as double,wizardDraft: freezed == wizardDraft ? _self.wizardDraft : wizardDraft // ignore: cast_nullable_to_non_nullable
+as WizardDraft?,
   ));
 }
 
@@ -3107,6 +3472,18 @@ $NotificationPrefsCopyWith<$Res> get notificationPrefs {
   
   return $NotificationPrefsCopyWith<$Res>(_self.notificationPrefs, (value) {
     return _then(_self.copyWith(notificationPrefs: value));
+  });
+}/// Create a copy of AppState
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$WizardDraftCopyWith<$Res>? get wizardDraft {
+    if (_self.wizardDraft == null) {
+    return null;
+  }
+
+  return $WizardDraftCopyWith<$Res>(_self.wizardDraft!, (value) {
+    return _then(_self.copyWith(wizardDraft: value));
   });
 }
 }

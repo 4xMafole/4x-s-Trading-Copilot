@@ -16,12 +16,18 @@ class TradingScreenViewModel {
     required this.settings,
     required this.activeTab,
     required this.setActiveTab,
+    this.requestLogTrade,
   });
 
   final TradingCoreCubit trading;
   final SettingsCubit settings;
   final int activeTab;
   final void Function(int) setActiveTab;
+
+  /// Optional bridge from any tab back to the host screen so that callers
+  /// (e.g. the Trade Flow wizard) can switch to the Journal tab AND open
+  /// the log-trade sheet pre-filled with a wizard draft in one shot.
+  final void Function(WizardDraft? draft)? requestLogTrade;
 
   // ── Trading state passthroughs ───────────────────────────────────────────
   AppState get state => trading.appState;
@@ -122,6 +128,15 @@ class TradingScreenViewModel {
 
   int get dailyTradeCap => trading.state.appState.dailyTradeCap;
   Future<void> setDailyTradeCap(int v) => trading.setDailyTradeCap(v);
+
+  // ── Trade-flow wizard ───────────────────────────────────────────────────
+  double get riskCapUsd => trading.state.appState.riskCapUsd;
+  Future<void> setRiskCapUsd(double v) => trading.setRiskCapUsd(v);
+
+  WizardDraft? get wizardDraft => trading.state.appState.wizardDraft;
+  Future<void> updateWizardDraft(WizardDraft draft) =>
+      trading.updateWizardDraft(draft);
+  Future<void> clearWizardDraft() => trading.clearWizardDraft();
 
   Future<void> setNotificationPrefs(NotificationPrefs prefs) =>
       trading.setNotificationPrefs(prefs);

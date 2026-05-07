@@ -14,39 +14,124 @@ class _TradeFlowTab extends StatefulWidget {
 }
 
 class _TradeFlowTabState extends State<_TradeFlowTab> {
-  int step = 0;
-  String instrument = 'XAUUSD';
-  final slCtrl = TextEditingController(text: '7');
-  final entriesCtrl = TextEditingController(text: '1');
+  late int step;
+  late String instrument;
+  late TextEditingController slCtrl;
+  late TextEditingController entriesCtrl;
+  late TextEditingController tpCtrl;
+  String? planImagePath;
+
+  final ImagePicker _imagePicker = ImagePicker();
+  bool _initialised = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialised) return;
+    _initialised = true;
+    final draft = widget.controller.wizardDraft;
+    step = draft?.step ?? 0;
+    instrument = draft?.instrument ?? 'XAUUSD';
+    slCtrl = TextEditingController(text: draft?.stopLoss ?? '7');
+    entriesCtrl = TextEditingController(text: draft?.entries ?? '1');
+    tpCtrl = TextEditingController(text: draft?.takeProfit ?? '');
+    planImagePath = draft?.planImagePath;
+  }
 
   @override
   void dispose() {
     slCtrl.dispose();
     entriesCtrl.dispose();
+    tpCtrl.dispose();
     super.dispose();
+  }
+
+  /// Persist the current wizard inputs back to the cubit so the user can
+  /// leave the tab and return without losing state.
+  void _persistDraft() {
+    final draft = WizardDraft(
+      step: step,
+      instrument: instrument,
+      stopLoss: slCtrl.text,
+      entries: entriesCtrl.text,
+      takeProfit: tpCtrl.text.isEmpty ? null : tpCtrl.text,
+      planImagePath: planImagePath,
+    );
+    // Fire-and-forget; persistence errors are non-fatal here.
+    widget.controller.updateWizardDraft(draft);
+  }
+
+  Future<void> _pickPlanImage() async {
+    try {
+      final img = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2000,
+        maxHeight: 2000,
+        imageQuality: 85,
+      );
+      if (img == null || img.path.isEmpty) return;
+      // Copy into app docs so the path survives app restarts.
+      final source = File(img.path);
+      if (!await source.exists()) return;
+      final docsDir = await getApplicationDocumentsDirectory();
+      final imageDir = Directory(
+        '${docsDir.path}${Platform.pathSeparator}plan_images',
+      );
+      if (!await imageDir.exists()) {
+        await imageDir.create(recursive: true);
+      }
+      final stamp = DateTime.now().microsecondsSinceEpoch;
+      final ext = img.path.substring(img.path.lastIndexOf('.'));
+      final cleanExt = ext.length > 8 ? '.jpg' : ext;
+      final target = File(
+        '${imageDir.path}${Platform.pathSeparator}plan_$stamp$cleanExt',
+      );
+      await source.copy(target.path);
+      if (!mounted) return;
+      setState(() => planImagePath = target.path);
+      _persistDraft();
+    } catch (_) {
+      // Silent fail — picker errors are surfaced to the user via the
+      // empty state of the attachment button.
+    }
+  }
+
+  void _clearPlanImage() {
+    setState(() => planImagePath = null);
+    _persistDraft();
   }
 
   @override
   Widget build(BuildContext context) {
     final c = widget.controller;
     final autoChecks = c.computeAutoGates();
-    final passedCount = kGates.where((g) {
+
+    // Symbol-scoped gates: only show gates that apply to the current
+    // instrument. The user's deep-dive symbol (e.g. EURUSD) will only
+    // see its relevant blackout windows / behavioural rules.
+    final activeGates = kGates
+        .where((g) => g.appliesTo(instrument))
+        .toList(growable: false);
+    final passedCount = activeGates.where((g) {
       if (g.auto) return autoChecks[g.id] ?? false;
       return c.state.checks[g.id] ?? false;
     }).length;
 
     final stopLoss = double.tryParse(slCtrl.text) ?? 0;
     final entries = int.tryParse(entriesCtrl.text) ?? 1;
+    final takeProfit = double.tryParse(tpCtrl.text) ?? 0;
     final meta = kInstruments[instrument]!;
+    final cap = c.riskCapUsd;
     var lot = 0.0;
     if (stopLoss > 0 && meta.pipVal > 0 && entries > 0) {
-      lot = (125 / entries) / (stopLoss * meta.pipVal * 10);
+      lot = (cap / entries) / (stopLoss * meta.pipVal * 10);
     }
     final risk = (lot * entries * stopLoss * meta.pipVal * 10)
-        .clamp(0, 125)
+        .clamp(0, cap)
         .toDouble();
 
     final stepLabels = ['Plan', 'Size', 'Execute'];
+    final dailyCap = c.dailyTradeCap;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -76,7 +161,10 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
                 : (active ? AppTheme.accent : context.c.textTertiary);
             return Expanded(
               child: GestureDetector(
-                onTap: () => setState(() => step = i),
+                onTap: () {
+                  setState(() => step = i);
+                  _persistDraft();
+                },
                 child: Column(
                   children: [
                     Container(
@@ -114,22 +202,37 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
               controller: c,
               autoChecks: autoChecks,
               passedCount: passedCount,
+              activeGates: activeGates,
+              instrument: instrument,
+              planImagePath: planImagePath,
+              onPickPlanImage: _pickPlanImage,
+              onClearPlanImage: _clearPlanImage,
             ),
             1 => _SizeStep(
               key: const ValueKey('size'),
               instrument: instrument,
               slCtrl: slCtrl,
               entriesCtrl: entriesCtrl,
+              tpCtrl: tpCtrl,
               lot: lot,
               risk: risk,
-              onInstrumentChange: (v) => setState(() => instrument = v),
-              onInputChange: () => setState(() {}),
+              riskCap: cap,
+              takeProfit: takeProfit,
+              onInstrumentChange: (v) {
+                setState(() => instrument = v);
+                _persistDraft();
+              },
+              onInputChange: () {
+                setState(() {});
+                _persistDraft();
+              },
             ),
             _ => _ExecuteStep(
               key: const ValueKey('exec'),
               controller: c,
               lot: lot,
               risk: risk,
+              dailyCap: dailyCap,
             ),
           },
         ),
@@ -142,7 +245,10 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
             if (step > 0)
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () => setState(() => step--),
+                  onPressed: () {
+                    setState(() => step--);
+                    _persistDraft();
+                  },
                   child: const Text('Back'),
                 ),
               ),
@@ -152,12 +258,17 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
                 onPressed: () {
                   // Gate enforcement: if blocked, vibrate and show why.
                   String? blocker;
-                  if (step == 0 && passedCount < kGates.length) {
-                    final remaining = kGates.length - passedCount;
+                  final rrOk = takeProfit <= 0 || takeProfit >= stopLoss * 2;
+                  if (step == 0 && passedCount < activeGates.length) {
+                    final remaining = activeGates.length - passedCount;
                     blocker =
                         '$remaining gate${remaining == 1 ? '' : 's'} still pending. Complete the checklist before sizing.';
-                  } else if (step == 1 && risk > 125) {
-                    blocker = 'Risk above 125 USD cap. Reduce SL or entries.';
+                  } else if (step == 1 && risk > cap) {
+                    blocker =
+                        'Risk above ${cap.toStringAsFixed(0)} USD cap. Reduce SL or entries.';
+                  } else if (step == 1 && takeProfit > 0 && !rrOk) {
+                    blocker =
+                        'TP must be ≥ 2× SL (${(stopLoss * 2).toStringAsFixed(1)}). Adjust your target.';
                   } else if (step == 2) {
                     final session = c.getSessionInfo();
                     final tradesToday = c.getTodayTrades().length;
@@ -165,7 +276,7 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
                       blocker = 'Account locked. No execution allowed.';
                     } else if (!session.ok) {
                       blocker = 'Outside execution window: ${session.detail}';
-                    } else if (tradesToday >= 2) {
+                    } else if (tradesToday >= dailyCap) {
                       blocker = 'Daily trade cap reached. Stop and review.';
                     }
                   }
@@ -205,8 +316,18 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
                   HapticFeedback.lightImpact();
                   if (step < 2) {
                     setState(() => step++);
+                    _persistDraft();
                   } else {
-                    c.setActiveTab(2);
+                    // Persist the final draft, then hand off to the
+                    // Journal tab with the prefill.
+                    _persistDraft();
+                    final draft = c.wizardDraft;
+                    final handoff = c.requestLogTrade;
+                    if (handoff != null) {
+                      handoff(draft);
+                    } else {
+                      c.setActiveTab(2);
+                    }
                   }
                 },
                 child: Text(step < 2 ? 'Continue' : 'Log Trade →'),
@@ -225,16 +346,105 @@ class _PlanStep extends StatelessWidget {
     required this.controller,
     required this.autoChecks,
     required this.passedCount,
+    required this.activeGates,
+    required this.instrument,
+    required this.planImagePath,
+    required this.onPickPlanImage,
+    required this.onClearPlanImage,
   });
   final TradingScreenViewModel controller;
   final Map<String, bool> autoChecks;
   final int passedCount;
+  final List<Gate> activeGates;
+  final String instrument;
+  final String? planImagePath;
+  final VoidCallback onPickPlanImage;
+  final VoidCallback onClearPlanImage;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── Plan chart attachment ──────────────────────────────
+        _Card(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.image_outlined,
+                    size: 18,
+                    color: AppTheme.accent,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Pre-trade chart',
+                    style: TextStyle(
+                      color: context.c.text,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (planImagePath != null)
+                    TextButton.icon(
+                      onPressed: onClearPlanImage,
+                      icon: const Icon(Icons.close, size: 16),
+                      label: const Text('Clear'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: context.c.textSecondary,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Snapshot your HTF setup before entry. Attached here, it auto-fills as the HTF chart on the journal entry.',
+                style: TextStyle(
+                  color: context.c.textTertiary,
+                  fontSize: 11,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 10),
+              if (planImagePath != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(planImagePath!),
+                    height: 140,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 140,
+                      color: context.c.surfaceRaised,
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.broken_image_outlined),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onPickPlanImage,
+                  icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+                  label: Text(
+                    planImagePath == null
+                        ? 'Attach plan screenshot'
+                        : 'Replace screenshot',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
         // Progress
         Row(
           children: [
@@ -243,7 +453,9 @@ class _PlanStep extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   minHeight: 4,
-                  value: passedCount / kGates.length,
+                  value: activeGates.isEmpty
+                      ? 0.0
+                      : passedCount / activeGates.length,
                   backgroundColor: context.c.border,
                   valueColor: const AlwaysStoppedAnimation<Color>(
                     AppTheme.green,
@@ -253,15 +465,22 @@ class _PlanStep extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              '$passedCount/${kGates.length}',
+              '$passedCount/${activeGates.length}',
               style: TextStyle(color: context.c.textSecondary, fontSize: 13),
             ),
           ],
         ),
+        if (activeGates.length < kGates.length) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Showing ${activeGates.length} of ${kGates.length} gates relevant to $instrument.',
+            style: TextStyle(color: context.c.textTertiary, fontSize: 11),
+          ),
+        ],
         const SizedBox(height: 16),
 
         // Gates list
-        ...kGates.map((gate) {
+        ...activeGates.map((gate) {
           final passed = gate.auto
               ? (autoChecks[gate.id] ?? false)
               : (controller.state.checks[gate.id] ?? false);
@@ -522,22 +741,33 @@ class _SizeStep extends StatelessWidget {
     required this.instrument,
     required this.slCtrl,
     required this.entriesCtrl,
+    required this.tpCtrl,
     required this.lot,
     required this.risk,
+    required this.riskCap,
+    required this.takeProfit,
     required this.onInstrumentChange,
     required this.onInputChange,
   });
   final String instrument;
   final TextEditingController slCtrl;
   final TextEditingController entriesCtrl;
+  final TextEditingController tpCtrl;
   final double lot;
   final double risk;
+  final double riskCap;
+  final double takeProfit;
   final ValueChanged<String> onInstrumentChange;
   final VoidCallback onInputChange;
 
   @override
   Widget build(BuildContext context) {
     final meta = kInstruments[instrument]!;
+    final sl = double.tryParse(slCtrl.text) ?? 0;
+    final minTp = sl * 2;
+    final hasTp = takeProfit > 0;
+    final rrOk = !hasTp || takeProfit >= minTp;
+    final rrRatio = hasTp && sl > 0 ? takeProfit / sl : 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -556,19 +786,28 @@ class _SizeStep extends StatelessWidget {
               child: _MetricTile(
                 label: 'Risk',
                 value: '\$${risk.toStringAsFixed(0)}',
-                tone: risk <= 125 ? AppTheme.green : AppTheme.red,
+                tone: risk <= riskCap ? AppTheme.green : AppTheme.red,
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: _MetricTile(
-                label: 'Min TP',
-                value: ((double.tryParse(slCtrl.text) ?? 0) * 2)
-                    .toStringAsFixed(1),
-                tone: AppTheme.amber,
+                label: hasTp ? 'R:R' : 'Min TP',
+                value: hasTp
+                    ? '1:${rrRatio.toStringAsFixed(1)}'
+                    : minTp.toStringAsFixed(1),
+                tone: hasTp
+                    ? (rrOk ? AppTheme.green : AppTheme.red)
+                    : AppTheme.amber,
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Risk cap: \$${riskCap.toStringAsFixed(0)} per trade · '
+          'Adjustable in Settings → Risk Management.',
+          style: TextStyle(color: context.c.textTertiary, fontSize: 11),
         ),
         const SizedBox(height: 16),
 
@@ -597,6 +836,20 @@ class _SizeStep extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         TextField(
+          controller: tpCtrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: 'Take profit (${meta.unit})',
+            helperText: hasTp
+                ? (rrOk
+                      ? 'R:R 1:${rrRatio.toStringAsFixed(1)} ✓'
+                      : 'Below 1:2 minimum — increase target')
+                : 'Optional. Suggested ≥ ${minTp.toStringAsFixed(1)} for 1:2 R:R',
+          ),
+          onChanged: (_) => onInputChange(),
+        ),
+        const SizedBox(height: 12),
+        TextField(
           controller: entriesCtrl,
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(labelText: 'Stacked entries'),
@@ -613,16 +866,19 @@ class _ExecuteStep extends StatelessWidget {
     required this.controller,
     required this.lot,
     required this.risk,
+    required this.dailyCap,
   });
   final TradingScreenViewModel controller;
   final double lot;
   final double risk;
+  final int dailyCap;
 
   @override
   Widget build(BuildContext context) {
     final trades = controller.getTodayTrades().length;
-    final locked = controller.state.lock || trades >= 2;
+    final locked = controller.state.lock || trades >= dailyCap;
     final session = controller.getSessionInfo();
+    final cap = controller.riskCapUsd;
 
     return _Card(
       child: Column(
@@ -640,8 +896,8 @@ class _ExecuteStep extends StatelessWidget {
           ),
           _StatusRow(
             'Trades',
-            '$trades / 2',
-            trades < 2 ? AppTheme.green : AppTheme.amber,
+            '$trades / $dailyCap',
+            trades < dailyCap ? AppTheme.green : AppTheme.amber,
           ),
           _StatusRow(
             'Lot size',
@@ -651,7 +907,7 @@ class _ExecuteStep extends StatelessWidget {
           _StatusRow(
             'Risk',
             '\$${risk.toStringAsFixed(0)}',
-            risk <= 125 ? AppTheme.green : AppTheme.red,
+            risk <= cap ? AppTheme.green : AppTheme.red,
           ),
           _StatusRow(
             'System',

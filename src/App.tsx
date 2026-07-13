@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Logo, LogoIcon } from './components/Logo';
 
 const STRIPE_URL = 'https://buy.stripe.com/test_placeholder';
 
@@ -37,8 +38,9 @@ function Hero() {
           </h1>
 
           <p className="text-base sm:text-lg text-white/50 max-w-md leading-relaxed mb-10 opacity-0 animate-[fadeUp_0.6s_0.35s_forwards]">
-            Every trade starts with your rules. Every mistake becomes data. 
-            Every week you know what's actually making you money.
+            No system means no edge. LocoTrader turns your chaos
+            into a repeatable, rule-based process — so you stop
+            bleeding money and start earning consistently.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 opacity-0 animate-[fadeUp_0.6s_0.5s_forwards]">
@@ -353,7 +355,7 @@ function Footer() {
   return (
     <footer className="border-t border-white/[0.04] py-10 sm:py-12 px-6 sm:px-12">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        <span className="text-sm font-bold tracking-tight">LocoTrader</span>
+        <Logo size={28} variant="full" />
         <span className="text-xs text-white/15">© {new Date().getFullYear()}</span>
       </div>
     </footer>

@@ -1,0 +1,44 @@
+<!-- LocoTrader Logo SVG
+     Primary mark: sharp angular shape combining an "L" form with an upward 
+     trending chart arrow — represents discipline leading to upward edge.
+     Colors: Electric blue (#3B82F6) on dark, white variant also included.
+-->
+
+<!-- USAGE:
+  Full logo (icon + wordmark): import LogoFull from './logo-full.svg'
+  Icon only: import LogoIcon from './logo-icon.svg'
+  For Flutter app icon: use logo-icon.svg exported at 1024x1024
+-->
+
+<!-- ICON ONLY — for app icon, favicon, small contexts -->
+<svg id="logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Background rounded square -->
+  <rect width="64" height="64" rx="14" fill="#050508"/>
+  
+  <!-- Sharp angular "L" form with chart trend line embedded -->
+  <!-- Bottom-left vertical bar of the L -->
+  <rect x="12" y="14" width="9" height="36" rx="2" fill="#3B82F6"/>
+  <!-- Bottom horizontal bar of the L -->
+  <rect x="12" y="41" width="22" height="9" rx="2" fill="#3B82F6"/>
+  
+  <!-- Upward trend line (chart arrow) — right side -->
+  <!-- Line segments forming an ascending staircase/trend -->
+  <path 
+    d="M36 44 L43 33 L50 26 L50 22" 
+    stroke="#3B82F6" 
+    stroke-width="4.5" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+  />
+  <!-- Arrow tip at top -->
+  <path 
+    d="M45 19 L50 22 L53 17" 
+    stroke="#3B82F6" 
+    stroke-width="4.5" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+  />
+  
+  <!-- Small dot at origin of trend line (anchored on the L bar) -->
+  <circle cx="36" cy="44" r="2.5" fill="#3B82F6"/>
+</svg>

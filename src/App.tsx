@@ -24,14 +24,30 @@ function openCheckout(priceId: string, customData?: Record<string, string>) {
     alert('Payment system loading... please try again.');
     return;
   }
+  const isLifetime = priceId === PADDLE_LIFETIME_PRICE_ID;
   window.Paddle.Checkout.open({
     items: [{ priceId, quantity: 1 }],
     ...(customData ? { customData } : {}),
+    settings: {
+      successUrl: isLifetime
+        ? window.location.origin + '/thank-you-lifetime'
+        : window.location.origin + '/thank-you-feature',
+    },
   });
 }
 
 export default function App() {
-  useEffect(() => { initPaddle(); }, []);
+  const [page, setPage] = useState(getPage());
+
+  useEffect(() => {
+    initPaddle();
+    const onNav = () => setPage(getPage());
+    window.addEventListener('popstate', onNav);
+    return () => window.removeEventListener('popstate', onNav);
+  }, []);
+
+  if (page === 'thank-you-lifetime') return <ThankYouLifetime />;
+  if (page === 'thank-you-feature') return <ThankYouFeature />;
 
   return (
     <div className="min-h-screen bg-[#050508] text-white font-sans selection:bg-blue-500/20 overflow-x-hidden">
@@ -41,6 +57,80 @@ export default function App() {
       <AppFeatures />
       <Offer />
       <Footer />
+    </div>
+  );
+}
+
+function getPage() {
+  const path = window.location.pathname;
+  if (path === '/thank-you-lifetime') return 'thank-you-lifetime';
+  if (path === '/thank-you-feature') return 'thank-you-feature';
+  return 'home';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  THANK YOU — Lifetime
+// ═══════════════════════════════════════════════════════════════
+
+function ThankYouLifetime() {
+  return (
+    <div className="min-h-screen bg-[#050508] text-white font-sans flex items-center justify-center px-6">
+      <div className="max-w-lg text-center">
+        <div className="text-6xl mb-6">◆</div>
+        <h1 className="text-3xl sm:text-4xl font-black mb-4">
+          You're in.
+        </h1>
+        <p className="text-xl text-white/60 mb-6">
+          You just became a systematic trader.
+        </p>
+        <p className="text-white/35 text-sm leading-relaxed mb-8">
+          Lifetime Pro is locked to your email. When LocoTrader launches, you'll be the first to get access — no subscription, no limits, forever.
+          <br /><br />
+          We'll email you with early builds, progress updates, and your founding member badge.
+        </p>
+        <div className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-8">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Payment confirmed
+        </div>
+        <div>
+          <a href="/" className="text-xs text-white/25 hover:text-white/50 transition">← Back to LocoTrader</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  THANK YOU — Feature Request
+// ═══════════════════════════════════════════════════════════════
+
+function ThankYouFeature() {
+  return (
+    <div className="min-h-screen bg-[#050508] text-white font-sans flex items-center justify-center px-6">
+      <div className="max-w-lg text-center">
+        <div className="text-6xl mb-6">✦</div>
+        <h1 className="text-3xl sm:text-4xl font-black mb-4">
+          Your voice matters.
+        </h1>
+        <p className="text-xl text-white/60 mb-6">
+          Feature request submitted and funded.
+        </p>
+        <p className="text-white/35 text-sm leading-relaxed mb-8">
+          Funded features ship faster. You've just moved this up the priority list.
+          We'll notify you when it's being built and when it ships.
+        </p>
+        <div className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-8">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          Payment confirmed · Feature queued
+        </div>
+        <div>
+          <a href="/" className="text-xs text-white/25 hover:text-white/50 transition">← Back to LocoTrader</a>
+        </div>
+      </div>
     </div>
   );
 }

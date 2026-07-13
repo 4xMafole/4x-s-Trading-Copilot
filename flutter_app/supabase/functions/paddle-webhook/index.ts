@@ -1,9 +1,140 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// Paddle webhook secret — set in Supabase Dashboard > Edge Functions > Secrets
-// PADDLE_WEBHOOK_SECRET = your webhook secret from Paddle > Developer Tools > Notifications
-const PADDLE_WEBHOOK_SECRET = Deno.env.get("PADDLE_WEBHOOK_SECRET") || "";
+// Secrets — set in Supabase Dashboard > Edge Functions > Secrets
+const PADDLE_API_KEY = Deno.env.get("PADDLE_API_KEY") || ""; // Paddle > Developer Tools > API Keys
+
+serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, paddle-signature",
+      },
+    });
+  }
+
+  if (req.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+
+  const body = await req.text();
+
+  let event;
+  try {
+    event = JSON.parse(body);
+  } catch {
+    return new Response("Invalid JSON", { status: 400 });
+  }
+
+  // Only process completed transactions
+  if (event.event_type !== "transaction.completed") {
+    return new Response(JSON.stringify({ received: true, skipped: event.event_type }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const data = event.data;
+  const transactionId = data.id || "";
+  const customerId = data.customer_id || "";
+  const items = data.items || [];
+  const lineItems = data.details?.line_items || [];
+  const customData = data.custom_data || {};
+
+  // ── Fix 1: Detect product type from actual payload paths ──
+  // data.items[0].price.description OR data.details.line_items[0].product.name
+  const priceDesc = (items[0]?.price?.description || "").toLowerCase();
+  const productName = (lineItems[0]?.product?.name || "").toLowerCase();
+  const combined = priceDesc + " " + productName;
+
+  let paymentType = "unknown";
+  if (combined.includes("lifetime") || combined.includes("pro")) {
+    paymentType = "lifetime_pro";
+  } else if (combined.includes("feature")) {
+    paymentType = "feature_request";
+  }
+
+  // Amount in dollars (Paddle sends cents)
+  const totalAmount = data.details?.totals?.total
+    ? parseFloat(data.details.totals.total) / 100
+    : 0;
+
+  // ── Fix 2: Fetch customer email from Paddle API ──
+  let email = "";
+  if (customerId && PADDLE_API_KEY) {
+    const apiBase = PADDLE_API_KEY.startsWith("test_")
+      ? "https://sandbox-api.paddle.com"
+      : "https://api.paddle.com";
+    try {
+      const res = await fetch(`${apiBase}/customers/${customerId}`, {
+        headers: { Authorization: `Bearer ${PADDLE_API_KEY}` },
+      });
+      if (res.ok) {
+        const customer = await res.json();
+        email = customer.data?.email || "";
+      }
+    } catch (e) {
+      console.error("Failed to fetch customer email:", e);
+    }
+  }
+
+  // ── Store in Supabase ──
+  const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+  const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  if (paymentType === "lifetime_pro") {
+    const { error } = await supabase.from("early_access_payments").insert({
+      email,
+      amount: totalAmount,
+      paddle_transaction_id: transactionId,
+    });
+    if (error) console.error("DB insert error:", error.message);
+
+  } else if (paymentType === "feature_request") {
+    const featureTitle = customData.feature_title || "Unnamed feature";
+    const featureDesc = customData.feature_description || "";
+
+    const { data: existing } = await supabase
+      .from("feature_requests")
+      .select("id, total_funded, backer_count")
+      .eq("title", featureTitle)
+      .maybeSingle();
+
+    let featureId = existing?.id;
+
+    if (existing) {
+      await supabase
+        .from("feature_requests")
+        .update({
+          total_funded: existing.total_funded + totalAmount,
+          backer_count: existing.backer_count + 1,
+        })
+        .eq("id", existing.id);
+    } else {
+      const { data: inserted } = await supabase
+        .from("feature_requests")
+        .insert({ title: featureTitle, description: featureDesc, email, total_funded: totalAmount, backer_count: 1 })
+        .select("id")
+        .single();
+      featureId = inserted?.id;
+    }
+
+    await supabase.from("feature_request_payments").insert({
+      feature_id: featureId,
+      email,
+      amount: totalAmount,
+      paddle_transaction_id: transactionId,
+    });
+  }
+
+  return new Response(
+    JSON.stringify({ received: true, type: paymentType, email, transactionId }),
+    { status: 200, headers: { "Content-Type": "application/json" } }
+  );
+});
 
 serve(async (req) => {
   // Handle CORS preflight

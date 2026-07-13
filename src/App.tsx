@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
 const STRIPE_URL = 'https://buy.stripe.com/test_placeholder';
-const SPOTS_TOTAL = 100;
-const SPOTS_CLAIMED = 23;
 
 export default function App() {
   return (
@@ -29,13 +27,13 @@ function Hero() {
       <div className="max-w-7xl mx-auto px-6 sm:px-12 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center py-24 lg:py-0">
         <div className="relative z-10">
           <p className="text-blue-400 text-sm font-mono tracking-wider mb-6 opacity-0 animate-[fadeUp_0.6s_0.1s_forwards]">
-            {SPOTS_TOTAL - SPOTS_CLAIMED} spots remaining
+            Early access open
           </p>
 
           <h1 className="text-4xl sm:text-5xl lg:text-[4.5rem] font-black leading-[1.05] tracking-tight mb-6 opacity-0 animate-[fadeUp_0.6s_0.2s_forwards]">
-            You're gambling.
+            Your edge isn't broken.
             <br />
-            <span className="text-white/30">This fixes that.</span>
+            <span className="text-white/30">You're missing a system.</span>
           </h1>
 
           <p className="text-base sm:text-lg text-white/50 max-w-md leading-relaxed mb-10 opacity-0 animate-[fadeUp_0.6s_0.35s_forwards]">
@@ -48,12 +46,12 @@ function Hero() {
               href={STRIPE_URL}
               className="group relative inline-flex items-center gap-2 px-7 py-4 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:shadow-[0_0_60px_rgba(59,130,246,0.5)]"
             >
-              Fix my trading — $5
+              Get Lifetime Access — $49
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </a>
-            <span className="text-xs text-white/25">Lifetime Pro · First 100 only</span>
+            <span className="text-xs text-white/25">Lifetime Pro · Limited spots</span>
           </div>
         </div>
 
@@ -111,9 +109,9 @@ function FeatureRequest() {
     <section ref={ref} className="py-20 sm:py-28 px-6 sm:px-12 border-t border-white/[0.04]">
       <div className={`max-w-2xl mx-auto text-center transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
         <p className="text-blue-400 text-xs font-mono tracking-wider mb-3 uppercase">Shape the product</p>
-        <h2 className="text-2xl sm:text-3xl font-black mb-3">Want a feature? Fund it.</h2>
+        <h2 className="text-2xl sm:text-3xl font-black mb-3">Help shape LocoTrader</h2>
         <p className="text-white/35 text-sm mb-8 max-w-md mx-auto">
-          Submit what you need for $5+. The more you fund, the faster it ships.
+          Vote with your wallet. Fund the features you want built first.
         </p>
 
         {!open ? (
@@ -301,40 +299,27 @@ function Offer() {
     return () => obs.disconnect();
   }, []);
 
-  const spotsLeft = SPOTS_TOTAL - SPOTS_CLAIMED;
-  const pct = (SPOTS_CLAIMED / SPOTS_TOTAL) * 100;
-
   return (
     <section ref={ref} className="py-28 sm:py-32 px-6 sm:px-12 border-t border-white/[0.04]">
       <div className={`max-w-2xl mx-auto text-center transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}`}>
         <p className="text-blue-400 text-sm font-mono tracking-wider mb-4">LIMITED OFFER</p>
 
         <h2 className="text-3xl sm:text-5xl font-black mb-4">
-          $5. Lifetime Pro.
+          One payment.
           <br />
-          <span className="text-white/30">Gone when it's gone.</span>
+          <span className="text-white/30">Forever yours.</span>
         </h2>
 
         <p className="text-white/40 mb-10 text-sm sm:text-base leading-relaxed max-w-lg mx-auto">
-          The first 100 people who put down $5 get <strong className="text-white">lifetime Pro access</strong> —
-          unlimited trades, broker import, AI coach, edge analytics. Forever.
+          Get <strong className="text-white">lifetime Pro access</strong> for a single payment —
+          unlimited trades, broker import, AI coach, edge analytics. No subscription. Ever.
         </p>
-
-        <div className="max-w-sm mx-auto mb-8">
-          <div className="flex justify-between text-xs text-white/30 mb-2">
-            <span>{SPOTS_CLAIMED} claimed</span>
-            <span>{spotsLeft} left</span>
-          </div>
-          <div className="h-2 bg-white/[0.06] rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
-          </div>
-        </div>
 
         <a
           href={STRIPE_URL}
           className="inline-flex items-center gap-2 px-10 py-5 bg-blue-500 text-white text-lg font-bold rounded-2xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_50px_rgba(59,130,246,0.3)] hover:shadow-[0_0_80px_rgba(59,130,246,0.5)] hover:scale-[1.02]"
         >
-          Fix my trading — $5
+          Get Lifetime Access — $49
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>

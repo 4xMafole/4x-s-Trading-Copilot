@@ -37,19 +37,16 @@ function Hero() {
           </h1>
 
           <p className="text-base sm:text-lg text-white/50 max-w-md leading-relaxed mb-10 opacity-0 animate-[fadeUp_0.6s_0.35s_forwards]">
-            No system means no edge. LocoTrader turns your chaos into a repeatable,
-            rule-based process — so you stop bleeding money and start trading like a professional.
+            Every trade starts with your rules. Every mistake becomes data. 
+            Every week you know what's actually making you money.
           </p>
 
           <div className="flex flex-wrap items-center gap-4 opacity-0 animate-[fadeUp_0.6s_0.5s_forwards]">
             <a
               href={STRIPE_URL}
-              className="group relative inline-flex items-center gap-2 px-7 py-4 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:shadow-[0_0_60px_rgba(59,130,246,0.5)]"
+              className="inline-flex items-center px-7 py-4 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:shadow-[0_0_60px_rgba(59,130,246,0.5)]"
             >
               Get Lifetime Access — $49
-              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
             </a>
             <span className="text-xs text-white/25">Lifetime Pro · Limited spots</span>
           </div>
@@ -207,9 +204,9 @@ function Problem() {
         </div>
 
         <div className={`mt-16 sm:mt-20 p-6 sm:p-8 rounded-2xl border border-white/[0.06] bg-white/[0.02] transition-all duration-700 delay-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <p className="text-lg sm:text-2xl font-semibold text-center">"Turn your chaos into a system."</p>
+          <p className="text-lg sm:text-2xl font-semibold text-center">Trade with a system that builds edge.</p>
           <p className="text-white/30 text-center mt-2 text-xs sm:text-sm">
-            Pre-trade gates that lock you out until your rules are met. Auto-journal. Edge analytics. One app.
+            Every trade starts with your rules. Every mistake becomes data. Every week you know what's actually making you money.
           </p>
         </div>
       </div>
@@ -224,11 +221,27 @@ function Problem() {
 function AppFeatures() {
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [itemVisible, setItemVisible] = useState([false, false, false]);
 
   useEffect(() => {
     const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVisible(true); }, { threshold: 0.1 });
     if (ref.current) obs.observe(ref.current);
     return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    itemRefs.current.forEach((el, i) => {
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setItemVisible(prev => { const n = [...prev]; n[i] = true; return n; }); },
+        { threshold: 0.3 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach(o => o.disconnect());
   }, []);
 
   const features = [
@@ -261,12 +274,12 @@ function AppFeatures() {
         {features.map((f, i) => (
           <div
             key={i}
-            className={`flex flex-col ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-10 lg:gap-16 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-16'}`}
-            style={{ transitionDelay: `${300 + i * 200}ms` }}
+            ref={el => { itemRefs.current[i] = el; }}
+            className={`flex flex-col ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-10 lg:gap-16 transition-all duration-1000 ${itemVisible[i] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`}
           >
             {/* Phone */}
-            <div className="shrink-0">
-              <div className="relative w-[260px] sm:w-[280px] rounded-[2.5rem] border-[6px] border-white/[0.06] bg-[#111] p-1 shadow-xl mx-auto">
+            <div className={`shrink-0 transition-all duration-1000 delay-200 ${itemVisible[i] ? 'opacity-100 scale-100' : 'opacity-0 scale-90'}`}>
+              <div className="relative w-[260px] sm:w-[280px] rounded-[2.5rem] border-[6px] border-white/[0.06] bg-[#111] p-1 shadow-xl mx-auto hover:shadow-blue-500/10 hover:border-white/[0.1] transition-all duration-500">
                 <div className="absolute top-1 left-1/2 -translate-x-1/2 w-16 h-4 bg-[#050508] rounded-b-xl z-10" />
                 <div className="rounded-[2rem] overflow-hidden">
                   <img src={f.src} alt={f.title} className="w-full" loading="lazy" />
@@ -274,7 +287,7 @@ function AppFeatures() {
               </div>
             </div>
             {/* Copy */}
-            <div className="text-center lg:text-left max-w-md">
+            <div className={`text-center lg:text-left max-w-md transition-all duration-1000 delay-300 ${itemVisible[i] ? 'opacity-100 translate-x-0' : `opacity-0 ${i % 2 === 0 ? 'translate-x-8' : '-translate-x-8'}`}`}>
               <h3 className="text-2xl sm:text-3xl font-black mb-3">{f.title}</h3>
               <p className="text-white/40 text-sm sm:text-base leading-relaxed">{f.desc}</p>
             </div>
@@ -317,12 +330,9 @@ function Offer() {
 
         <a
           href={STRIPE_URL}
-          className="inline-flex items-center gap-2 px-10 py-5 bg-blue-500 text-white text-lg font-bold rounded-2xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_50px_rgba(59,130,246,0.3)] hover:shadow-[0_0_80px_rgba(59,130,246,0.5)] hover:scale-[1.02]"
+          className="inline-flex items-center px-10 py-5 bg-blue-500 text-white text-lg font-bold rounded-2xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_50px_rgba(59,130,246,0.3)] hover:shadow-[0_0_80px_rgba(59,130,246,0.5)] hover:scale-[1.02]"
         >
           Get Lifetime Access — $49
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-          </svg>
         </a>
 
         <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-white/30">

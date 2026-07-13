@@ -30,24 +30,24 @@ export function LogoIcon({ size = 32 }: { size?: number }) {
       xmlns="http://www.w3.org/2000/svg"
       aria-label="LocoTrader"
     >
-      {/* Two intersecting angular planes — creates depth + negative space
-          Inspired by Linear/Stripe's geometric simplicity.
-          The two overlapping rhomboids suggest: precision, edge, forward momentum */}
+      {/* Two intersecting angular planes on white background */}
 
-      {/* Back plane — deeper blue, offset bottom-left */}
+      <rect width="64" height="64" rx="14" fill="white" />
+
+      {/* Back plane */}
       <path
         d="M10 44 L28 12 L38 12 L20 44Z"
         fill="#3B82F6"
         opacity="0.35"
       />
 
-      {/* Front plane — full blue, offset top-right */}
+      {/* Front plane */}
       <path
         d="M26 52 L44 20 L54 20 L36 52Z"
         fill="#3B82F6"
       />
 
-      {/* Intersection highlight — subtle lighter accent where planes overlap */}
+      {/* Intersection highlight */}
       <path
         d="M26 44 L28 12 L38 12 L36 44Z"
         fill="#60A5FA"

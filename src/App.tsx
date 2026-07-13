@@ -4,9 +4,9 @@ import { Logo, LogoIcon } from './components/Logo';
 // ── Paddle Config ──
 // Replace with your real IDs from Paddle Dashboard
 const PADDLE_ENV = 'sandbox'; // 'sandbox' or 'production'
-const PADDLE_TOKEN = 'test_YOUR_CLIENT_TOKEN_HERE'; // Dashboard > Developer Tools > Authentication
-const PADDLE_LIFETIME_PRICE_ID = 'pri_YOUR_LIFETIME_PRICE_ID'; // $49 one-time
-const PADDLE_FEATURE_PRICE_ID = 'pri_YOUR_FEATURE_PRICE_ID'; // $5 one-time
+const PADDLE_TOKEN = 'test_624badc1cd5bed55b29061370cf'; // Dashboard > Developer Tools > Authentication
+const PADDLE_LIFETIME_PRICE_ID = 'pri_01kxew356qb5kfvyccsjrjmttg'; // $49 one-time
+const PADDLE_FEATURE_PRICE_ID = 'pri_01kxew27g9f08pzr3sqv12y3c4'; // $5 one-time
 
 // Initialize Paddle on load
 declare global { interface Window { Paddle: any; } }
@@ -19,12 +19,15 @@ function initPaddle() {
   }
 }
 
-function openCheckout(priceId: string) {
+function openCheckout(priceId: string, customData?: Record<string, string>) {
   if (!window.Paddle) {
     alert('Payment system loading... please try again.');
     return;
   }
-  window.Paddle.Checkout.open({ items: [{ priceId, quantity: 1 }] });
+  window.Paddle.Checkout.open({
+    items: [{ priceId, quantity: 1 }],
+    ...(customData ? { customData } : {}),
+  });
 }
 
 export default function App() {
@@ -127,8 +130,10 @@ function FeatureRequest() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || amount < 5) return;
-    // Open Paddle checkout for the feature request
-    openCheckout(PADDLE_FEATURE_PRICE_ID);
+    openCheckout(PADDLE_FEATURE_PRICE_ID, {
+      feature_title: title.trim(),
+      feature_description: desc.trim(),
+    });
   }
 
   return (

@@ -206,9 +206,9 @@ function Problem() {
         </div>
 
         <div className={`mt-16 sm:mt-20 p-6 sm:p-8 rounded-2xl border border-white/[0.06] bg-white/[0.02] transition-all duration-700 delay-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <p className="text-lg sm:text-2xl font-semibold text-center">Trade with a system that builds edge.</p>
+          <p className="text-lg sm:text-2xl font-semibold text-center">Systematic traders don't hope. They know.</p>
           <p className="text-white/30 text-center mt-2 text-xs sm:text-sm">
-            Every trade starts with your rules. Every mistake becomes data. Every week you know what's actually making you money.
+            Every trade starts with your rules. Every mistake becomes data. Every week you see exactly what's making — or costing — you money.
           </p>
         </div>
       </div>
@@ -249,18 +249,18 @@ function AppFeatures() {
   const features = [
     {
       src: '/screenshots/photo_2026-07-13_15-11-40.jpg',
-      title: 'Edge Map',
-      desc: 'See exactly where your edge lives — by session, symbol, day, behaviour. Computed from your real trades.',
+      title: 'The disciplined trader sees the edge.',
+      desc: 'Your real trades reveal patterns you can\'t see in the moment — which sessions print, which setups bleed, which habits cost you. This is how you stop guessing.',
     },
     {
       src: '/screenshots/photo_2026-07-13_15-11-48.jpg',
-      title: 'Trade Flow',
-      desc: 'Plan → Size → Execute. Pre-trade gates force your checklist. No shortcuts, no skipping steps.',
+      title: 'The systematic trader follows a process.',
+      desc: 'Before every trade: your rules, your checklist, your risk — verified. No more "I\'ll just take this one." The system says yes or the system says no.',
     },
     {
       src: '/screenshots/photo_2026-07-13_15-11-50.jpg',
-      title: 'Dashboard',
-      desc: 'Readiness score, equity curve, discipline streak, P&L — everything a serious trader needs at a glance.',
+      title: 'The professional trader knows the numbers.',
+      desc: 'Win rate, discipline streak, equity curve, readiness score — not vanity metrics. Real accountability that compounds into consistency.',
     },
   ];
 
@@ -268,7 +268,7 @@ function AppFeatures() {
     <section ref={ref} className="py-28 sm:py-32 border-t border-white/[0.04]">
       <div className="max-w-5xl mx-auto px-6 sm:px-12 mb-12 sm:mb-16">
         <h2 className={`text-3xl sm:text-4xl font-black transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          Built for traders who are done losing.
+          What changes when you have a system.
         </h2>
       </div>
 
@@ -326,8 +326,8 @@ function Offer() {
         </h2>
 
         <p className="text-white/40 mb-10 text-sm sm:text-base leading-relaxed max-w-lg mx-auto">
-          Get <strong className="text-white">lifetime Pro access</strong> for a single payment —
-          unlimited trades, broker import, AI coach, edge analytics. No subscription. Ever.
+          Join the traders who decided to stop guessing. One payment gives you 
+          <strong className="text-white">lifetime Pro access</strong> — the full system, forever. No subscription.
         </p>
 
         <a

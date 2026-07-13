@@ -30,23 +30,29 @@ export function LogoIcon({ size = 32 }: { size?: number }) {
       xmlns="http://www.w3.org/2000/svg"
       aria-label="LocoTrader"
     >
-      {/* Background */}
-      <rect width="64" height="64" rx="14" fill="#090912" />
+      {/* Two intersecting angular planes — creates depth + negative space
+          Inspired by Linear/Stripe's geometric simplicity.
+          The two overlapping rhomboids suggest: precision, edge, forward momentum */}
 
-      {/* 3 ascending bars — sharp, no radius */}
-      <rect x="10" y="42" width="11" height="12" fill="#3B82F6" opacity="0.3" />
-      <rect x="26" y="30" width="11" height="24" fill="#3B82F6" opacity="0.65" />
-      <rect x="42" y="16" width="11" height="38" fill="#3B82F6" />
+      {/* Back plane — deeper blue, offset bottom-left */}
+      <path
+        d="M10 44 L28 12 L38 12 L20 44Z"
+        fill="#3B82F6"
+        opacity="0.35"
+      />
 
-      {/* Trend line connecting bar tops — 1.5px, square cap */}
-      <line x1="15.5" y1="42" x2="31.5" y2="30" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="butt" />
-      <line x1="31.5" y1="30" x2="47.5" y2="16" stroke="#3B82F6" strokeWidth="1.5" strokeLinecap="butt" />
+      {/* Front plane — full blue, offset top-right */}
+      <path
+        d="M26 52 L44 20 L54 20 L36 52Z"
+        fill="#3B82F6"
+      />
 
-      {/* Arrowhead at top — filled triangle, points north-east */}
-      <polygon points="48,10 55,17 50,19" fill="#3B82F6" />
-
-      {/* Faint baseline */}
-      <rect x="10" y="55" width="44" height="1" fill="white" opacity="0.07" />
+      {/* Intersection highlight — subtle lighter accent where planes overlap */}
+      <path
+        d="M26 44 L28 12 L38 12 L36 44Z"
+        fill="#60A5FA"
+        opacity="0.25"
+      />
     </svg>
   );
 }

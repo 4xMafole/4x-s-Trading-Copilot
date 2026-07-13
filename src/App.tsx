@@ -1,9 +1,35 @@
 import { useEffect, useRef, useState } from 'react';
 import { Logo, LogoIcon } from './components/Logo';
 
-const STRIPE_URL = 'https://buy.stripe.com/test_placeholder';
+// ── Paddle Config ──
+// Replace with your real IDs from Paddle Dashboard
+const PADDLE_ENV = 'sandbox'; // 'sandbox' or 'production'
+const PADDLE_TOKEN = 'test_YOUR_CLIENT_TOKEN_HERE'; // Dashboard > Developer Tools > Authentication
+const PADDLE_LIFETIME_PRICE_ID = 'pri_YOUR_LIFETIME_PRICE_ID'; // $49 one-time
+const PADDLE_FEATURE_PRICE_ID = 'pri_YOUR_FEATURE_PRICE_ID'; // $5 one-time
+
+// Initialize Paddle on load
+declare global { interface Window { Paddle: any; } }
+function initPaddle() {
+  if (window.Paddle) {
+    if (PADDLE_ENV === 'sandbox') {
+      window.Paddle.Environment.set('sandbox');
+    }
+    window.Paddle.Initialize({ token: PADDLE_TOKEN });
+  }
+}
+
+function openCheckout(priceId: string) {
+  if (!window.Paddle) {
+    alert('Payment system loading... please try again.');
+    return;
+  }
+  window.Paddle.Checkout.open({ items: [{ priceId, quantity: 1 }] });
+}
 
 export default function App() {
+  useEffect(() => { initPaddle(); }, []);
+
   return (
     <div className="min-h-screen bg-[#050508] text-white font-sans selection:bg-blue-500/20 overflow-x-hidden">
       <Hero />
@@ -44,12 +70,12 @@ function Hero() {
           </p>
 
           <div className="flex flex-wrap items-center gap-4 opacity-0 animate-[fadeUp_0.6s_0.5s_forwards]">
-            <a
-              href={STRIPE_URL}
-              className="inline-flex items-center px-7 py-4 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:shadow-[0_0_60px_rgba(59,130,246,0.5)]"
+            <button
+              onClick={() => openCheckout(PADDLE_LIFETIME_PRICE_ID)}
+              className="inline-flex items-center px-7 py-4 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:shadow-[0_0_60px_rgba(59,130,246,0.5)] cursor-pointer"
             >
               Get Lifetime Access — $49
-            </a>
+            </button>
             <span className="text-xs text-white/25">Lifetime Pro · Limited spots</span>
           </div>
         </div>
@@ -101,7 +127,8 @@ function FeatureRequest() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || amount < 5) return;
-    alert(`"${title}" — $${amount}\n\nStripe payment will be connected here.`);
+    // Open Paddle checkout for the feature request
+    openCheckout(PADDLE_FEATURE_PRICE_ID);
   }
 
   return (
@@ -330,17 +357,17 @@ function Offer() {
           <strong className="text-white">lifetime Pro access</strong> — the full system, forever. No subscription.
         </p>
 
-        <a
-          href={STRIPE_URL}
-          className="inline-flex items-center px-10 py-5 bg-blue-500 text-white text-lg font-bold rounded-2xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_50px_rgba(59,130,246,0.3)] hover:shadow-[0_0_80px_rgba(59,130,246,0.5)] hover:scale-[1.02]"
+        <button
+          onClick={() => openCheckout(PADDLE_LIFETIME_PRICE_ID)}
+          className="inline-flex items-center px-10 py-5 bg-blue-500 text-white text-lg font-bold rounded-2xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_50px_rgba(59,130,246,0.3)] hover:shadow-[0_0_80px_rgba(59,130,246,0.5)] hover:scale-[1.02] cursor-pointer"
         >
           Get Lifetime Access — $49
-        </a>
+        </button>
 
         <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-white/30">
           <span>✓ Lifetime Pro access</span>
           <span>✓ All future features</span>
-          <span>✓ Secure via Stripe</span>
+          <span>✓ Secure payment via Paddle</span>
         </div>
       </div>
     </section>

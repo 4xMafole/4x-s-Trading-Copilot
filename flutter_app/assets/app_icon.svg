@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" fill="none">
+  <!-- App icon: logo mark on dark background, 1024x1024 for launcher -->
+  <rect width="1024" height="1024" rx="224" fill="#090912"/>
+  <path d="M160 704 L448 192 L608 192 L320 704Z" fill="#3B82F6" opacity="0.35"/>
+  <path d="M416 832 L704 320 L864 320 L576 832Z" fill="#3B82F6"/>
+  <path d="M416 704 L448 192 L608 192 L576 704Z" fill="#60A5FA" opacity="0.25"/>
+</svg>

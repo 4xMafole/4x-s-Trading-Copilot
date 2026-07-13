@@ -64,11 +64,11 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/avatar.png"
-  background_color: "#FFFFFF"
-  theme_color: "#FFFFFF"
-  adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/avatar.png"
+  image_path: "assets/app_icon.png"
+  background_color: "#090912"
+  theme_color: "#090912"
+  adaptive_icon_background: "#090912"
+  adaptive_icon_foreground: "assets/app_icon.png"
   remove_alpha_ios: true
 
 # Run: dart run flutter_native_splash:create

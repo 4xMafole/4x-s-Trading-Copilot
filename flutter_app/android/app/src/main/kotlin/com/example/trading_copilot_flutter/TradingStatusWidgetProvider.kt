@@ -10,6 +10,7 @@ import android.graphics.Color
 import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
+import com.locotrader.app.R
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Calendar

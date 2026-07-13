@@ -83,14 +83,11 @@ class _JournalTabState extends State<_JournalTab> {
 
   /// Computes the suggested lot text for the log sheet based on a wizard
   /// draft (instrument + SL pips + entries against the configured risk cap).
-  String _prefillLotText(
-    TradingScreenViewModel c,
-    WizardDraft? d,
-  ) {
+  String _prefillLotText(TradingScreenViewModel c, WizardDraft? d) {
     if (d == null) return '';
     final sl = double.tryParse(d.stopLoss) ?? 0;
     final entries = int.tryParse(d.entries) ?? 1;
-    final meta = kInstruments[d.instrument];
+    final meta = c.state.effectiveInstruments[d.instrument];
     if (meta == null || sl <= 0 || meta.pipVal <= 0 || entries <= 0) return '';
     final cap = c.riskCapUsd;
     final lot = (cap / entries) / (sl * meta.pipVal * 10);
@@ -98,14 +95,11 @@ class _JournalTabState extends State<_JournalTab> {
   }
 
   /// Computes the suggested planned-risk text from a wizard draft.
-  String _prefillRiskText(
-    TradingScreenViewModel c,
-    WizardDraft? d,
-  ) {
+  String _prefillRiskText(TradingScreenViewModel c, WizardDraft? d) {
     if (d == null) return '';
     final sl = double.tryParse(d.stopLoss) ?? 0;
     final entries = int.tryParse(d.entries) ?? 1;
-    final meta = kInstruments[d.instrument];
+    final meta = c.state.effectiveInstruments[d.instrument];
     if (meta == null || sl <= 0 || meta.pipVal <= 0 || entries <= 0) return '';
     final cap = c.riskCapUsd;
     final lot = (cap / entries) / (sl * meta.pipVal * 10);

@@ -255,8 +255,8 @@ Map<String, dynamic> _$NotificationPrefsToJson(_NotificationPrefs instance) =>
 _AppState _$AppStateFromJson(Map<String, dynamic> json) => _AppState(
   schemaVersion:
       (json['schemaVersion'] as num?)?.toInt() ?? kCurrentSchemaVersion,
-  balance: (json['balance'] as num?)?.toDouble() ?? 25000.0,
-  startDate: json['startDate'] as String? ?? '2026-04-20',
+  balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
+  startDate: json['startDate'] as String? ?? '',
   priorPnl: (json['priorPnl'] as num?)?.toDouble() ?? 0.0,
   checks:
       (json['checks'] as Map<String, dynamic>?)?.map(
@@ -314,10 +314,21 @@ _AppState _$AppStateFromJson(Map<String, dynamic> json) => _AppState(
       : NotificationPrefs.fromJson(
           json['notificationPrefs'] as Map<String, dynamic>,
         ),
-  riskCapUsd: (json['riskCapUsd'] as num?)?.toDouble() ?? 125.0,
+  riskCapUsd: (json['riskCapUsd'] as num?)?.toDouble() ?? 100.0,
   wizardDraft: json['wizardDraft'] == null
       ? null
       : WizardDraft.fromJson(json['wizardDraft'] as Map<String, dynamic>),
+  userGates:
+      (json['userGates'] as List<dynamic>?)
+          ?.map((e) => UserGate.fromJson(e as Map<String, dynamic>))
+          .toList() ??
+      const [],
+  userInstruments:
+      (json['userInstruments'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(k, Instrument.fromJson(e as Map<String, dynamic>)),
+      ) ??
+      const {},
+  userTimezone: json['userTimezone'] as String?,
 );
 
 Map<String, dynamic> _$AppStateToJson(_AppState instance) => <String, dynamic>{
@@ -345,4 +356,44 @@ Map<String, dynamic> _$AppStateToJson(_AppState instance) => <String, dynamic>{
   'notificationPrefs': instance.notificationPrefs.toJson(),
   'riskCapUsd': instance.riskCapUsd,
   'wizardDraft': instance.wizardDraft?.toJson(),
+  'userGates': instance.userGates.map((e) => e.toJson()).toList(),
+  'userInstruments': instance.userInstruments.map(
+    (k, e) => MapEntry(k, e.toJson()),
+  ),
+  'userTimezone': instance.userTimezone,
 };
+
+_UserGate _$UserGateFromJson(Map<String, dynamic> json) => _UserGate(
+  id: json['id'] as String,
+  auto: json['auto'] as bool? ?? false,
+  label: json['label'] as String,
+  sub: json['sub'] as String? ?? '',
+  symbols:
+      (json['symbols'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      null,
+  sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
+);
+
+Map<String, dynamic> _$UserGateToJson(_UserGate instance) => <String, dynamic>{
+  'id': instance.id,
+  'auto': instance.auto,
+  'label': instance.label,
+  'sub': instance.sub,
+  'symbols': instance.symbols,
+  'sortOrder': instance.sortOrder,
+};
+
+_Instrument _$InstrumentFromJson(Map<String, dynamic> json) => _Instrument(
+  unit: json['unit'] as String,
+  pipVal: (json['pipVal'] as num?)?.toDouble() ?? 1.0,
+  desc: json['desc'] as String? ?? '',
+  category: json['category'] as String? ?? '',
+);
+
+Map<String, dynamic> _$InstrumentToJson(_Instrument instance) =>
+    <String, dynamic>{
+      'unit': instance.unit,
+      'pipVal': instance.pipVal,
+      'desc': instance.desc,
+      'category': instance.category,
+    };

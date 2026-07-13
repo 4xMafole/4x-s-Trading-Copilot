@@ -141,6 +141,19 @@ class TradingScreenViewModel {
   Future<void> setNotificationPrefs(NotificationPrefs prefs) =>
       trading.setNotificationPrefs(prefs);
 
+  // ── User configuration ──────────────────────────────────────────────────
+  List<UserGate> get userGates => trading.state.appState.userGates;
+  Future<void> setUserGates(List<UserGate> gates) =>
+      trading.setUserGates(gates);
+
+  Map<String, Instrument> get userInstruments =>
+      trading.state.appState.userInstruments;
+  Future<void> setUserInstruments(Map<String, Instrument> instruments) =>
+      trading.setUserInstruments(instruments);
+
+  String? get userTimezone => trading.state.appState.userTimezone;
+  Future<void> setUserTimezone(String? tz) => trading.setUserTimezone(tz);
+
   // Sprint 6.5 — Multi-account.
   List<TradingAccount> get accounts => trading.state.appState.accounts;
   String? get activeAccountId => trading.state.appState.activeAccountId;

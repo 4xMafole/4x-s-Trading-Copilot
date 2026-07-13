@@ -109,7 +109,7 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
     // Symbol-scoped gates: only show gates that apply to the current
     // instrument. The user's deep-dive symbol (e.g. EURUSD) will only
     // see its relevant blackout windows / behavioural rules.
-    final activeGates = kGates
+    final activeGates = c.state.effectiveGates
         .where((g) => g.appliesTo(instrument))
         .toList(growable: false);
     final passedCount = activeGates.where((g) {
@@ -120,7 +120,7 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
     final stopLoss = double.tryParse(slCtrl.text) ?? 0;
     final entries = int.tryParse(entriesCtrl.text) ?? 1;
     final takeProfit = double.tryParse(tpCtrl.text) ?? 0;
-    final meta = kInstruments[instrument]!;
+    final meta = c.state.effectiveInstruments[instrument]!;
     final cap = c.riskCapUsd;
     var lot = 0.0;
     if (stopLoss > 0 && meta.pipVal > 0 && entries > 0) {
@@ -210,6 +210,7 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
             ),
             1 => _SizeStep(
               key: const ValueKey('size'),
+              controller: c,
               instrument: instrument,
               slCtrl: slCtrl,
               entriesCtrl: entriesCtrl,
@@ -470,10 +471,10 @@ class _PlanStep extends StatelessWidget {
             ),
           ],
         ),
-        if (activeGates.length < kGates.length) ...[
+        if (activeGates.length < controller.state.effectiveGates.length) ...[
           const SizedBox(height: 6),
           Text(
-            'Showing ${activeGates.length} of ${kGates.length} gates relevant to $instrument.',
+            'Showing ${activeGates.length} of ${controller.state.effectiveGates.length} gates relevant to $instrument.',
             style: TextStyle(color: context.c.textTertiary, fontSize: 11),
           ),
         ],
@@ -738,6 +739,7 @@ class _PlanStep extends StatelessWidget {
 class _SizeStep extends StatelessWidget {
   const _SizeStep({
     super.key,
+    required this.controller,
     required this.instrument,
     required this.slCtrl,
     required this.entriesCtrl,
@@ -749,6 +751,7 @@ class _SizeStep extends StatelessWidget {
     required this.onInstrumentChange,
     required this.onInputChange,
   });
+  final TradingScreenViewModel controller;
   final String instrument;
   final TextEditingController slCtrl;
   final TextEditingController entriesCtrl;
@@ -762,7 +765,7 @@ class _SizeStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final meta = kInstruments[instrument]!;
+    final meta = controller.state.effectiveInstruments[instrument]!;
     final sl = double.tryParse(slCtrl.text) ?? 0;
     final minTp = sl * 2;
     final hasTp = takeProfit > 0;
@@ -815,7 +818,7 @@ class _SizeStep extends StatelessWidget {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: kInstruments.keys.map((k) {
+          children: controller.state.effectiveInstruments.keys.map((k) {
             return ChoiceChip(
               label: Text(k == 'NQ' ? 'NQ100' : k),
               selected: instrument == k,

@@ -27,7 +27,8 @@ class IntelligenceEngine {
     final today = c.getTodayPnl();
     final trades = c.getTodayTrades();
     final autoGates = c.computeAutoGates();
-    final passedCount = kGates.where((g) {
+    final gates = c.state.effectiveGates;
+    final passedCount = gates.where((g) {
       if (g.auto) return autoGates[g.id] ?? false;
       return c.state.checks[g.id] ?? false;
     }).length;
@@ -86,8 +87,8 @@ class IntelligenceEngine {
       );
     }
 
-    if (passedCount < kGates.length && session.ok) {
-      final remaining = kGates.length - passedCount;
+    if (passedCount < gates.length && session.ok) {
+      final remaining = gates.length - passedCount;
       insights.add(
         Insight(
           Icons.checklist,
@@ -95,9 +96,7 @@ class IntelligenceEngine {
           AppTheme.accent,
         ),
       );
-    } else if (passedCount == kGates.length &&
-        session.ok &&
-        trades.length < 2) {
+    } else if (passedCount == gates.length && session.ok && trades.length < 2) {
       insights.add(
         Insight(
           Icons.rocket_launch_outlined,
@@ -266,8 +265,9 @@ class IntelligenceEngine {
     int score = 0;
     final session = c.getSessionInfo();
     final auto = c.computeAutoGates();
-    final total = kGates.length;
-    final passed = kGates.where((g) {
+    final effectiveGates = c.state.effectiveGates;
+    final total = effectiveGates.length;
+    final passed = effectiveGates.where((g) {
       if (g.auto) return auto[g.id] ?? false;
       return c.state.checks[g.id] ?? false;
     }).length;

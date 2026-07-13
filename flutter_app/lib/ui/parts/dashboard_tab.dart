@@ -26,7 +26,9 @@ class _DashboardTab extends StatelessWidget {
         ? 0.0
         : (wins / allRealTrades.length) * 100;
     final balance = c.state.balance + challenge;
-    final progress = (challenge / 1250).clamp(0.0, 1.0);
+    final progress = c.state.balance > 0
+        ? (challenge / c.state.balance).clamp(0.0, 1.0)
+        : 0.0;
     final streak = IntelligenceEngine.disciplineStreak(c);
 
     return ListView(
@@ -43,38 +45,16 @@ class _DashboardTab extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        '4x Trades',
+                        'LocoTrader',
                         style: Theme.of(
                           context,
                         ).textTheme.headlineMedium?.copyWith(fontSize: 24),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFFD740), Color(0xFFFFA000)],
-                          ),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'PREMIUM',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _eatTime(c.nowEAT),
+                    '${session.label} · ${_eatTime(c.nowEAT)}',
                     style: TextStyle(
                       color: context.c.textTertiary,
                       fontSize: 13,

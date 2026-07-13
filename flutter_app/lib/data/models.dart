@@ -247,8 +247,8 @@ abstract class AppState with _$AppState {
 
   const factory AppState({
     @Default(kCurrentSchemaVersion) int schemaVersion,
-    @Default(25000.0) double balance,
-    @Default('2026-04-20') String startDate,
+    @Default(0.0) double balance,
+    @Default('') String startDate,
     @Default(0.0) double priorPnl,
     @Default({}) Map<String, bool> checks,
     @Default({}) Map<String, String> gateProofs,
@@ -293,19 +293,123 @@ abstract class AppState with _$AppState {
     @Default(NotificationPrefs()) NotificationPrefs notificationPrefs,
 
     /// Configurable risk cap in USD per single trade. Drives lot/risk
-    /// calculation in Trade Flow → Size step. Default 125 USD.
-    @Default(125.0) double riskCapUsd,
+    /// calculation in Trade Flow → Size step. Default 100 USD.
+    @Default(100.0) double riskCapUsd,
 
     /// In-flight wizard draft so the Trade Flow tab can be left and
     /// returned to without losing inputs. Cleared after the trade is
     /// logged successfully.
     WizardDraft? wizardDraft,
+
+    /// User-configured gates (replaces hardcoded kGates). When empty,
+    /// falls back to kGates for backward compatibility.
+    @Default([]) List<UserGate> userGates,
+
+    /// User-selected instruments with metadata. Keys are symbols (e.g.
+    /// 'XAUUSD'). When empty, falls back to kInstruments.
+    @Default({}) Map<String, Instrument> userInstruments,
+
+    /// User's IANA timezone identifier (e.g. 'Africa/Nairobi', 'UTC').
+    /// When null, falls back to EAT (UTC+3).
+    String? userTimezone,
   }) = _AppState;
 
   factory AppState.defaults() => const AppState();
 
   factory AppState.fromJson(Map<String, dynamic> json) =>
       _$AppStateFromJson(json);
+
+  /// Effective gate list: user-configured gates if set, otherwise empty.
+  /// New users must configure gates via onboarding or settings.
+  List<Gate> get effectiveGates {
+    if (userGates.isNotEmpty) {
+      return userGates
+          .map(
+            (ug) => Gate(
+              id: ug.id,
+              auto: ug.auto,
+              label: ug.label,
+              sub: ug.sub,
+              symbols: ug.symbols,
+            ),
+          )
+          .toList();
+    }
+    return [];
+  }
+
+  /// Effective instrument map: user-selected if set, otherwise generic defaults.
+  Map<String, Instrument> get effectiveInstruments {
+    if (userInstruments.isNotEmpty) return userInstruments;
+    return const {
+      'EURUSD': Instrument(
+        unit: 'pips',
+        pipVal: 1,
+        desc: 'Euro / US Dollar',
+        category: 'forex_major',
+      ),
+      'XAUUSD': Instrument(
+        unit: r'$ price move',
+        pipVal: 1,
+        desc: 'Gold / US Dollar',
+        category: 'commodities',
+      ),
+      'NAS100': Instrument(
+        unit: 'points',
+        pipVal: 1,
+        desc: 'Nasdaq 100 Index',
+        category: 'indices',
+      ),
+      'BTCUSD': Instrument(
+        unit: r'$ price move',
+        pipVal: 1,
+        desc: 'Bitcoin / US Dollar',
+        category: 'crypto',
+      ),
+    };
+  }
+
+  /// UTC offset in hours derived from user timezone. Defaults to +3 (EAT).
+  int get utcOffsetHours {
+    switch (userTimezone) {
+      case 'America/New_York':
+        return -4;
+      case 'America/Chicago':
+        return -5;
+      case 'America/Los_Angeles':
+        return -7;
+      case 'Europe/London':
+        return 1;
+      case 'Europe/Berlin':
+        return 2;
+      case 'Europe/Moscow':
+        return 3;
+      case 'Africa/Nairobi':
+        return 3;
+      case 'Africa/Lagos':
+        return 1;
+      case 'Africa/Johannesburg':
+        return 2;
+      case 'Asia/Dubai':
+        return 4;
+      case 'Asia/Kolkata':
+        return 5;
+      case 'Asia/Singapore':
+        return 8;
+      case 'Asia/Tokyo':
+        return 9;
+      case 'Asia/Shanghai':
+        return 8;
+      case 'Australia/Sydney':
+        return 11;
+      case 'Pacific/Auckland':
+        return 13;
+      case 'UTC':
+        return 0;
+      default:
+        return 0; // UTC fallback for unconfigured users
+    }
+  }
 
   String toPrettyJson() {
     const encoder = JsonEncoder.withIndent('  ');
@@ -344,6 +448,23 @@ const List<MoodOption> kMoodOptions = <MoodOption>[
   MoodOption('Frustrated', '😤', 'Frustrated'),
   MoodOption('Hyped', '🤩', 'Hyped'),
 ];
+
+/// User-configurable gate stored in AppState (JSON-serializable).
+/// Unlike [Gate], this is mutable via the gate management UI.
+@freezed
+abstract class UserGate with _$UserGate {
+  const factory UserGate({
+    required String id,
+    @Default(false) bool auto,
+    required String label,
+    @Default('') String sub,
+    @Default(null) List<String>? symbols,
+    @Default(0) int sortOrder,
+  }) = _UserGate;
+
+  factory UserGate.fromJson(Map<String, dynamic> json) =>
+      _$UserGateFromJson(json);
+}
 
 class Gate {
   const Gate({
@@ -447,16 +568,17 @@ const List<Gate> kGates = <Gate>[
   ),
 ];
 
-class Instrument {
-  const Instrument({
-    required this.unit,
-    required this.pipVal,
-    required this.desc,
-  });
+@freezed
+abstract class Instrument with _$Instrument {
+  const factory Instrument({
+    required String unit,
+    @Default(1.0) double pipVal,
+    @Default('') String desc,
+    @Default('') String category,
+  }) = _Instrument;
 
-  final String unit;
-  final double pipVal;
-  final String desc;
+  factory Instrument.fromJson(Map<String, dynamic> json) =>
+      _$InstrumentFromJson(json);
 }
 
 const Map<String, Instrument> kInstruments = <String, Instrument>{

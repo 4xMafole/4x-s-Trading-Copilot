@@ -2080,9 +2080,7 @@ class _RiskCapCardState extends State<_RiskCapCard> {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                      'Risk cap set to \$${v.toStringAsFixed(0)}.',
-                    ),
+                    content: Text('Risk cap set to \$${v.toStringAsFixed(0)}.'),
                   ),
                 );
               }
@@ -2093,17 +2091,11 @@ class _RiskCapCardState extends State<_RiskCapCard> {
             children: [
               Text(
                 '\$25',
-                style: TextStyle(
-                  color: context.c.textTertiary,
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: context.c.textTertiary, fontSize: 11),
               ),
               Text(
                 '\$1,000',
-                style: TextStyle(
-                  color: context.c.textTertiary,
-                  fontSize: 11,
-                ),
+                style: TextStyle(color: context.c.textTertiary, fontSize: 11),
               ),
             ],
           ),

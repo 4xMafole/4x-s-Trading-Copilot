@@ -77,82 +77,50 @@ String eatDateStr(DateTime eat) {
   return '$y-$m-$d';
 }
 
-SessionInfo computeSessionInfo(DateTime eat) {
-  final h = eat.toUtc().hour;
-  final m = eat.toUtc().minute;
+SessionInfo computeSessionInfo(DateTime userTime) {
+  final h = userTime.toUtc().hour;
+  final m = userTime.toUtc().minute;
   final t = h * 60 + m;
-  final fri = eat.toUtc().weekday == DateTime.friday;
 
-  if (t < 540) {
+  // Generic session windows based on market hours (UTC-relative).
+  // These are informational, not blocking (v1 — user can configure in Settings).
+  if (t < 480) {
     return const SessionInfo(
-      label: 'Pre-London - no trade',
-      type: 'gray',
-      ok: false,
-      detail:
-          'Market not open for your sessions. Study H4/Daily and mark key levels.',
-    );
-  }
-  if (t < 630) {
-    return const SessionInfo(
-      label: 'Early London - dead zone',
-      type: 'red',
-      ok: false,
-      detail: '09:00-10:30 EAT: hard no-trade. Observe only.',
-    );
-  }
-  if (t < 780) {
-    return const SessionInfo(
-      label: 'Mid London - valid',
-      type: 'green',
-      ok: true,
-      detail: '10:30-13:00 EAT: valid setups. Keep risk strict.',
-    );
-  }
-  if (t < 900) {
-    return const SessionInfo(
-      label: 'Late London - prime',
-      type: 'green',
-      ok: true,
-      detail: '13:00-15:00 EAT: prime multi-instrument window.',
-    );
-  }
-  if (t <= 990) {
-    return const SessionInfo(
-      label: 'BLACKOUT - no execution',
-      type: 'red',
-      ok: false,
-      detail: '15:00-16:30 EAT: no exceptions.',
-    );
-  }
-  if (fri && t >= 1200) {
-    return const SessionInfo(
-      label: 'Friday kill-switch',
-      type: 'red',
-      ok: false,
-      detail: 'After 20:00 EAT Friday: flat only, no new trades.',
-    );
-  }
-  if (t <= 1110) {
-    return const SessionInfo(
-      label: 'NY Open - prime',
-      type: 'green',
-      ok: true,
-      detail: '16:30-18:30 EAT: prime NY window.',
-    );
-  }
-  if (t <= 1200) {
-    return const SessionInfo(
-      label: 'NY Mid - caution',
+      label: 'Asian Session',
       type: 'amber',
       ok: true,
-      detail: '18:30-20:00 EAT: continuation setups only.',
+      detail: 'Asian session. Lower volatility on most pairs.',
+    );
+  }
+  if (t < 720) {
+    return const SessionInfo(
+      label: 'London Session',
+      type: 'green',
+      ok: true,
+      detail: 'London session active. High liquidity.',
+    );
+  }
+  if (t < 930) {
+    return const SessionInfo(
+      label: 'NY Session',
+      type: 'green',
+      ok: true,
+      detail: 'New York session active. Peak volume.',
+    );
+  }
+  if (t < 1020) {
+    return const SessionInfo(
+      label: 'NY Afternoon',
+      type: 'amber',
+      ok: true,
+      detail: 'NY winding down. Reduced momentum.',
     );
   }
   return const SessionInfo(
-    label: 'NY Late - no trade',
+    label: 'Off-hours',
     type: 'gray',
-    ok: false,
-    detail: 'Session closed. Journal and review compliance.',
+    ok: true,
+    detail: 'Markets quiet. Crypto still active.',
   );
 }
 
@@ -191,7 +159,7 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) async {
       final previousMinute = state.nowEAT.toUtc().minute;
-      final newNow = _getEAT();
+      final newNow = _getUserTime();
       emit(state.copyWith(nowEAT: newNow));
       await checkLock();
       if (newNow.toUtc().minute != previousMinute) {
@@ -287,26 +255,21 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
   double getChallengePnl() => state.appState.priorPnl + getTodayPnl();
 
   int getDayNumber() {
+    final startStr = state.appState.startDate;
+    if (startStr.isEmpty) return 1;
     final start =
-        DateTime.tryParse('${state.appState.startDate}T00:00:00Z') ??
-        DateTime.utc(2026, 4, 20);
+        DateTime.tryParse('${startStr}T00:00:00Z') ?? DateTime.now().toUtc();
     final today = DateTime.parse('${eatDateStr(state.nowEAT)}T00:00:00Z');
     final diff = today.difference(start).inDays + 1;
     return diff < 1 ? 1 : diff;
   }
 
   Map<String, bool> computeAutoGates() {
-    final h = state.nowEAT.toUtc().hour;
-    final m = state.nowEAT.toUtc().minute;
-    final t = h * 60 + m;
-    final fri = state.nowEAT.toUtc().weekday == DateTime.friday;
     final tc = getTodayTrades().length;
-
+    // Generic auto-gates: only trade-cap and lock are universal.
+    // Time-based gates are now user-configured (not hardcoded).
     return <String, bool>{
-      'g2': !(t >= 540 && t < 630),
-      'g3': !(t >= 900 && t <= 990),
       'g8': tc < state.appState.dailyTradeCap && !state.appState.lock,
-      'g11': !(fri && t >= 1200),
     };
   }
 
@@ -542,6 +505,21 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
   Future<void> setRiskCapUsd(double v) async {
     final clamped = v.clamp(25.0, 1000.0).toDouble();
     await _save(state.appState.copyWith(riskCapUsd: clamped));
+  }
+
+  /// Replaces the user's pre-trade gate list.
+  Future<void> setUserGates(List<UserGate> gates) async {
+    await _save(state.appState.copyWith(userGates: gates));
+  }
+
+  /// Replaces the user's selected instrument map.
+  Future<void> setUserInstruments(Map<String, Instrument> instruments) async {
+    await _save(state.appState.copyWith(userInstruments: instruments));
+  }
+
+  /// Updates the user's timezone preference.
+  Future<void> setUserTimezone(String? tz) async {
+    await _save(state.appState.copyWith(userTimezone: tz));
   }
 
   /// Persists / replaces the in-flight wizard draft.
@@ -1527,6 +1505,13 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
 
   static DateTime _getEAT() =>
       DateTime.now().toUtc().add(const Duration(hours: 3));
+
+  /// Returns the current time adjusted to the user's configured timezone.
+  /// Falls back to EAT (UTC+3) when no timezone is set.
+  DateTime _getUserTime() {
+    final offset = state.appState.utcOffsetHours;
+    return DateTime.now().toUtc().add(Duration(hours: offset));
+  }
 
   // ── Reactive local-notification triggers ───────────────────────────────
   // Memory-only flags so we only fire on threshold crossings, not on every

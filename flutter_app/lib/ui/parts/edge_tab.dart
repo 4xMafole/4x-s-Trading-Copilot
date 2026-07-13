@@ -54,10 +54,7 @@ class _EdgeTabState extends State<_EdgeTab>
               const SizedBox(height: 4),
               Text(
                 'What actually makes you money',
-                style: TextStyle(
-                  color: context.c.textSecondary,
-                  fontSize: 13,
-                ),
+                style: TextStyle(color: context.c.textSecondary, fontSize: 13),
               ),
             ],
           ),
@@ -283,10 +280,7 @@ class _EdgeTabState extends State<_EdgeTab>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Text(
             body,

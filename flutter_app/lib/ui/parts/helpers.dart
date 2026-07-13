@@ -21,7 +21,7 @@ Color _sessionTone(BuildContext context, String type) {
 String _eatTime(DateTime dt) {
   return '${dt.toUtc().hour.toString().padLeft(2, '0')}:'
       '${dt.toUtc().minute.toString().padLeft(2, '0')}:'
-      '${dt.toUtc().second.toString().padLeft(2, '0')} EAT';
+      '${dt.toUtc().second.toString().padLeft(2, '0')}';
 }
 
 String _compact(double v) {
@@ -119,7 +119,6 @@ class _ThemeModeSelector extends StatelessWidget {
   }
 }
 
-
 // -----------------------------------------------------------------------
 //  IMAGE VIEWER (Hero target for journal chart screenshots)
 // -----------------------------------------------------------------------
@@ -173,7 +172,6 @@ class _ImageViewerScreen extends StatelessWidget {
     );
   }
 }
-
 
 // -----------------------------------------------------------------------
 //  ANIMATED NUMBER � tweens between values for snappy KPI updates

@@ -6,7 +6,14 @@ import { Logo, LogoIcon } from './components/Logo';
 const PADDLE_ENV = 'sandbox'; // 'sandbox' or 'production'
 const PADDLE_TOKEN = 'test_624badc1cd5bed55b29061370cf'; // Dashboard > Developer Tools > Authentication
 const PADDLE_LIFETIME_PRICE_ID = 'pri_01kxew356qb5kfvyccsjrjmttg'; // $49 one-time
-const PADDLE_FEATURE_PRICE_ID = 'pri_01kxew27g9f08pzr3sqv12y3c4'; // $5 one-time
+
+// Feature request boost prices — create these in Paddle under your "Feature Request" product
+const PADDLE_FEATURE_PRICES: Record<number, string> = {
+  5: 'pri_01kxew27g9f08pzr3sqv12y3c4',   // $5
+  10: 'pri_REPLACE_WITH_10_PRICE_ID',      // $10
+  25: 'pri_REPLACE_WITH_25_PRICE_ID',      // $25
+  50: 'pri_REPLACE_WITH_50_PRICE_ID',      // $50
+};
 
 // Initialize Paddle on load
 declare global { interface Window { Paddle: any; } }
@@ -220,7 +227,9 @@ function FeatureRequest() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || amount < 5) return;
-    openCheckout(PADDLE_FEATURE_PRICE_ID, {
+    const priceId = PADDLE_FEATURE_PRICES[amount];
+    if (!priceId) { alert('Invalid amount selected'); return; }
+    openCheckout(priceId, {
       feature_title: title.trim(),
       feature_description: desc.trim(),
     });

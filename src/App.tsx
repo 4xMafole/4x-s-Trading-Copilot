@@ -3,16 +3,16 @@ import { Logo, LogoIcon } from './components/Logo';
 
 // ── Paddle Config ──
 // Replace with your real IDs from Paddle Dashboard
-const PADDLE_ENV = 'sandbox'; // 'sandbox' or 'production'
-const PADDLE_TOKEN = 'test_624badc1cd5bed55b29061370cf'; // Dashboard > Developer Tools > Authentication
-const PADDLE_LIFETIME_PRICE_ID = 'pri_01kxew356qb5kfvyccsjrjmttg'; // $49 one-time
+const PADDLE_ENV = 'production'; // 'sandbox' or 'production'
+const PADDLE_TOKEN = 'live_d979fa11bd518d23d0ece24d6e0'; // Dashboard > Developer Tools > Authentication
+const PADDLE_LIFETIME_PRICE_ID = 'pri_01kxevvp3cb1ww5xxve1nawbp5'; // $49 one-time
 
 // Feature request boost prices — create these in Paddle under your "Feature Request" product
 const PADDLE_FEATURE_PRICES: Record<number, string> = {
-  5: 'pri_01kxew27g9f08pzr3sqv12y3c4',   // $5
-  10: 'pri_REPLACE_WITH_10_PRICE_ID',      // $10
-  25: 'pri_REPLACE_WITH_25_PRICE_ID',      // $25
-  50: 'pri_REPLACE_WITH_50_PRICE_ID',      // $50
+  5: 'pri_01kxevxmrv2hcv86eefe42s8c3',   // $5
+  10: 'pri_01kxf3cy3ry682sjfyqs33n3bm',      // $10
+  25: 'pri_01kxf3dpdcns0zgz505h1k7rar',      // $25
+  50: 'pri_01kxf3efy541gwymsktx3c4n1f',      // $50
 };
 
 // Initialize Paddle on load

@@ -55,6 +55,9 @@ export default function App() {
 
   if (page === 'thank-you-lifetime') return <ThankYouLifetime />;
   if (page === 'thank-you-feature') return <ThankYouFeature />;
+  if (page === 'terms') return <LegalPage title="Terms of Service" content={termsContent} />;
+  if (page === 'privacy') return <LegalPage title="Privacy Policy" content={privacyContent} />;
+  if (page === 'refund') return <LegalPage title="Refund Policy" content={refundContent} />;
 
   return (
     <div className="min-h-screen bg-[#050508] text-white font-sans selection:bg-blue-500/20 overflow-x-hidden">
@@ -72,6 +75,9 @@ function getPage() {
   const path = window.location.pathname;
   if (path === '/thank-you-lifetime') return 'thank-you-lifetime';
   if (path === '/thank-you-feature') return 'thank-you-feature';
+  if (path === '/terms') return 'terms';
+  if (path === '/privacy') return 'privacy';
+  if (path === '/refund') return 'refund';
   return 'home';
 }
 
@@ -487,8 +493,150 @@ function Footer() {
     <footer className="border-t border-white/[0.04] py-10 sm:py-12 px-6 sm:px-12">
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <Logo size={28} variant="full" />
-        <span className="text-xs text-white/15">© {new Date().getFullYear()}</span>
+        <div className="flex gap-5 text-xs text-white/25">
+          <a href="/terms" className="hover:text-white/50 transition">Terms</a>
+          <a href="/privacy" className="hover:text-white/50 transition">Privacy</a>
+          <a href="/refund" className="hover:text-white/50 transition">Refund Policy</a>
+        </div>
+        <span className="text-xs text-white/15">&copy; {new Date().getFullYear()} LocoTrader</span>
       </div>
     </footer>
   );
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  LEGAL PAGES
+// ═══════════════════════════════════════════════════════════════
+
+function LegalPage({ title, content }: { title: string; content: string }) {
+  return (
+    <div className="min-h-screen bg-[#050508] text-white font-sans px-6 py-20">
+      <div className="max-w-2xl mx-auto">
+        <a href="/" className="inline-flex items-center gap-2 text-xs text-white/30 hover:text-white/60 transition mb-8">
+          <span>&larr;</span> Back to LocoTrader
+        </a>
+        <h1 className="text-3xl font-black mb-8">{title}</h1>
+        <div
+          className="prose prose-invert prose-sm max-w-none [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mt-8 [&_h2]:mb-3 [&_p]:text-white/50 [&_p]:leading-relaxed [&_p]:mb-4 [&_li]:text-white/50 [&_ul]:mb-4 [&_ul]:list-disc [&_ul]:pl-5"
+          dangerouslySetInnerHTML={{ __html: content }}
+        />
+        <p className="text-white/20 text-xs mt-12">Last updated: July 2026</p>
+      </div>
+    </div>
+  );
+}
+
+const termsContent = `
+<p>These Terms of Service ("Terms") govern your use of the LocoTrader application and website (locotrader.app), operated by LocoTrader ("we", "us", "our").</p>
+
+<h2>1. Acceptance of Terms</h2>
+<p>By accessing or using LocoTrader, you agree to be bound by these Terms. If you do not agree, do not use our services.</p>
+
+<h2>2. Description of Service</h2>
+<p>LocoTrader is a trading journal and discipline tool that provides pre-trade checklists, trade logging, edge analytics, and related features. LocoTrader does not provide financial advice, trading signals, or investment recommendations.</p>
+
+<h2>3. Account Registration</h2>
+<p>You must provide accurate information when creating an account. You are responsible for maintaining the security of your account credentials. You must be at least 18 years old to use this service.</p>
+
+<h2>4. Payments and Subscriptions</h2>
+<p>Payments are processed securely by Paddle (our Merchant of Record). By purchasing, you agree to Paddle's terms. Prices are displayed inclusive of applicable taxes. Lifetime access means access for the lifetime of the product.</p>
+
+<h2>5. Acceptable Use</h2>
+<p>You agree not to:</p>
+<ul>
+<li>Use the service for any illegal purpose</li>
+<li>Attempt to reverse-engineer or exploit the application</li>
+<li>Share your account with others or resell access</li>
+<li>Upload malicious content or interfere with other users</li>
+</ul>
+
+<h2>6. Intellectual Property</h2>
+<p>All content, features, and functionality of LocoTrader are owned by us and protected by intellectual property laws. Your trading data remains yours.</p>
+
+<h2>7. Limitation of Liability</h2>
+<p>LocoTrader is a journaling and discipline tool, not a financial advisor. We are not liable for any trading losses, missed opportunities, or financial decisions made while using our service. Trading involves substantial risk of loss.</p>
+
+<h2>8. Termination</h2>
+<p>We may terminate or suspend your account for violation of these Terms. You may delete your account at any time.</p>
+
+<h2>9. Changes to Terms</h2>
+<p>We may update these Terms from time to time. Continued use after changes constitutes acceptance.</p>
+
+<h2>10. Contact</h2>
+<p>For questions about these Terms, contact us at support@locotrader.app.</p>
+`;
+
+const privacyContent = `
+<p>This Privacy Policy describes how LocoTrader ("we", "us", "our") collects, uses, and protects your personal information when you use our application and website (locotrader.app).</p>
+
+<h2>1. Information We Collect</h2>
+<p><strong>Account information:</strong> Email address, display name (when you sign up).</p>
+<p><strong>Trading data:</strong> Trades you log, journal entries, checklist responses, and analytics. This data is yours and stored securely.</p>
+<p><strong>Payment information:</strong> Handled entirely by Paddle (our payment processor). We do not store your credit card details.</p>
+<p><strong>Usage data:</strong> Anonymous analytics about how you use the app (no personal trading data is shared).</p>
+
+<h2>2. How We Use Your Information</h2>
+<ul>
+<li>To provide and maintain the LocoTrader service</li>
+<li>To process payments and manage your subscription</li>
+<li>To send transactional emails (purchase confirmations, feature updates)</li>
+<li>To improve the product based on aggregated, anonymized usage patterns</li>
+</ul>
+
+<h2>3. Data Storage and Security</h2>
+<p>Your data is stored on Supabase (hosted on AWS) with row-level security. Each user can only access their own data. We use encryption in transit (TLS) and at rest.</p>
+
+<h2>4. Third-Party Services</h2>
+<ul>
+<li><strong>Paddle:</strong> Payment processing (Merchant of Record)</li>
+<li><strong>Supabase:</strong> Database and authentication</li>
+<li><strong>Resend:</strong> Transactional emails</li>
+<li><strong>Vercel:</strong> Website hosting</li>
+</ul>
+
+<h2>5. Your Rights</h2>
+<p>You have the right to:</p>
+<ul>
+<li>Access your personal data</li>
+<li>Export your trading data</li>
+<li>Delete your account and all associated data</li>
+<li>Opt out of non-essential communications</li>
+</ul>
+
+<h2>6. Data Retention</h2>
+<p>We retain your data for as long as your account is active. If you delete your account, all personal data is permanently removed within 30 days.</p>
+
+<h2>7. Cookies</h2>
+<p>We use minimal cookies required for authentication and session management. No third-party tracking cookies are used.</p>
+
+<h2>8. Children's Privacy</h2>
+<p>LocoTrader is not intended for users under 18 years of age.</p>
+
+<h2>9. Changes to This Policy</h2>
+<p>We may update this Privacy Policy from time to time. We will notify you of material changes via email.</p>
+
+<h2>10. Contact</h2>
+<p>For privacy-related inquiries, contact us at support@locotrader.app.</p>
+`;
+
+const refundContent = `
+<p>We want you to be completely satisfied with your purchase. This policy applies to all purchases made through LocoTrader (locotrader.app).</p>
+
+<h2>14-Day Refund Policy</h2>
+<p>If you are not satisfied with your purchase, you may request a full refund within <strong>14 days</strong> of your purchase date. No questions asked.</p>
+
+<h2>How to Request a Refund</h2>
+<p>Email us at <strong>support@locotrader.app</strong> with your purchase email address and we will process your refund within 5-7 business days.</p>
+
+<h2>Lifetime Access Purchases</h2>
+<p>Lifetime Pro purchases ($49) are eligible for a full refund within 14 days of purchase. After 14 days, lifetime purchases are non-refundable as access is granted immediately and permanently.</p>
+
+<h2>Feature Request Funding</h2>
+<p>Feature request payments ($5-$50) are non-refundable once the feature has been marked as "planned" or "building." If the feature has not yet been started, you may request a refund within 14 days.</p>
+
+<h2>Processing</h2>
+<p>Refunds are processed by Paddle (our payment processor) and will appear on your statement within 5-10 business days depending on your bank.</p>
+
+<h2>Contact</h2>
+<p>For refund requests or questions, email support@locotrader.app.</p>
+`;

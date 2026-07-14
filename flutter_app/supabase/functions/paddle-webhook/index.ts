@@ -7,22 +7,32 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
 async function fetchCustomerEmail(customerId: string): Promise<string> {
-  if (!customerId || !PADDLE_API_KEY) return "";
-  const apiBase = PADDLE_API_KEY.startsWith("test_")
-    ? "https://sandbox-api.paddle.com"
-    : "https://api.paddle.com";
-  try {
-    const res = await fetch(`${apiBase}/customers/${customerId}`, {
-      headers: { Authorization: `Bearer ${PADDLE_API_KEY}` },
-    });
-    if (!res.ok) { console.error(`Paddle ${res.status}:`, await res.text()); return ""; }
-    const json = await res.json();
-    return json?.data?.email ?? "";
-  } catch (e) { console.error("fetchCustomerEmail:", e); return ""; }
+  if (!customerId) { console.error("fetchCustomerEmail: no customerId"); return ""; }
+  if (!PADDLE_API_KEY) { console.error("fetchCustomerEmail: PADDLE_API_KEY is empty"); return ""; }
+  // Try sandbox first, then production
+  const bases = ["https://sandbox-api.paddle.com", "https://api.paddle.com"];
+  for (const apiBase of bases) {
+    try {
+      console.log(`Trying ${apiBase}/customers/${customerId}`);
+      const res = await fetch(`${apiBase}/customers/${customerId}`, {
+        headers: { Authorization: `Bearer ${PADDLE_API_KEY}` },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        const email = json?.data?.email ?? "";
+        console.log(`Got email from ${apiBase}:`, email);
+        return email;
+      }
+      const txt = await res.text();
+      console.error(`${apiBase} returned ${res.status}:`, txt);
+    } catch (e) { console.error(`${apiBase} error:`, e); }
+  }
+  return "";
 }
 
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  if (!RESEND_API_KEY || !to) { console.log("sendEmail skipped — no key or no to"); return; }
+  if (!RESEND_API_KEY) { console.error("sendEmail SKIPPED: RESEND_API_KEY is empty or not set"); return; }
+  if (!to) { console.error("sendEmail SKIPPED: recipient email (to) is empty"); return; }
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -77,7 +87,7 @@ serve(async (req) => {
   if (paymentType === "lifetime_pro") {
     const { error } = await supabase.from("early_access_payments").insert({ email, amount: totalAmount, paddle_transaction_id: transactionId });
     if (error) console.error("DB error:", error.message);
-    await sendEmail(email, "You're in — LocoTrader Lifetime Pro confirmed", `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 24px;background:#050508;color:#fff;"><h1 style="font-size:28px;font-weight:900;">You're in.</h1><p style="color:#60a5fa;">Lifetime Pro confirmed.</p><p style="color:#9ca3af;line-height:1.7;">You just became a systematic trader. Lifetime Pro is locked to this email. When LocoTrader launches, you'll be the first in — no subscription, no limits, forever.</p><p style="color:#4b5563;font-size:12px;margin-top:24px;">Transaction: ${transactionId}</p></div>`);
+    await sendEmail(email, "You're in ï¿½ LocoTrader Lifetime Pro confirmed", `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 24px;background:#050508;color:#fff;"><h1 style="font-size:28px;font-weight:900;">You're in.</h1><p style="color:#60a5fa;">Lifetime Pro confirmed.</p><p style="color:#9ca3af;line-height:1.7;">You just became a systematic trader. Lifetime Pro is locked to this email. When LocoTrader launches, you'll be the first in ï¿½ no subscription, no limits, forever.</p><p style="color:#4b5563;font-size:12px;margin-top:24px;">Transaction: ${transactionId}</p></div>`);
 
   } else if (paymentType === "feature_request") {
     const featureTitle = String(customData?.feature_title ?? "Unnamed feature");
@@ -93,7 +103,7 @@ serve(async (req) => {
       featureId = ins?.id;
     }
     await supabase.from("feature_request_payments").insert({ feature_id: featureId, email, amount: totalAmount, paddle_transaction_id: transactionId });
-    await sendEmail(email, `Feature funded — "${featureTitle}"`, `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 24px;background:#050508;color:#fff;"><h1 style="font-size:28px;font-weight:900;">Your voice matters.</h1><p style="color:#60a5fa;">Feature funded — $${totalAmount}</p><p style="color:#9ca3af;line-height:1.7;">"${featureTitle}" submitted and funded. Funded features ship faster. We'll notify you when it ships.</p></div>`);
+    await sendEmail(email, `Feature funded ï¿½ "${featureTitle}"`, `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 24px;background:#050508;color:#fff;"><h1 style="font-size:28px;font-weight:900;">Your voice matters.</h1><p style="color:#60a5fa;">Feature funded ï¿½ $${totalAmount}</p><p style="color:#9ca3af;line-height:1.7;">"${featureTitle}" submitted and funded. Funded features ship faster. We'll notify you when it ships.</p></div>`);
   }
 
   return new Response(JSON.stringify({ received: true, type: paymentType, email, transactionId }), { status: 200, headers: { "Content-Type": "application/json" } });

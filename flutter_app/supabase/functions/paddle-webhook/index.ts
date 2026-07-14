@@ -87,7 +87,7 @@ serve(async (req) => {
   if (paymentType === "lifetime_pro") {
     const { error } = await supabase.from("early_access_payments").insert({ email, amount: totalAmount, paddle_transaction_id: transactionId });
     if (error) console.error("DB error:", error.message);
-    await sendEmail(email, "You're in � LocoTrader Lifetime Pro confirmed", `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 24px;background:#050508;color:#fff;"><h1 style="font-size:28px;font-weight:900;">You're in.</h1><p style="color:#60a5fa;">Lifetime Pro confirmed.</p><p style="color:#9ca3af;line-height:1.7;">You just became a systematic trader. Lifetime Pro is locked to this email. When LocoTrader launches, you'll be the first in � no subscription, no limits, forever.</p><p style="color:#4b5563;font-size:12px;margin-top:24px;">Transaction: ${transactionId}</p></div>`);
+    await sendEmail(email, "You're in - LocoTrader Lifetime Pro confirmed", lifetimeEmailHtml(transactionId));
 
   } else if (paymentType === "feature_request") {
     const featureTitle = String(customData?.feature_title ?? "Unnamed feature");
@@ -103,8 +103,88 @@ serve(async (req) => {
       featureId = ins?.id;
     }
     await supabase.from("feature_request_payments").insert({ feature_id: featureId, email, amount: totalAmount, paddle_transaction_id: transactionId });
-    await sendEmail(email, `Feature funded � "${featureTitle}"`, `<div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:40px 24px;background:#050508;color:#fff;"><h1 style="font-size:28px;font-weight:900;">Your voice matters.</h1><p style="color:#60a5fa;">Feature funded � $${totalAmount}</p><p style="color:#9ca3af;line-height:1.7;">"${featureTitle}" submitted and funded. Funded features ship faster. We'll notify you when it ships.</p></div>`);
+    await sendEmail(email, `Feature funded - "${featureTitle}"`, featureEmailHtml(featureTitle, featureDesc, totalAmount, transactionId));
   }
 
   return new Response(JSON.stringify({ received: true, type: paymentType, email, transactionId }), { status: 200, headers: { "Content-Type": "application/json" } });
 });
+
+// ── Email Templates ───────────────────────────────────────────────────
+
+const LOGO_SVG = `<svg width="40" height="40" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="14" fill="white"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/><path d="M26 44 L28 12 L38 12 L36 44Z" fill="#60A5FA" opacity="0.25"/></svg>`;
+
+function emailWrapper(content: string): string {
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#050508;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#050508;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;">
+        <!-- Logo -->
+        <tr><td style="padding-bottom:32px;">${LOGO_SVG}<span style="display:inline-block;vertical-align:middle;margin-left:12px;font-size:18px;font-weight:900;color:#fff;">Loco</span><span style="display:inline-block;vertical-align:middle;font-size:18px;font-weight:900;color:#60A5FA;">Trader</span></td></tr>
+        <!-- Content -->
+        <tr><td style="background:#0d0d18;border-radius:16px;padding:40px 32px;border:1px solid rgba(255,255,255,0.06);">
+          ${content}
+        </td></tr>
+        <!-- Footer -->
+        <tr><td style="padding-top:24px;text-align:center;">
+          <a href="https://locotrader.app" style="color:#4b5563;font-size:12px;text-decoration:none;">locotrader.app</a>
+          <p style="color:#1f2937;font-size:11px;margin-top:8px;">You received this because you made a purchase on LocoTrader.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+function lifetimeEmailHtml(txnId: string): string {
+  return emailWrapper(`
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="display:inline-block;background:#3B82F6;color:#fff;font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 12px;border-radius:20px;text-transform:uppercase;">Founding Member</div>
+    </div>
+    <h1 style="color:#ffffff;font-size:28px;font-weight:900;margin:0 0 8px;text-align:center;">You're in.</h1>
+    <p style="color:#60a5fa;font-size:14px;text-align:center;margin:0 0 24px;">Lifetime Pro - confirmed</p>
+    <div style="width:48px;height:2px;background:#3B82F6;margin:0 auto 24px;border-radius:1px;"></div>
+    <p style="color:#9ca3af;line-height:1.8;font-size:14px;margin:0 0 20px;">
+      You just joined the traders who decided to stop guessing.
+    </p>
+    <p style="color:#9ca3af;line-height:1.8;font-size:14px;margin:0 0 20px;">
+      Lifetime Pro is locked to this email. When LocoTrader launches, you will be the first to get access - no subscription, no limits, forever.
+    </p>
+    <p style="color:#9ca3af;line-height:1.8;font-size:14px;margin:0 0 20px;">
+      Here is what happens next:
+    </p>
+    <table cellpadding="0" cellspacing="0" style="margin-bottom:24px;width:100%;">
+      <tr><td style="padding:8px 0;color:#60a5fa;font-size:13px;width:24px;vertical-align:top;">1.</td><td style="padding:8px 0;color:#d1d5db;font-size:13px;">Early access build sent to your email before public launch</td></tr>
+      <tr><td style="padding:8px 0;color:#60a5fa;font-size:13px;width:24px;vertical-align:top;">2.</td><td style="padding:8px 0;color:#d1d5db;font-size:13px;">Your founding member badge added to your profile</td></tr>
+      <tr><td style="padding:8px 0;color:#60a5fa;font-size:13px;width:24px;vertical-align:top;">3.</td><td style="padding:8px 0;color:#d1d5db;font-size:13px;">Progress updates as we build</td></tr>
+    </table>
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);border-radius:8px;padding:12px 16px;margin-bottom:8px;">
+      <p style="color:#6b7280;font-size:11px;margin:0;">Transaction: ${txnId}</p>
+    </div>
+  `);
+}
+
+function featureEmailHtml(title: string, desc: string, amount: number, txnId: string): string {
+  return emailWrapper(`
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="display:inline-block;background:#3B82F6;color:#fff;font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 12px;border-radius:20px;text-transform:uppercase;">Feature Funded</div>
+    </div>
+    <h1 style="color:#ffffff;font-size:28px;font-weight:900;margin:0 0 8px;text-align:center;">Your voice matters.</h1>
+    <p style="color:#60a5fa;font-size:14px;text-align:center;margin:0 0 24px;">Funded - $${amount}</p>
+    <div style="width:48px;height:2px;background:#3B82F6;margin:0 auto 24px;border-radius:1px;"></div>
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;margin-bottom:24px;">
+      <p style="color:#ffffff;font-size:16px;font-weight:700;margin:0 0 8px;">"${title}"</p>
+      ${desc ? `<p style="color:#6b7280;font-size:13px;line-height:1.6;margin:0;">${desc}</p>` : ""}
+    </div>
+    <p style="color:#9ca3af;line-height:1.8;font-size:14px;margin:0 0 20px;">
+      Funded features ship faster. You have just moved this up the priority list.
+    </p>
+    <p style="color:#9ca3af;line-height:1.8;font-size:14px;margin:0 0 20px;">
+      We will notify you when this feature is being built and when it ships.
+    </p>
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.15);border-radius:8px;padding:12px 16px;">
+      <p style="color:#6b7280;font-size:11px;margin:0;">Amount: $${amount} | Transaction: ${txnId}</p>
+    </div>
+  `);
+}

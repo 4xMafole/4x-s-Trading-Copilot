@@ -148,12 +148,20 @@ class _TradingScreenState extends State<TradingScreen> {
       final prefs = c.state.notificationPrefs;
       final userTz = c.state.userTimezone;
       if (prefs.master && prefs.moodReminder) {
-        unawaited(NotificationCenter.instance.scheduleDailyMoodReminder(timezone: userTz));
+        unawaited(
+          NotificationCenter.instance.scheduleDailyMoodReminder(
+            timezone: userTz,
+          ),
+        );
       } else {
         unawaited(NotificationCenter.instance.cancelMoodReminder());
       }
       if (prefs.master && prefs.backupReminder) {
-        unawaited(NotificationCenter.instance.scheduleSundayBackupReminder(timezone: userTz));
+        unawaited(
+          NotificationCenter.instance.scheduleSundayBackupReminder(
+            timezone: userTz,
+          ),
+        );
       } else {
         unawaited(NotificationCenter.instance.cancelBackupReminder());
       }

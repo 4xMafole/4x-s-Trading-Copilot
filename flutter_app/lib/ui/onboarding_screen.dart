@@ -599,7 +599,7 @@ class _QuizPage extends StatelessWidget {
   }
 }
 
-class _TimezonePage extends StatelessWidget {
+class _TimezonePage extends StatefulWidget {
   const _TimezonePage({required this.timezone, required this.onChanged});
   final String timezone;
   final ValueChanged<String> onChanged;
@@ -609,8 +609,8 @@ class _TimezonePage extends StatelessWidget {
     ('America/New_York', 'New York', 'EST / UTC-5'),
     ('America/Chicago', 'Chicago', 'CST / UTC-6'),
     ('America/Los_Angeles', 'Los Angeles', 'PST / UTC-8'),
-    ('Europe/London', 'London', 'GMT / UTC+0 to +1'),
-    ('Europe/Berlin', 'Berlin', 'CET / UTC+1 to +2'),
+    ('Europe/London', 'London', 'GMT / UTC+0'),
+    ('Europe/Berlin', 'Berlin', 'CET / UTC+1'),
     ('Europe/Moscow', 'Moscow', 'MSK / UTC+3'),
     ('Africa/Nairobi', 'Nairobi', 'EAT / UTC+3'),
     ('Africa/Lagos', 'Lagos', 'WAT / UTC+1'),
@@ -621,8 +621,28 @@ class _TimezonePage extends StatelessWidget {
     ('Asia/Tokyo', 'Tokyo', 'JST / UTC+9'),
     ('Asia/Shanghai', 'Shanghai', 'CST / UTC+8'),
     ('Australia/Sydney', 'Sydney', 'AEDT / UTC+11'),
-    ('Pacific/Auckland', 'Auckland', 'NZST / UTC+13'),
+    ('Pacific/Auckland', 'Auckland', 'NZST / UTC+12'),
   ];
+
+  @override
+  State<_TimezonePage> createState() => _TimezonePageState();
+}
+
+class _TimezonePageState extends State<_TimezonePage> {
+  late final FixedExtentScrollController _scrollCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    final idx = _TimezonePage._timezones.indexWhere((t) => t.$1 == widget.timezone);
+    _scrollCtrl = FixedExtentScrollController(initialItem: idx < 0 ? 0 : idx);
+  }
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -635,91 +655,117 @@ class _TimezonePage extends StatelessWidget {
           const SizedBox(height: 32),
           Text(
             'Your timezone',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(
-            'Session times, trade timestamps, and notifications use this.',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface.withAlpha(150),
-              fontSize: 14,
-            ),
+            'Trade timestamps and notifications use this.',
+            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 14),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
+
+          // Drum-roll picker
           Expanded(
-            child: ListView.separated(
-              itemCount: _timezones.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (ctx, i) {
-                final tz = _timezones[i];
-                final selected = timezone == tz.$1;
-                return InkWell(
-                  onTap: () => onChanged(tz.$1),
-                  borderRadius: BorderRadius.circular(12),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: selected
-                            ? theme.colorScheme.primary
-                            : theme.dividerColor,
-                        width: selected ? 2 : 1,
-                      ),
-                      color: selected
-                          ? theme.colorScheme.primary.withAlpha(15)
-                          : theme.colorScheme.surface,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.public,
-                          size: 18,
-                          color: selected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.onSurface.withAlpha(100),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                tz.$2,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.onSurface,
-                                ),
-                              ),
-                              Text(
-                                tz.$3,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: theme.colorScheme.onSurface.withAlpha(
-                                    120,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (selected)
-                          Icon(
-                            Icons.check_circle_rounded,
-                            color: theme.colorScheme.primary,
-                            size: 20,
-                          ),
-                      ],
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Selection highlight band
+                Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withAlpha(18),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withAlpha(80),
+                      width: 1.5,
                     ),
                   ),
-                );
-              },
+                ),
+                // Top fade
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 80,
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            theme.scaffoldBackgroundColor,
+                            theme.scaffoldBackgroundColor.withAlpha(0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // Bottom fade
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 80,
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            theme.scaffoldBackgroundColor,
+                            theme.scaffoldBackgroundColor.withAlpha(0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // Wheel
+                ListWheelScrollView.useDelegate(
+                  controller: _scrollCtrl,
+                  itemExtent: 56,
+                  physics: const FixedExtentScrollPhysics(),
+                  onSelectedItemChanged: (i) {
+                    widget.onChanged(_TimezonePage._timezones[i].$1);
+                  },
+                  childDelegate: ListWheelChildListDelegate(
+                    children: _TimezonePage._timezones.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final tz = entry.value;
+                      final isSelected = widget.timezone == tz.$1;
+                      return AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: isSelected ? 17 : 14,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface.withAlpha(120),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(tz.$2),
+                            Text(
+                              tz.$3,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isSelected
+                                    ? theme.colorScheme.primary.withAlpha(180)
+                                    : theme.colorScheme.onSurface.withAlpha(70),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
@@ -799,7 +845,27 @@ class _RiskSetupPage extends StatelessWidget {
             'Account balance',
             style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+
+          // Quick-pick chips
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final amount in ['500', '1000', '5000', '10000', '25000', '50000', '100000'])
+                _BalanceChip(
+                  label: _formatBalanceChip(amount, currency),
+                  selected: balanceCtrl.text == amount,
+                  onTap: () {
+                    balanceCtrl.text = amount;
+                    onChanged();
+                  },
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Custom amount row
           Row(
             children: [
               // Currency picker
@@ -827,14 +893,12 @@ class _RiskSetupPage extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: balanceCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
                   decoration: InputDecoration(
-                    hintText: '10,000',
+                    hintText: 'Custom amount',
                     prefixText: _currencySymbol(currency),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -926,14 +990,54 @@ class _RiskSetupPage extends StatelessWidget {
 
   String _currencySymbol(String c) {
     switch (c) {
-      case 'USD':
-        return r'$';
-      case 'EUR':
-        return '€';
-      case 'GBP':
-        return '£';
-      default:
-        return '$c ';
+      case 'USD': return r'$';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      default: return '$c ';
     }
+  }
+
+  String _formatBalanceChip(String amount, String currency) {
+    final sym = _currencySymbol(currency);
+    final n = int.tryParse(amount) ?? 0;
+    if (n >= 1000) return '$sym${n ~/ 1000}k';
+    return '$sym$n';
+  }
+}
+
+// ── Balance quick-pick chip ───────────────────────────────────────────
+
+class _BalanceChip extends StatelessWidget {
+  const _BalanceChip({required this.label, required this.selected, required this.onTap});
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? theme.colorScheme.primary : theme.dividerColor,
+            width: selected ? 2 : 1,
+          ),
+          color: selected ? theme.colorScheme.primary.withAlpha(15) : null,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
   }
 }

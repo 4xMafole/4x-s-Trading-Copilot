@@ -2607,19 +2607,22 @@ class _NotificationsCard extends StatelessWidget {
                 children: [
                   _NotificationToggle(
                     title: 'Drawdown warning',
-                    subtitle: 'Fires when your daily or total drawdown enters the danger zone.',
+                    subtitle:
+                        'Fires when your daily or total drawdown enters the danger zone.',
                     value: p.drawdown,
                     onChanged: (v) => _save(p.copyWith(drawdown: v)),
                   ),
                   _NotificationToggle(
                     title: 'Weekly risk budget',
-                    subtitle: 'Warns at 80% used, alerts again when fully exhausted.',
+                    subtitle:
+                        'Warns at 80% used, alerts again when fully exhausted.',
                     value: p.riskBudget,
                     onChanged: (v) => _save(p.copyWith(riskBudget: v)),
                   ),
                   _NotificationToggle(
                     title: 'Account locked',
-                    subtitle: 'Notifies when auto-lock activates after consecutive losses.',
+                    subtitle:
+                        'Notifies when auto-lock activates after consecutive losses.',
                     value: p.lock,
                     onChanged: (v) => _save(p.copyWith(lock: v)),
                   ),
@@ -2631,26 +2634,30 @@ class _NotificationsCard extends StatelessWidget {
                   ),
                   _NotificationToggle(
                     title: 'Daily trade cap',
-                    subtitle: 'Fires when you reach your maximum trades for the day.',
+                    subtitle:
+                        'Fires when you reach your maximum trades for the day.',
                     value: p.dailyCap,
                     onChanged: (v) => _save(p.copyWith(dailyCap: v)),
                   ),
                   _NotificationToggle(
                     title: 'High-impact news',
-                    subtitle: 'Alert before major events: NFP, CPI, FOMC, interest rate decisions.',
+                    subtitle:
+                        'Alert before major events: NFP, CPI, FOMC, interest rate decisions.',
                     value: p.newsImminent,
                     onChanged: (v) => _save(p.copyWith(newsImminent: v)),
                   ),
                   const Divider(height: 24),
                   _NotificationToggle(
                     title: 'Morning mood check-in',
-                    subtitle: 'Daily reminder to log your emotional state before trading.',
+                    subtitle:
+                        'Daily reminder to log your emotional state before trading.',
                     value: p.moodReminder,
                     onChanged: (v) => _save(p.copyWith(moodReminder: v)),
                   ),
                   _NotificationToggle(
                     title: 'Weekly backup reminder',
-                    subtitle: 'Sunday reminder to export an encrypted backup of your data.',
+                    subtitle:
+                        'Sunday reminder to export an encrypted backup of your data.',
                     value: p.backupReminder,
                     onChanged: (v) => _save(p.copyWith(backupReminder: v)),
                   ),

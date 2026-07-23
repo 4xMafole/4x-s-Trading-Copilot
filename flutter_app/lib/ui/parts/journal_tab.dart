@@ -576,8 +576,9 @@ class _JournalTabState extends State<_JournalTab> {
                                         const TextInputType.numberWithOptions(
                                           decimal: true,
                                         ),
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                       labelText: 'Lots',
+                                      suffixIcon: _TooltipIcon('Position size in lots. 1 lot = 100,000 units. A micro lot = 0.01 lots.'),
                                     ),
                                   ),
                                 ),
@@ -586,25 +587,21 @@ class _JournalTabState extends State<_JournalTab> {
                             const SizedBox(height: 12),
                             TextField(
                               controller: sheetPnlCtrl,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              decoration: const InputDecoration(
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
                                 labelText: 'P&L (USD)',
+                                suffixIcon: _TooltipIcon('Your realized profit or loss. Negative = loss (e.g. -200), positive = win (e.g. +150).'),
                               ),
                             ),
                             const SizedBox(height: 12),
                             TextField(
                               controller: sheetPlannedRiskCtrl,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              decoration: const InputDecoration(
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              decoration: InputDecoration(
                                 labelText: 'Planned risk (USD)',
                                 hintText: 'From your calculator',
-                                prefixText: '\$ ',
+                                prefixText: r'$ ',
+                                suffixIcon: _TooltipIcon('The max USD you intended to lose on this trade. Used to measure slippage vs plan.'),
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -934,7 +931,7 @@ class _JournalTabState extends State<_JournalTab> {
                                         ? '${sheetDate!.year.toString().padLeft(4, '0')}-${sheetDate!.month.toString().padLeft(2, '0')}-${sheetDate!.day.toString().padLeft(2, '0')}'
                                         : null,
                                     time: sheetTime != null
-                                        ? '${sheetTime!.hour.toString().padLeft(2, '0')}:${sheetTime!.minute.toString().padLeft(2, '0')} EAT'
+                                        ? '${sheetTime!.hour.toString().padLeft(2, '0')}:${sheetTime!.minute.toString().padLeft(2, '0')}'
                                         : null,
                                     isHypothetical: enforcedHypothetical,
                                     setupQuality: sheetSetupQuality,
@@ -1779,6 +1776,31 @@ class _ReflectionChoiceBtn extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Tooltip icon for journal form fields ────────────────────────────────
+
+class _TooltipIcon extends StatelessWidget {
+  const _TooltipIcon(this.message);
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: message,
+      triggerMode: TooltipTriggerMode.tap,
+      showDuration: const Duration(seconds: 4),
+      preferBelow: true,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Icon(
+          Icons.help_outline,
+          size: 16,
+          color: Theme.of(context).colorScheme.onSurface.withAlpha(100),
         ),
       ),
     );

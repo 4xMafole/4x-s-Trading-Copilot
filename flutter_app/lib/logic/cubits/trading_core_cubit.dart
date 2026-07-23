@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -404,11 +405,21 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
   }
 
   /// Attach a post-trade reflection to an existing trade.
+  /// Saves locally (Hive) and syncs to Supabase.
   Future<void> setReflection(String tradeId, TradeReflection reflection) async {
     final next = state.appState.allTrades
         .map((t) => t.id == tradeId ? t.copyWith(reflection: reflection) : t)
         .toList();
     await _save(state.appState.copyWith(allTrades: next));
+
+    // Sync to Supabase (non-blocking, best-effort)
+    unawaited(() async {
+      try {
+        await _repository.saveReflection(tradeId, reflection);
+      } catch (e) {
+        debugPrint('setReflection Supabase sync failed: $e');
+      }
+    }());
   }
 
   // ── Daily mood (Sprint 2.3) ──────────────────────────────────────────────

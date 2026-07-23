@@ -23,7 +23,7 @@ class CloudBackupService {
   CloudBackupService();
 
   /// Magic header so we can sanity-check files before attempting decrypt.
-  static const String _magic = '4XBKPv1';
+  static const String _magic = 'LTBKPv1';
   static const int _pbkdf2Iterations = 200000;
   static const int _saltLength = 16;
   static const int _nonceLength = 12;
@@ -67,13 +67,13 @@ class CloudBackupService {
         .toIso8601String()
         .replaceAll(':', '-')
         .replaceAll('.', '-');
-    final path = '${dir.path}/4xtrades-backup-$ts.4xbkp';
+    final path = '${dir.path}/locotrader-backup-$ts.ltbkp';
     final file = File(path);
     await file.writeAsBytes(out.toBytes(), flush: true);
 
     await Share.shareXFiles(
       [XFile(path)],
-      subject: '4x Trades encrypted backup',
+      subject: 'LocoTrader encrypted backup',
       text: 'Save this file in Drive/iCloud. Restore with the same PIN.',
     );
     return path;
@@ -88,11 +88,11 @@ class CloudBackupService {
     final bytes = await file.readAsBytes();
     final magicLen = _magic.length;
     if (bytes.length < magicLen + 4 + _saltLength + _nonceLength + 16) {
-      throw const FormatException('File too small to be a 4x Trades backup.');
+      throw const FormatException('File too small to be a LocoTrader backup.');
     }
     final magic = utf8.decode(bytes.sublist(0, magicLen));
     if (magic != _magic) {
-      throw const FormatException('Not a 4x Trades backup file.');
+      throw const FormatException('Not a LocoTrader backup file.');
     }
     var offset = magicLen;
     final iter = _readUint32BE(bytes, offset);

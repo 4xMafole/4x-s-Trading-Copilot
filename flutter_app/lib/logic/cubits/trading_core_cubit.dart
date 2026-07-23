@@ -1581,8 +1581,8 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
             : 'Your account';
         unawaited(
           NotificationCenter.instance.showDrawdownAlert(
-            '$accountLabel — drawdown at $pct%',
-            'Your $which drawdown is in the red zone. Consider stopping for today.',
+            '$accountLabel — Drawdown at $pct%',
+            'You are in the danger zone. Protect your remaining capital and consider stopping for today.',
           ),
         );
       } else if (tone != DrawdownTone.danger) {
@@ -1599,8 +1599,8 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
         _ntfRiskBudgetExhaust = true;
         unawaited(
           NotificationCenter.instance.showRiskBudgetAlert(
-            'Weekly risk budget exhausted',
-            'You have used 100% of this week\'s R-budget. Stop trading until Monday.',
+            'Weekly risk exhausted',
+            'You have used 100% of this week\'s risk budget. No new trades until the next week starts.',
           ),
         );
       } else if (warn && !_ntfRiskBudgetWarn && !exhausted) {
@@ -1610,8 +1610,8 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
                 .round();
         unawaited(
           NotificationCenter.instance.showRiskBudgetAlert(
-            'Risk budget at $pct%',
-            'Only ${100 - pct}% of this week\'s R-budget remains.',
+            'Risk budget at $pct% used',
+            'Only ${100 - pct}% of your weekly risk budget remains. Be selective.',
           ),
         );
       }
@@ -1627,8 +1627,8 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
         _ntfStreakWarn = true;
         unawaited(
           NotificationCenter.instance.showStreakAlert(
-            '${streak.length} losses in a row',
-            'Pause. Step away. Don\'t revenge-trade.',
+            '${streak.length} consecutive losses',
+            'Step away from the screen. Revenge trading after a streak is the fastest way to blow an account.',
           ),
         );
       } else if (!(streak.shouldWarn && losing)) {
@@ -1645,8 +1645,8 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
         _ntfDailyCap = true;
         unawaited(
           NotificationCenter.instance.showDailyCapAlert(
-            'Daily trade limit reached',
-            'You\'ve hit your ${s.dailyTradeCap}-trade cap for today. Journal, reflect, and come back tomorrow.',
+            'Trade limit reached for today',
+            'You have taken ${s.dailyTradeCap} trades today. Journal what you saw and come back tomorrow.',
           ),
         );
       }

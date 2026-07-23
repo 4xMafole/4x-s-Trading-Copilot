@@ -146,13 +146,14 @@ class _TradingScreenState extends State<TradingScreen> {
     // Also (re)apply user notification preferences for recurring reminders.
     try {
       final prefs = c.state.notificationPrefs;
+      final userTz = c.state.userTimezone;
       if (prefs.master && prefs.moodReminder) {
-        unawaited(NotificationCenter.instance.scheduleDailyMoodReminder());
+        unawaited(NotificationCenter.instance.scheduleDailyMoodReminder(timezone: userTz));
       } else {
         unawaited(NotificationCenter.instance.cancelMoodReminder());
       }
       if (prefs.master && prefs.backupReminder) {
-        unawaited(NotificationCenter.instance.scheduleSundayBackupReminder());
+        unawaited(NotificationCenter.instance.scheduleSundayBackupReminder(timezone: userTz));
       } else {
         unawaited(NotificationCenter.instance.cancelBackupReminder());
       }

@@ -2538,14 +2538,19 @@ class _NotificationsCard extends StatelessWidget {
 
   Future<void> _save(NotificationPrefs next) async {
     await controller.setNotificationPrefs(next);
+    final userTz = controller.userTimezone;
     // Re-apply recurring schedules whenever prefs change.
     if (next.master && next.moodReminder) {
-      await NotificationCenter.instance.scheduleDailyMoodReminder();
+      await NotificationCenter.instance.scheduleDailyMoodReminder(
+        timezone: userTz,
+      );
     } else {
       await NotificationCenter.instance.cancelMoodReminder();
     }
     if (next.master && next.backupReminder) {
-      await NotificationCenter.instance.scheduleSundayBackupReminder();
+      await NotificationCenter.instance.scheduleSundayBackupReminder(
+        timezone: userTz,
+      );
     } else {
       await NotificationCenter.instance.cancelBackupReminder();
     }
@@ -2601,51 +2606,51 @@ class _NotificationsCard extends StatelessWidget {
               child: Column(
                 children: [
                   _NotificationToggle(
-                    title: 'Drawdown danger',
-                    subtitle: 'Fires when daily/total drawdown crosses 70%.',
+                    title: 'Drawdown warning',
+                    subtitle: 'Fires when your daily or total drawdown enters the danger zone.',
                     value: p.drawdown,
                     onChanged: (v) => _save(p.copyWith(drawdown: v)),
                   ),
                   _NotificationToggle(
                     title: 'Weekly risk budget',
-                    subtitle: 'Warns at 80% used, alerts again at 100%.',
+                    subtitle: 'Warns at 80% used, alerts again when fully exhausted.',
                     value: p.riskBudget,
                     onChanged: (v) => _save(p.copyWith(riskBudget: v)),
                   ),
                   _NotificationToggle(
                     title: 'Account locked',
-                    subtitle: 'Confirms when auto-lock engages after losses.',
+                    subtitle: 'Notifies when auto-lock activates after consecutive losses.',
                     value: p.lock,
                     onChanged: (v) => _save(p.copyWith(lock: v)),
                   ),
                   _NotificationToggle(
-                    title: 'Loss streak',
-                    subtitle: '3+ losers in a row → step away.',
+                    title: 'Loss streak alert',
+                    subtitle: '3+ losses in a row — prompts you to step away.',
                     value: p.streak,
                     onChanged: (v) => _save(p.copyWith(streak: v)),
                   ),
                   _NotificationToggle(
                     title: 'Daily trade cap',
-                    subtitle: 'Tells you when you\'ve hit your trade limit.',
+                    subtitle: 'Fires when you reach your maximum trades for the day.',
                     value: p.dailyCap,
                     onChanged: (v) => _save(p.copyWith(dailyCap: v)),
                   ),
                   _NotificationToggle(
                     title: 'High-impact news',
-                    subtitle: 'Heads-up before NFP / CPI / FOMC prints.',
+                    subtitle: 'Alert before major events: NFP, CPI, FOMC, interest rate decisions.',
                     value: p.newsImminent,
                     onChanged: (v) => _save(p.copyWith(newsImminent: v)),
                   ),
                   const Divider(height: 24),
                   _NotificationToggle(
                     title: 'Morning mood check-in',
-                    subtitle: 'Daily 08:30 EAT reminder to log your state.',
+                    subtitle: 'Daily reminder to log your emotional state before trading.',
                     value: p.moodReminder,
                     onChanged: (v) => _save(p.copyWith(moodReminder: v)),
                   ),
                   _NotificationToggle(
                     title: 'Weekly backup reminder',
-                    subtitle: 'Sunday 19:00 EAT — export an encrypted backup.',
+                    subtitle: 'Sunday reminder to export an encrypted backup of your data.',
                     value: p.backupReminder,
                     onChanged: (v) => _save(p.copyWith(backupReminder: v)),
                   ),

@@ -33,7 +33,9 @@ class _EdgeTabState extends State<_EdgeTab>
 
   @override
   Widget build(BuildContext context) {
-    final trades = controller.state.allTrades.where((t) => !t.isHypothetical).toList();
+    final trades = controller.state.allTrades
+        .where((t) => !t.isHypothetical)
+        .toList();
 
     // Empty state for new users
     if (trades.isEmpty) {
@@ -43,16 +45,27 @@ class _EdgeTabState extends State<_EdgeTab>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.insights_outlined, size: 56,
-                  color: Theme.of(context).colorScheme.onSurface.withAlpha(60)),
+              Icon(
+                Icons.insights_outlined,
+                size: 56,
+                color: Theme.of(context).colorScheme.onSurface.withAlpha(60),
+              ),
               const SizedBox(height: 16),
-              Text('Edge Map unlocks after 5 trades',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center),
+              Text(
+                'Edge Map unlocks after 5 trades',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 8),
               Text(
                 'Every trade you log builds your personal edge profile — by session, symbol, setup, and behaviour.',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withAlpha(120), fontSize: 13, height: 1.5),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withAlpha(120),
+                  fontSize: 13,
+                  height: 1.5,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

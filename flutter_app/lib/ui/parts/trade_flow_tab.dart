@@ -129,8 +129,10 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
     final stopLoss = double.tryParse(slCtrl.text) ?? 0;
     final entries = int.tryParse(entriesCtrl.text) ?? 1;
     final takeProfit = double.tryParse(tpCtrl.text) ?? 0;
-    final meta = c.state.effectiveInstruments[instrument] ??
-        const Instrument(unit: 'pips', pipVal: 1, desc: '');;
+    final meta =
+        c.state.effectiveInstruments[instrument] ??
+        const Instrument(unit: 'pips', pipVal: 1, desc: '');
+    ;
     final cap = c.riskCapUsd;
     var lot = 0.0;
     if (stopLoss > 0 && meta.pipVal > 0 && entries > 0) {
@@ -775,7 +777,8 @@ class _SizeStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final meta = controller.state.effectiveInstruments[instrument] ??
+    final meta =
+        controller.state.effectiveInstruments[instrument] ??
         const Instrument(unit: 'pips', pipVal: 1, desc: '');
     final sl = double.tryParse(slCtrl.text) ?? 0;
     final minTp = sl * 2;

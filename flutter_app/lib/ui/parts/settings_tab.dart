@@ -2294,11 +2294,18 @@ class _AccountsCard extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () { Navigator.pop(ctx, null); localCtrl.dispose(); },
+              onPressed: () {
+                Navigator.pop(ctx, null);
+                localCtrl.dispose();
+              },
               child: const Text('Cancel'),
             ),
             FilledButton(
-              onPressed: () { final v = localCtrl.text.trim(); localCtrl.dispose(); Navigator.pop(ctx, v); },
+              onPressed: () {
+                final v = localCtrl.text.trim();
+                localCtrl.dispose();
+                Navigator.pop(ctx, v);
+              },
               child: const Text('Create'),
             ),
           ],

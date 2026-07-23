@@ -326,10 +326,10 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
               : null;
           final body = until != null
               ? 'Cooldown until ${until.toLocal().hour.toString().padLeft(2, '0')}:'
-                    '${until.toLocal().minute.toString().padLeft(2, '0')}.'
-              : 'Cooldown active. Step away from the screen.';
+                    '${until.toLocal().minute.toString().padLeft(2, '0')}. Step away and reset.'
+              : 'Trading locked after consecutive losses. Step away from the screen.';
           unawaited(
-            NotificationCenter.instance.showLockAlert('Account locked', body),
+            NotificationCenter.instance.showLockAlert('Account locked — cooldown active', body),
           );
         }
       }
@@ -1569,9 +1569,12 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
       if (tone == DrawdownTone.danger && !_ntfDrawdownDanger) {
         _ntfDrawdownDanger = true;
         final pct = (consumed * 100).round();
+        final accountLabel = s.accounts.isNotEmpty
+            ? (s.accounts.where((a) => a.id == s.activeAccountId).firstOrNull?.name ?? 'Your account')
+            : 'Your account';
         unawaited(
           NotificationCenter.instance.showDrawdownAlert(
-            'Drawdown danger — $pct% used',
+            '$accountLabel — drawdown at $pct%',
             'Your $which drawdown is in the red zone. Consider stopping for today.',
           ),
         );
@@ -1635,8 +1638,8 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
         _ntfDailyCap = true;
         unawaited(
           NotificationCenter.instance.showDailyCapAlert(
-            'Daily cap reached',
-            'You\'ve hit your ${s.dailyTradeCap}-trade cap for today. See you tomorrow.',
+            'Daily trade limit reached',
+            'You\'ve hit your ${s.dailyTradeCap}-trade cap for today. Journal, reflect, and come back tomorrow.',
           ),
         );
       }

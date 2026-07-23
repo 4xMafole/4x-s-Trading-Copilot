@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../data/models.dart';
@@ -20,11 +21,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   int _page = 0;
 
   // Quiz answers
-  String? _experience; // beginner, intermediate, advanced
-  String? _primaryMarket; // forex_majors, indices, crypto, commodities, stocks
-  String? _strategyTemplate; // ICT, SMC, Supply/Demand, Price Action, Custom
+  String? _experience;
+  String? _primaryMarket;
+  String? _strategyTemplate;
   String _timezone = 'UTC';
   final Set<String> _selectedInstruments = {};
+  // Step 5: Risk management
+  final _balanceCtrl = TextEditingController();
+  String _currency = 'USD';
+  final _riskPctCtrl = TextEditingController(text: '1');
+  final _riskUsdCtrl = TextEditingController();
+  bool _useRiskPct = true; // toggle between % and fixed USD
+
+  @override
+  void dispose() {
+    _balanceCtrl.dispose();
+    _riskPctCtrl.dispose();
+    _riskUsdCtrl.dispose();
+    super.dispose();
+  }
 
   static const _experiences = [
     ('beginner', 'Beginner', 'Less than 1 year trading'),
@@ -57,7 +72,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ];
 
   void _next() {
-    if (_page < 3) {
+    if (_page < 4) {
       _pageCtrl.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -77,13 +92,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       case 2:
         return _strategyTemplate != null;
       case 3:
-        return true;
+        return true; // timezone always valid
+      case 4:
+        final balance = double.tryParse(_balanceCtrl.text) ?? 0;
+        if (balance <= 0) return false;
+        if (_useRiskPct) {
+          final pct = double.tryParse(_riskPctCtrl.text) ?? 0;
+          return pct > 0 && pct <= 10;
+        } else {
+          final usd = double.tryParse(_riskUsdCtrl.text) ?? 0;
+          return usd > 0;
+        }
       default:
         return false;
     }
   }
 
   Future<void> _finish() async {
+    final balance = double.tryParse(_balanceCtrl.text) ?? 0;
+    double riskCapUsd;
+    if (_useRiskPct) {
+      final pct = double.tryParse(_riskPctCtrl.text) ?? 1;
+      riskCapUsd = balance * (pct / 100);
+    } else {
+      riskCapUsd = double.tryParse(_riskUsdCtrl.text) ?? 100;
+    }
+    riskCapUsd = riskCapUsd.clamp(1, 100000).toDouble();
+
     // ── 1. Wire choices into LOCAL AppState (drives the UI) ──
     final cubit = context.read<TradingCoreCubit>();
 
@@ -91,10 +126,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     await cubit.setUserInstruments(
       _instrumentsForMarket(_primaryMarket ?? 'forex_majors'),
     );
-
     if (_strategyTemplate != null && _strategyTemplate != 'Custom') {
       await cubit.setUserGates(_gatesForStrategy(_strategyTemplate!));
     }
+    await cubit.setRiskCapUsd(riskCapUsd);
+    // Set balance
+    final today = DateTime.now();
+    final startDate =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    await cubit.updateState(balance: balance, startDate: startDate);
 
     // ── 2. Try to save to Supabase (non-blocking) ──
     try {
@@ -361,11 +401,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               child: Row(
-                children: List.generate(4, (i) {
+                children: List.generate(5, (i) {
                   return Expanded(
                     child: Container(
                       height: 3,
-                      margin: EdgeInsets.only(right: i < 3 ? 4 : 0),
+                      margin: EdgeInsets.only(right: i < 4 ? 4 : 0),
                       decoration: BoxDecoration(
                         color: i <= _page
                             ? theme.colorScheme.primary
@@ -411,6 +451,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     timezone: _timezone,
                     onChanged: (v) => setState(() => _timezone = v),
                   ),
+                  _RiskSetupPage(
+                    balanceCtrl: _balanceCtrl,
+                    currency: _currency,
+                    onCurrencyChanged: (v) => setState(() => _currency = v),
+                    riskPctCtrl: _riskPctCtrl,
+                    riskUsdCtrl: _riskUsdCtrl,
+                    useRiskPct: _useRiskPct,
+                    onToggleRiskMode: (v) => setState(() => _useRiskPct = v),
+                    onChanged: () => setState(() {}),
+                  ),
                 ],
               ),
             ),
@@ -434,7 +484,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const Spacer(),
                   FilledButton(
                     onPressed: _canAdvance ? _next : null,
-                    child: Text(_page < 3 ? 'Continue' : 'Get Started'),
+                    child: Text(_page < 4 ? 'Continue' : 'Get Started'),
                   ),
                 ],
               ),
@@ -554,74 +604,263 @@ class _TimezonePage extends StatelessWidget {
   final String timezone;
   final ValueChanged<String> onChanged;
 
-  static const _commonTimezones = [
-    'America/New_York',
-    'America/Chicago',
-    'America/Los_Angeles',
-    'Europe/London',
-    'Europe/Berlin',
-    'Europe/Moscow',
-    'Africa/Nairobi',
-    'Africa/Lagos',
-    'Africa/Johannesburg',
-    'Asia/Dubai',
-    'Asia/Kolkata',
-    'Asia/Singapore',
-    'Asia/Tokyo',
-    'Asia/Shanghai',
-    'Australia/Sydney',
-    'Pacific/Auckland',
-    'UTC',
+  static const _timezones = [
+    ('UTC', 'UTC', 'Coordinated Universal Time'),
+    ('America/New_York', 'New York', 'EST / UTC-5'),
+    ('America/Chicago', 'Chicago', 'CST / UTC-6'),
+    ('America/Los_Angeles', 'Los Angeles', 'PST / UTC-8'),
+    ('Europe/London', 'London', 'GMT / UTC+0 to +1'),
+    ('Europe/Berlin', 'Berlin', 'CET / UTC+1 to +2'),
+    ('Europe/Moscow', 'Moscow', 'MSK / UTC+3'),
+    ('Africa/Nairobi', 'Nairobi', 'EAT / UTC+3'),
+    ('Africa/Lagos', 'Lagos', 'WAT / UTC+1'),
+    ('Africa/Johannesburg', 'Johannesburg', 'SAST / UTC+2'),
+    ('Asia/Dubai', 'Dubai', 'GST / UTC+4'),
+    ('Asia/Kolkata', 'Mumbai', 'IST / UTC+5:30'),
+    ('Asia/Singapore', 'Singapore', 'SGT / UTC+8'),
+    ('Asia/Tokyo', 'Tokyo', 'JST / UTC+9'),
+    ('Asia/Shanghai', 'Shanghai', 'CST / UTC+8'),
+    ('Australia/Sydney', 'Sydney', 'AEDT / UTC+11'),
+    ('Pacific/Auckland', 'Auckland', 'NZST / UTC+13'),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Auto-detect as default
-    final detected = DateTime.now().timeZoneName;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 32),
-          Text(
-            'Your timezone',
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text('Your timezone',
+              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
           Text(
-            'We use this for session timing, blackout windows, and trade timestamps. '
-            'Detected: $detected',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface.withAlpha(150),
-              fontSize: 14,
-            ),
+            'Session times, trade timestamps, and notifications use this.',
+            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 14),
           ),
-          const SizedBox(height: 24),
-          DropdownButtonFormField<String>(
-            value: _commonTimezones.contains(timezone) ? timezone : 'UTC',
-            decoration: const InputDecoration(
-              labelText: 'Timezone',
-              prefixIcon: Icon(Icons.public),
-            ),
-            items: _commonTimezones
-                .map(
-                  (tz) => DropdownMenuItem(
-                    value: tz,
-                    child: Text(tz.replaceAll('_', ' ')),
+          const SizedBox(height: 20),
+          Expanded(
+            child: ListView.separated(
+              itemCount: _timezones.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              itemBuilder: (ctx, i) {
+                final tz = _timezones[i];
+                final selected = timezone == tz.$1;
+                return InkWell(
+                  onTap: () => onChanged(tz.$1),
+                  borderRadius: BorderRadius.circular(12),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: selected
+                            ? theme.colorScheme.primary
+                            : theme.dividerColor,
+                        width: selected ? 2 : 1,
+                      ),
+                      color: selected
+                          ? theme.colorScheme.primary.withAlpha(15)
+                          : theme.colorScheme.surface,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.public,
+                            size: 18,
+                            color: selected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurface.withAlpha(100)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(tz.$2,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: theme.colorScheme.onSurface,
+                                  )),
+                              Text(tz.$3,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: theme.colorScheme.onSurface.withAlpha(120),
+                                  )),
+                            ],
+                          ),
+                        ),
+                        if (selected)
+                          Icon(Icons.check_circle_rounded,
+                              color: theme.colorScheme.primary, size: 20),
+                      ],
+                    ),
                   ),
-                )
-                .toList(),
-            onChanged: (v) {
-              if (v != null) onChanged(v);
-            },
+                );
+              },
+            ),
           ),
+          const SizedBox(height: 8),
         ],
       ),
     );
   }
 }
+
+// ─────────────────────────────────────────────
+//  STEP 5: Risk Management Setup
+// ─────────────────────────────────────────────
+
+class _RiskSetupPage extends StatelessWidget {
+  const _RiskSetupPage({
+    required this.balanceCtrl,
+    required this.currency,
+    required this.onCurrencyChanged,
+    required this.riskPctCtrl,
+    required this.riskUsdCtrl,
+    required this.useRiskPct,
+    required this.onToggleRiskMode,
+    required this.onChanged,
+  });
+
+  final TextEditingController balanceCtrl;
+  final String currency;
+  final ValueChanged<String> onCurrencyChanged;
+  final TextEditingController riskPctCtrl;
+  final TextEditingController riskUsdCtrl;
+  final bool useRiskPct;
+  final ValueChanged<bool> onToggleRiskMode;
+  final VoidCallback onChanged;
+
+  static const _currencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'ZAR', 'NGN', 'KES'];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final balance = double.tryParse(balanceCtrl.text) ?? 0;
+    final riskPct = double.tryParse(riskPctCtrl.text) ?? 1;
+    final calculatedRisk = balance * (riskPct / 100);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 32),
+          Text('Risk management',
+              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 6),
+          Text(
+            'Your starting balance and per-trade risk limit. You can change these anytime in Settings.',
+            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 14),
+          ),
+          const SizedBox(height: 28),
+
+          // Balance + currency
+          Text('Account balance', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              // Currency picker
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: theme.dividerColor),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: currency,
+                    borderRadius: BorderRadius.circular(12),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    items: _currencies
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (v) { if (v != null) onCurrencyChanged(v); onChanged(); },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: balanceCtrl,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                  decoration: InputDecoration(
+                    hintText: '10,000',
+                    prefixText: _currencySymbol(currency),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onChanged: (_) => onChanged(),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 28),
+          Text('Risk per trade', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const SizedBox(height: 8),
+
+          // Toggle % vs fixed
+          Row(
+            children: [
+              ChoiceChip(
+                label: const Text('% of balance'),
+                selected: useRiskPct,
+                onSelected: (_) { onToggleRiskMode(true); onChanged(); },
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: Text('Fixed $currency'),
+                selected: !useRiskPct,
+                onSelected: (_) { onToggleRiskMode(false); onChanged(); },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          if (useRiskPct)
+            TextField(
+              controller: riskPctCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+              decoration: InputDecoration(
+                hintText: '1',
+                suffixText: '%',
+                helperText: balance > 0
+                    ? 'Max risk per trade: ${_currencySymbol(currency)}${calculatedRisk.toStringAsFixed(0)}'
+                    : null,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onChanged: (_) => onChanged(),
+            )
+          else
+            TextField(
+              controller: riskUsdCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+              decoration: InputDecoration(
+                hintText: '100',
+                prefixText: _currencySymbol(currency),
+                helperText: 'Fixed amount lost max per trade',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onChanged: (_) => onChanged(),
+            ),
+
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  String _currencySymbol(String c) {
+    switch (c) {
+      case 'USD': return r'$';
+      case 'EUR': return '€';
+      case 'GBP': return '£';
+      default: return '$c ';
+    }
+  }
+}
+

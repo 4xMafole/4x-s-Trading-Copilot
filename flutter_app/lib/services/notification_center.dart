@@ -201,9 +201,10 @@ class NotificationCenter {
   Future<void> scheduleDailyMoodReminder({
     int hour = 8,
     int minute = 30,
+    String? timezone,
   }) async {
     await initialize();
-    final loc = _eatLocation();
+    final loc = _locationForTimezone(timezone);
     final now = tz.TZDateTime.now(loc);
     var next = tz.TZDateTime(loc, now.year, now.month, now.day, hour, minute);
     if (!next.isAfter(now)) next = next.add(const Duration(days: 1));
@@ -221,8 +222,8 @@ class NotificationCenter {
     try {
       await _plugin.zonedSchedule(
         idMoodReminder,
-        'Morning check-in',
-        'How are you feeling? Log your mood before the session.',
+        'How are you feeling today?',
+        'Log your mood before the session. Emotional state affects your trading.',
         next,
         details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -243,9 +244,10 @@ class NotificationCenter {
   Future<void> scheduleSundayBackupReminder({
     int hour = 19,
     int minute = 0,
+    String? timezone,
   }) async {
     await initialize();
-    final loc = _eatLocation();
+    final loc = _locationForTimezone(timezone);
     final now = tz.TZDateTime.now(loc);
     var next = tz.TZDateTime(loc, now.year, now.month, now.day, hour, minute);
     while (next.weekday != DateTime.sunday || !next.isAfter(now)) {
@@ -265,8 +267,8 @@ class NotificationCenter {
     try {
       await _plugin.zonedSchedule(
         idBackupReminder,
-        'Backup time',
-        'Tap to export an encrypted backup to Drive/iCloud.',
+        'Weekly backup reminder',
+        'Export an encrypted backup to keep your trading history safe.',
         next,
         details,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -298,11 +300,18 @@ class NotificationCenter {
     }
   }
 
-  tz.Location _eatLocation() {
+  tz.Location _locationForTimezone([String? timezone]) {
     try {
-      return tz.getLocation('Africa/Nairobi');
+      if (timezone != null && timezone.isNotEmpty && timezone != 'UTC') {
+        return tz.getLocation(timezone);
+      }
+      // Try local timezone
+      return tz.local;
     } catch (_) {
       return tz.local;
     }
   }
+
+  /// Legacy helper — kept for compatibility. Prefers user's timezone.
+  tz.Location _eatLocation() => _locationForTimezone('Africa/Nairobi');
 }

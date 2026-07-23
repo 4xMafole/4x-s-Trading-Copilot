@@ -61,10 +61,10 @@ class AppColors extends ThemeExtension<AppColors> {
   );
 
   static const AppColors lightColors = AppColors(
-    bg: Color(0xFFFFFFFF),
-    surface: Color(0xFFF6F8FB),
-    surfaceRaised: Color(0xFFEDF1F6),
-    surfaceGlass: Color(0xCCFFFFFF),
+    bg: Color(0xFFF8F9FA),
+    surface: Color(0xFFFFFFFF),
+    surfaceRaised: Color(0xFFF1F3F6),
+    surfaceGlass: Color(0xCCF8F9FA),
     border: Color(0xFFE2E7EF),
     borderStrong: Color(0xFFCBD3DF),
     divider: Color(0xFFEBEFF5),
@@ -146,11 +146,11 @@ class AppTheme {
   static const Color surfaceRaised = Color(0xFF11151C);
   static const Color border = Color(0xFF1A2030);
 
-  // ── Surfaces (light) ──
-  static const Color bgLight = Color(0xFFFFFFFF);
-  static const Color surfaceLight = Color(0xFFF6F8FB);
-  static const Color surfaceRaisedLight = Color(0xFFEDF1F6);
-  static const Color borderLight = Color(0xFFE2E7EF);
+  // ── Surfaces (light) ── off-white/cream, easier on the eyes ──
+  static const Color bgLight = Color(0xFFF8F9FA);
+  static const Color surfaceLight = Color(0xFFFFFFFF);
+  static const Color surfaceRaisedLight = Color(0xFFF1F3F6);
+  static const Color borderLight = Color(0xFFE0E5EE);
 
   // ── Accents (theme-agnostic) ──
   static const Color accent = Color(0xFF00E5FF);
@@ -164,10 +164,10 @@ class AppTheme {
   static const Color textSecondary = Color(0xFF9BA8BD);
   static const Color textTertiary = Color(0xFF5C6B82);
 
-  // ── Text (light) ──
-  static const Color textLight = Color(0xFF0E1422);
-  static const Color textSecondaryLight = Color(0xFF55617A);
-  static const Color textTertiaryLight = Color(0xFF8A95A8);
+  // ── Text (light) — navy for strong readability on cream ──
+  static const Color textLight = Color(0xFF0D1526);
+  static const Color textSecondaryLight = Color(0xFF3D4F6E);
+  static const Color textTertiaryLight = Color(0xFF7A8CAA);
 
   static ThemeData dark() {
     final base = ThemeData(brightness: Brightness.dark, useMaterial3: true);

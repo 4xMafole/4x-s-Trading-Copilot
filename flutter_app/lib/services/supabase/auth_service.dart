@@ -104,6 +104,12 @@ class AuthService {
   Future<void> updateProfile(Map<String, dynamic> updates) async {
     final uid = user?.id;
     if (uid == null) return;
+    // Refresh session if expired before making API calls
+    try {
+      await _auth.refreshSession();
+    } catch (_) {
+      // Non-fatal — proceed with existing session
+    }
     final data = {
       'id': uid,
       'email': user?.email ?? '',

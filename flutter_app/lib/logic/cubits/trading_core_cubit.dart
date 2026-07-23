@@ -329,7 +329,10 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
                     '${until.toLocal().minute.toString().padLeft(2, '0')}. Step away and reset.'
               : 'Trading locked after consecutive losses. Step away from the screen.';
           unawaited(
-            NotificationCenter.instance.showLockAlert('Account locked — cooldown active', body),
+            NotificationCenter.instance.showLockAlert(
+              'Account locked — cooldown active',
+              body,
+            ),
           );
         }
       }
@@ -1570,7 +1573,11 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
         _ntfDrawdownDanger = true;
         final pct = (consumed * 100).round();
         final accountLabel = s.accounts.isNotEmpty
-            ? (s.accounts.where((a) => a.id == s.activeAccountId).firstOrNull?.name ?? 'Your account')
+            ? (s.accounts
+                      .where((a) => a.id == s.activeAccountId)
+                      .firstOrNull
+                      ?.name ??
+                  'Your account')
             : 'Your account';
         unawaited(
           NotificationCenter.instance.showDrawdownAlert(

@@ -20,11 +20,15 @@ class _JournalTabState extends State<_JournalTab> {
   String? selectedTag;
 
   static const _vList = [
-    {'id': 'stacking', 'label': 'Stacking'},
+    {'id': 'trend', 'label': 'Trend'},
+    {'id': 'breakout', 'label': 'Breakout'},
+    {'id': 'reversal', 'label': 'Reversal'},
+    {'id': 'scalp', 'label': 'Scalp'},
+    {'id': 'news', 'label': 'News'},
+    {'id': 'fomo', 'label': 'FOMO'},
+    {'id': 'revenge', 'label': 'Revenge'},
     {'id': 'session', 'label': 'Session'},
-    {'id': 'risk', 'label': 'Risk'},
-    {'id': 'instrument', 'label': 'Instrument'},
-    {'id': 'rr', 'label': 'R:R'},
+    {'id': 'mistake', 'label': 'Mistake'},
   ];
 
   Future<String?> _pickImagePath() async {
@@ -417,7 +421,11 @@ class _JournalTabState extends State<_JournalTab> {
   Future<void> openLogTradeSheet({WizardDraft? prefill}) async {
     final c = widget.controller;
 
-    var sheetSym = prefill?.instrument ?? 'XAUUSD';
+    var sheetSym =
+        prefill?.instrument ??
+        (c.state.effectiveInstruments.keys.isNotEmpty
+            ? c.state.effectiveInstruments.keys.first
+            : 'XAUUSD');
     var sheetDir = 'buy';
     final sheetViolations = <String>{};
     final sheetTags = <String>{};
@@ -469,468 +477,497 @@ class _JournalTabState extends State<_JournalTab> {
                 });
               }
 
-              return SafeArea(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    16,
-                    16,
-                    16 + MediaQuery.of(ctx).viewInsets.bottom,
+              final screenH = MediaQuery.of(ctx).size.height;
+              final keyboardH = MediaQuery.of(ctx).viewInsets.bottom;
+
+              return Container(
+                constraints: BoxConstraints(maxHeight: screenH * 0.85),
+                decoration: BoxDecoration(
+                  color: ctx.c.bg,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
                   ),
-                  child: _Card(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Log trade',
-                                style: Theme.of(ctx).textTheme.titleMedium,
-                              ),
-                              const Spacer(),
-                              IconButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                icon: const Icon(Icons.close),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            value: sheetSym,
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'XAUUSD',
-                                child: Text('XAUUSD'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'NQ',
-                                child: Text('NQ100'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'EURUSD',
-                                child: Text('EURUSD'),
-                              ),
-                            ],
-                            onChanged: (v) {
-                              setSheetState(() => sheetSym = v ?? 'XAUUSD');
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'Instrument',
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  value: sheetDir,
-                                  items: const [
-                                    DropdownMenuItem(
-                                      value: 'buy',
-                                      child: Text('Buy'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'sell',
-                                      child: Text('Sell'),
-                                    ),
-                                  ],
-                                  onChanged: (v) {
-                                    setSheetState(() => sheetDir = v ?? 'buy');
-                                  },
-                                  decoration: const InputDecoration(
-                                    labelText: 'Direction',
-                                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Handle
+                    Container(
+                      margin: const EdgeInsets.only(top: 12, bottom: 4),
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: ctx.c.border,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    // Scrollable content
+                    Flexible(
+                      child: SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + keyboardH),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'Log trade',
+                                  style: Theme.of(ctx).textTheme.titleMedium,
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: TextField(
-                                  controller: sheetLotsCtrl,
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                      ),
-                                  decoration: const InputDecoration(
-                                    labelText: 'Lots',
-                                  ),
+                                const Spacer(),
+                                IconButton(
+                                  onPressed: () => Navigator.pop(ctx),
+                                  icon: const Icon(Icons.close),
+                                  visualDensity: VisualDensity.compact,
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: sheetPnlCtrl,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
+                              ],
                             ),
-                            decoration: const InputDecoration(
-                              labelText: 'P&L (USD)',
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: sheetPlannedRiskCtrl,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            decoration: const InputDecoration(
-                              labelText: 'Planned risk (USD)',
-                              hintText: 'From your calculator',
-                              prefixText: '\$ ',
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: _vList.map((item) {
-                              final id = item['id']!;
-                              return FilterChip(
-                                label: Text(item['label']!),
-                                selected: sheetViolations.contains(id),
-                                onSelected: (on) => setSheetState(() {
-                                  on
-                                      ? sheetViolations.add(id)
-                                      : sheetViolations.remove(id);
-                                }),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: sheetNoteCtrl,
-                            maxLines: 3,
-                            decoration: const InputDecoration(
-                              labelText: 'Notes',
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: sheetTagsCtrl,
-                            decoration: const InputDecoration(
-                              labelText: 'Tags',
-                              hintText: 'fomo, A-Plus, news (comma-separated)',
-                              prefixIcon: Icon(Icons.tag, size: 18),
-                            ),
-                            onChanged: (v) {
-                              final parsed = v
-                                  .split(RegExp(r'[,\s]+'))
-                                  .map((s) => s.trim().replaceAll('#', ''))
-                                  .where((s) => s.isNotEmpty)
-                                  .toSet();
-                              sheetTags
-                                ..clear()
-                                ..addAll(parsed);
-                            },
-                          ),
-                          if (tagSuggestions.isNotEmpty) ...[
                             const SizedBox(height: 8),
+                            // Instrument dropdown — user's instruments
+                            DropdownButtonFormField<String>(
+                              value: sheetSym,
+                              items: c.state.effectiveInstruments.keys
+                                  .map(
+                                    (k) => DropdownMenuItem(
+                                      value: k,
+                                      child: Text(k),
+                                    ),
+                                  )
+                                  .toList(),
+                              onChanged: (v) {
+                                setSheetState(() => sheetSym = v ?? sheetSym);
+                              },
+                              decoration: const InputDecoration(
+                                labelText: 'Instrument',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: DropdownButtonFormField<String>(
+                                    value: sheetDir,
+                                    items: const [
+                                      DropdownMenuItem(
+                                        value: 'buy',
+                                        child: Text('Buy'),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: 'sell',
+                                        child: Text('Sell'),
+                                      ),
+                                    ],
+                                    onChanged: (v) {
+                                      setSheetState(
+                                        () => sheetDir = v ?? 'buy',
+                                      );
+                                    },
+                                    decoration: const InputDecoration(
+                                      labelText: 'Direction',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextField(
+                                    controller: sheetLotsCtrl,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                    decoration: const InputDecoration(
+                                      labelText: 'Lots',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: sheetPnlCtrl,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: const InputDecoration(
+                                labelText: 'P&L (USD)',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: sheetPlannedRiskCtrl,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: const InputDecoration(
+                                labelText: 'Planned risk (USD)',
+                                hintText: 'From your calculator',
+                                prefixText: '\$ ',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
                             Wrap(
                               spacing: 6,
                               runSpacing: 6,
-                              children: tagSuggestions.map((tag) {
-                                final selected = sheetTags.contains(tag);
+                              children: _vList.map((item) {
+                                final id = item['id']!;
                                 return FilterChip(
-                                  label: Text('#$tag'),
-                                  selected: selected,
+                                  label: Text(item['label']!),
+                                  selected: sheetViolations.contains(id),
                                   onSelected: (on) => setSheetState(() {
-                                    if (on) {
-                                      sheetTags.add(tag);
-                                    } else {
-                                      sheetTags.remove(tag);
-                                    }
-                                    sheetTagsCtrl.text = sheetTags.join(', ');
-                                    sheetTagsCtrl.selection =
-                                        TextSelection.collapsed(
-                                          offset: sheetTagsCtrl.text.length,
-                                        );
+                                    on
+                                        ? sheetViolations.add(id)
+                                        : sheetViolations.remove(id);
                                   }),
                                 );
                               }).toList(),
                             ),
-                          ],
-                          const SizedBox(height: 16),
-                          Text(
-                            'Setup Quality *',
-                            style: Theme.of(ctx).textTheme.labelLarge,
-                          ),
-                          const SizedBox(height: 6),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: kSetupQualities.map((q) {
-                              final selected = sheetSetupQuality == q;
-                              return ChoiceChip(
-                                label: Text(q),
-                                selected: selected,
-                                onSelected: (_) =>
-                                    setSheetState(() => sheetSetupQuality = q),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Trigger *',
-                            style: Theme.of(ctx).textTheme.labelLarge,
-                          ),
-                          const SizedBox(height: 6),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: kTradeTriggers.map((t) {
-                              final selected = sheetTrigger == t;
-                              return ChoiceChip(
-                                label: Text(t),
-                                selected: selected,
-                                onSelected: (_) =>
-                                    setSheetState(() => sheetTrigger = t),
-                              );
-                            }).toList(),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Both fields are required. They power your edge analytics.',
-                            style: TextStyle(
-                              color: Theme.of(
-                                ctx,
-                              ).extension<AppColors>()!.textTertiary,
-                              fontSize: 11,
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: sheetNoteCtrl,
+                              maxLines: 3,
+                              decoration: const InputDecoration(
+                                labelText: 'Notes',
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Backfill / Hypothetical (Optional)',
-                            style: Theme.of(ctx).textTheme.labelLarge,
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () async {
-                                    final d = await showDatePicker(
-                                      context: ctx,
-                                      initialDate: sheetDate ?? DateTime.now(),
-                                      firstDate: DateTime(2020),
-                                      lastDate: DateTime.now(),
-                                    );
-                                    if (d != null)
-                                      setSheetState(() => sheetDate = d);
-                                  },
-                                  icon: const Icon(
-                                    Icons.calendar_today,
-                                    size: 18,
-                                  ),
-                                  label: Text(
-                                    sheetDate != null
-                                        ? '${sheetDate!.year}-${sheetDate!.month.toString().padLeft(2, '0')}-${sheetDate!.day.toString().padLeft(2, '0')}'
-                                        : 'Set Date',
-                                  ),
-                                ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: sheetTagsCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Tags',
+                                hintText:
+                                    'fomo, A-Plus, news (comma-separated)',
+                                prefixIcon: Icon(Icons.tag, size: 18),
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () async {
-                                    final t = await showTimePicker(
-                                      context: ctx,
-                                      initialTime: sheetTime ?? TimeOfDay.now(),
-                                    );
-                                    if (t != null)
-                                      setSheetState(() => sheetTime = t);
-                                  },
-                                  icon: const Icon(Icons.access_time, size: 18),
-                                  label: Text(
-                                    sheetTime != null
-                                        ? sheetTime!.format(ctx)
-                                        : 'Set Time',
-                                  ),
-                                ),
+                              onChanged: (v) {
+                                final parsed = v
+                                    .split(RegExp(r'[,\s]+'))
+                                    .map((s) => s.trim().replaceAll('#', ''))
+                                    .where((s) => s.isNotEmpty)
+                                    .toSet();
+                                sheetTags
+                                  ..clear()
+                                  ..addAll(parsed);
+                              },
+                            ),
+                            if (tagSuggestions.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: tagSuggestions.map((tag) {
+                                  final selected = sheetTags.contains(tag);
+                                  return FilterChip(
+                                    label: Text('#$tag'),
+                                    selected: selected,
+                                    onSelected: (on) => setSheetState(() {
+                                      if (on) {
+                                        sheetTags.add(tag);
+                                      } else {
+                                        sheetTags.remove(tag);
+                                      }
+                                      sheetTagsCtrl.text = sheetTags.join(', ');
+                                      sheetTagsCtrl.selection =
+                                          TextSelection.collapsed(
+                                            offset: sheetTagsCtrl.text.length,
+                                          );
+                                    }),
+                                  );
+                                }).toList(),
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 8),
-                          SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('Hypothetical (What-if) Trade'),
-                            subtitle: const Text('Excludes from Challenge P&L'),
-                            value: sheetIsHypothetical,
-                            onChanged: (v) =>
-                                setSheetState(() => sheetIsHypothetical = v),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () => attachImage(true),
-                                  icon: const Icon(Icons.image, size: 18),
-                                  label: Text(
-                                    sheetHtfImagePath != null
-                                        ? 'HTF ✓'
-                                        : 'HTF Chart',
+                            const SizedBox(height: 16),
+                            Text(
+                              'Setup Quality *',
+                              style: Theme.of(ctx).textTheme.labelLarge,
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: kSetupQualities.map((q) {
+                                final selected = sheetSetupQuality == q;
+                                return ChoiceChip(
+                                  label: Text(q),
+                                  selected: selected,
+                                  onSelected: (_) => setSheetState(
+                                    () => sheetSetupQuality = q,
                                   ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () => attachImage(false),
-                                  icon: const Icon(Icons.image, size: 18),
-                                  label: Text(
-                                    sheetLtfImagePath != null
-                                        ? 'LTF ✓'
-                                        : 'LTF Chart',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              onPressed: () async {
-                                FocusScope.of(ctx).unfocus();
-
-                                final pnl = double.tryParse(
-                                  sheetPnlCtrl.text.trim(),
                                 );
-                                if (pnl == null) {
-                                  _snack(context, 'Enter valid P&L.');
-                                  return;
-                                }
-                                if (sheetSetupQuality == null) {
-                                  _snack(
-                                    context,
-                                    'Pick a Setup Quality (A+/B/C).',
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Trigger *',
+                              style: Theme.of(ctx).textTheme.labelLarge,
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: kTradeTriggers.map((t) {
+                                final selected = sheetTrigger == t;
+                                return ChoiceChip(
+                                  label: Text(t),
+                                  selected: selected,
+                                  onSelected: (_) =>
+                                      setSheetState(() => sheetTrigger = t),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Both fields are required. They power your edge analytics.',
+                              style: TextStyle(
+                                color: Theme.of(
+                                  ctx,
+                                ).extension<AppColors>()!.textTertiary,
+                                fontSize: 11,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Backfill / Hypothetical (Optional)',
+                              style: Theme.of(ctx).textTheme.labelLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () async {
+                                      final d = await showDatePicker(
+                                        context: ctx,
+                                        initialDate:
+                                            sheetDate ?? DateTime.now(),
+                                        firstDate: DateTime(2020),
+                                        lastDate: DateTime.now(),
+                                      );
+                                      if (d != null)
+                                        setSheetState(() => sheetDate = d);
+                                    },
+                                    icon: const Icon(
+                                      Icons.calendar_today,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      sheetDate != null
+                                          ? '${sheetDate!.year}-${sheetDate!.month.toString().padLeft(2, '0')}-${sheetDate!.day.toString().padLeft(2, '0')}'
+                                          : 'Set Date',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () async {
+                                      final t = await showTimePicker(
+                                        context: ctx,
+                                        initialTime:
+                                            sheetTime ?? TimeOfDay.now(),
+                                      );
+                                      if (t != null)
+                                        setSheetState(() => sheetTime = t);
+                                    },
+                                    icon: const Icon(
+                                      Icons.access_time,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      sheetTime != null
+                                          ? sheetTime!.format(ctx)
+                                          : 'Set Time',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            SwitchListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Hypothetical (What-if) Trade'),
+                              subtitle: const Text(
+                                'Excludes from Challenge P&L',
+                              ),
+                              value: sheetIsHypothetical,
+                              onChanged: (v) =>
+                                  setSheetState(() => sheetIsHypothetical = v),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => attachImage(true),
+                                    icon: const Icon(Icons.image, size: 18),
+                                    label: Text(
+                                      sheetHtfImagePath != null
+                                          ? 'HTF ✓'
+                                          : 'HTF Chart',
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => attachImage(false),
+                                    icon: const Icon(Icons.image, size: 18),
+                                    label: Text(
+                                      sheetLtfImagePath != null
+                                          ? 'LTF ✓'
+                                          : 'LTF Chart',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: () async {
+                                  FocusScope.of(ctx).unfocus();
+
+                                  final pnl = double.tryParse(
+                                    sheetPnlCtrl.text.trim(),
                                   );
-                                  return;
-                                }
-                                if (sheetTrigger == null) {
-                                  _snack(
-                                    context,
-                                    'Pick a Trigger (Plan/FOMO/etc).',
-                                  );
-                                  return;
-                                }
-
-                                // Sprint 3.3 — pre-trade streak warning.
-                                if (!sheetIsHypothetical) {
-                                  final streak =
-                                      IntelligenceEngine.currentStreak(
-                                        c.state.allTrades,
-                                      );
-                                  if (streak.shouldWarn) {
-                                    final proceed =
-                                        await _showStreakWarningModal(
-                                          context,
-                                          streak,
-                                        );
-                                    if (proceed != true) return;
-                                  }
-                                }
-
-                                // Sprint 4.2 — weekly R-budget enforcement.
-                                // If exhausted, force the trade to be
-                                // logged as paper-only for the rest of week.
-                                var enforcedHypothetical = sheetIsHypothetical;
-                                if (!sheetIsHypothetical) {
-                                  final b = c.weeklyRiskBudget;
-                                  final lossUsd =
-                                      RiskBudgetEngine.weeklyLossUsd(
-                                        c.state.allTrades,
-                                        c.nowEAT,
-                                      );
-                                  if (RiskBudgetEngine.isExhausted(
-                                    lossUsd,
-                                    b,
-                                  )) {
-                                    enforcedHypothetical = true;
-                                    if (context.mounted) {
-                                      _snack(
-                                        context,
-                                        'Weekly R-budget exhausted — logged as paper-only.',
-                                      );
-                                    }
-                                  }
-                                }
-
-                                // Sprint 4.4 — high-impact news blackout.
-                                if (!sheetIsHypothetical &&
-                                    c.blockTradesAroundNews) {
-                                  final events = await EconomicCalendarService()
-                                      .getHighImpactEvents();
-                                  final inBlackout =
-                                      EconomicCalendarService.isInBlackout(
-                                        events,
-                                        DateTime.now(),
-                                      );
-                                  if (inBlackout) {
-                                    if (context.mounted) {
-                                      _snack(
-                                        context,
-                                        'Trade blocked: high-impact news within ±15 min.',
-                                      );
-                                    }
+                                  if (pnl == null) {
+                                    _snack(context, 'Enter valid P&L.');
                                     return;
                                   }
-                                }
+                                  if (sheetSetupQuality == null) {
+                                    _snack(
+                                      context,
+                                      'Pick a Setup Quality (A+/B/C).',
+                                    );
+                                    return;
+                                  }
+                                  if (sheetTrigger == null) {
+                                    _snack(
+                                      context,
+                                      'Pick a Trigger (Plan/FOMO/etc).',
+                                    );
+                                    return;
+                                  }
 
-                                final newTrade = await c.addTrade(
-                                  sym: sheetSym,
-                                  dir: sheetDir,
-                                  lots:
-                                      double.tryParse(
-                                        sheetLotsCtrl.text.trim(),
-                                      ) ??
-                                      0,
-                                  pnl: pnl,
-                                  note: sheetNoteCtrl.text,
-                                  violations: sheetViolations.toList(),
-                                  tags: sheetTags.toList(),
-                                  htfImage: sheetHtfImagePath,
-                                  ltfImage: sheetLtfImagePath,
-                                  date: sheetDate != null
-                                      ? '${sheetDate!.year.toString().padLeft(4, '0')}-${sheetDate!.month.toString().padLeft(2, '0')}-${sheetDate!.day.toString().padLeft(2, '0')}'
-                                      : null,
-                                  time: sheetTime != null
-                                      ? '${sheetTime!.hour.toString().padLeft(2, '0')}:${sheetTime!.minute.toString().padLeft(2, '0')} EAT'
-                                      : null,
-                                  isHypothetical: enforcedHypothetical,
-                                  setupQuality: sheetSetupQuality,
-                                  trigger: sheetTrigger,
-                                  plannedRisk: double.tryParse(
-                                    sheetPlannedRiskCtrl.text.trim(),
-                                  ),
-                                );
+                                  // Sprint 3.3 — pre-trade streak warning.
+                                  if (!sheetIsHypothetical) {
+                                    final streak =
+                                        IntelligenceEngine.currentStreak(
+                                          c.state.allTrades,
+                                        );
+                                    if (streak.shouldWarn) {
+                                      final proceed =
+                                          await _showStreakWarningModal(
+                                            context,
+                                            streak,
+                                          );
+                                      if (proceed != true) return;
+                                    }
+                                  }
 
-                                if (ctx.mounted) Navigator.pop(ctx);
-                                // Clear the in-flight wizard draft so the
-                                // Trade tab resets after a successful log.
-                                await c.clearWizardDraft();
-                                if (!enforcedHypothetical && mounted) {
-                                  await _showPostTradeReflectionSheet(
-                                    context,
-                                    c,
-                                    newTrade,
+                                  // Sprint 4.2 — weekly R-budget enforcement.
+                                  // If exhausted, force the trade to be
+                                  // logged as paper-only for the rest of week.
+                                  var enforcedHypothetical =
+                                      sheetIsHypothetical;
+                                  if (!sheetIsHypothetical) {
+                                    final b = c.weeklyRiskBudget;
+                                    final lossUsd =
+                                        RiskBudgetEngine.weeklyLossUsd(
+                                          c.state.allTrades,
+                                          c.nowEAT,
+                                        );
+                                    if (RiskBudgetEngine.isExhausted(
+                                      lossUsd,
+                                      b,
+                                    )) {
+                                      enforcedHypothetical = true;
+                                      if (context.mounted) {
+                                        _snack(
+                                          context,
+                                          'Weekly R-budget exhausted — logged as paper-only.',
+                                        );
+                                      }
+                                    }
+                                  }
+
+                                  // Sprint 4.4 — high-impact news blackout.
+                                  if (!sheetIsHypothetical &&
+                                      c.blockTradesAroundNews) {
+                                    final events =
+                                        await EconomicCalendarService()
+                                            .getHighImpactEvents();
+                                    final inBlackout =
+                                        EconomicCalendarService.isInBlackout(
+                                          events,
+                                          DateTime.now(),
+                                        );
+                                    if (inBlackout) {
+                                      if (context.mounted) {
+                                        _snack(
+                                          context,
+                                          'Trade blocked: high-impact news within ±15 min.',
+                                        );
+                                      }
+                                      return;
+                                    }
+                                  }
+
+                                  final newTrade = await c.addTrade(
+                                    sym: sheetSym,
+                                    dir: sheetDir,
+                                    lots:
+                                        double.tryParse(
+                                          sheetLotsCtrl.text.trim(),
+                                        ) ??
+                                        0,
+                                    pnl: pnl,
+                                    note: sheetNoteCtrl.text,
+                                    violations: sheetViolations.toList(),
+                                    tags: sheetTags.toList(),
+                                    htfImage: sheetHtfImagePath,
+                                    ltfImage: sheetLtfImagePath,
+                                    date: sheetDate != null
+                                        ? '${sheetDate!.year.toString().padLeft(4, '0')}-${sheetDate!.month.toString().padLeft(2, '0')}-${sheetDate!.day.toString().padLeft(2, '0')}'
+                                        : null,
+                                    time: sheetTime != null
+                                        ? '${sheetTime!.hour.toString().padLeft(2, '0')}:${sheetTime!.minute.toString().padLeft(2, '0')} EAT'
+                                        : null,
+                                    isHypothetical: enforcedHypothetical,
+                                    setupQuality: sheetSetupQuality,
+                                    trigger: sheetTrigger,
+                                    plannedRisk: double.tryParse(
+                                      sheetPlannedRiskCtrl.text.trim(),
+                                    ),
                                   );
-                                }
-                                if (mounted) {
-                                  setState(() => selectedDate = null);
-                                  _snack(context, 'Trade logged.');
-                                }
-                              },
-                              child: const Text('Save'),
+
+                                  if (ctx.mounted) Navigator.pop(ctx);
+                                  // Clear the in-flight wizard draft so the
+                                  // Trade tab resets after a successful log.
+                                  await c.clearWizardDraft();
+                                  if (!enforcedHypothetical && mounted) {
+                                    await _showPostTradeReflectionSheet(
+                                      context,
+                                      c,
+                                      newTrade,
+                                    );
+                                  }
+                                  if (mounted) {
+                                    setState(() => selectedDate = null);
+                                    _snack(context, 'Trade logged.');
+                                  }
+                                },
+                                child: const Text('Save'),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
+                    ), // Flexible
+                  ],
                 ),
               );
             },
@@ -1171,289 +1208,511 @@ class _JournalTabState extends State<_JournalTab> {
             final tone = t.pnl >= 0 ? AppTheme.green : AppTheme.red;
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _Card(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 4,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: tone,
-                            borderRadius: BorderRadius.circular(2),
+              child: GestureDetector(
+                onTap: () => _showTradeDetail(context, c, t),
+                child: _Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 4,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: tone,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    '${t.sym} ${t.dir.toUpperCase()}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  if (t.isHypothetical) ...[
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                        vertical: 2,
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      '${t.sym} ${t.dir.toUpperCase()}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.accent.withValues(
-                                          alpha: 0.15,
+                                    ),
+                                    if (t.isHypothetical) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                          vertical: 2,
                                         ),
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(
+                                        decoration: BoxDecoration(
                                           color: AppTheme.accent.withValues(
-                                            alpha: 0.5,
+                                            alpha: 0.15,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                          border: Border.all(
+                                            color: AppTheme.accent.withValues(
+                                              alpha: 0.5,
+                                            ),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'WHAT IF',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: AppTheme.accent,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.5,
                                           ),
                                         ),
                                       ),
-                                      child: const Text(
-                                        'WHAT IF',
+                                    ],
+                                  ],
+                                ),
+                                Text(
+                                  '${t.time} · ${t.lots.toStringAsFixed(2)} lots',
+                                  style: TextStyle(
+                                    color: context.c.textTertiary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                if (t.plannedRisk != null &&
+                                    t.plannedRisk! > 0 &&
+                                    t.pnl < 0) ...[
+                                  const SizedBox(height: 4),
+                                  Builder(
+                                    builder: (_) {
+                                      final actual = -t.pnl;
+                                      final delta = actual - t.plannedRisk!;
+                                      final pct = (delta / t.plannedRisk! * 100)
+                                          .round();
+                                      final overshoot = delta > 0;
+                                      return Text(
+                                        'Plan \$${t.plannedRisk!.toStringAsFixed(0)} · '
+                                        'Actual \$${actual.toStringAsFixed(0)} · '
+                                        '${overshoot ? "+" : ""}$pct%',
                                         style: TextStyle(
-                                          fontSize: 10,
-                                          color: AppTheme.accent,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.5,
+                                          color: overshoot
+                                              ? AppTheme.red
+                                              : AppTheme.green,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          Text(
+                            _signed(t.pnl),
+                            style: TextStyle(
+                              color: tone,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () => _confirmDeleteTrade(t),
+                            icon: Icon(
+                              Icons.close,
+                              size: 16,
+                              color: context.c.textTertiary,
+                            ),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ],
+                      ),
+                      // Show images if available
+                      if (t.htfImage != null || t.ltfImage != null) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            if (t.htfImage != null)
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'HTF',
+                                      style: TextStyle(
+                                        color: context.c.textTertiary,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    GestureDetector(
+                                      onTap: () => _openImageViewer(
+                                        t.htfImage!,
+                                        heroTag: 'htf-${t.id}',
+                                      ),
+                                      child: Hero(
+                                        tag: 'htf-${t.id}',
+                                        child: Container(
+                                          height: 80,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                            border: Border.all(
+                                              color: context.c.border,
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                            child: Image.file(
+                                              File(t.htfImage!),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  Icon(
+                                                    Icons.image_not_supported,
+                                                    color:
+                                                        context.c.textTertiary,
+                                                  ),
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ],
-                                ],
-                              ),
-                              Text(
-                                '${t.time} · ${t.lots.toStringAsFixed(2)} lots',
-                                style: TextStyle(
-                                  color: context.c.textTertiary,
-                                  fontSize: 12,
                                 ),
                               ),
-                              if (t.plannedRisk != null &&
-                                  t.plannedRisk! > 0 &&
-                                  t.pnl < 0) ...[
-                                const SizedBox(height: 4),
-                                Builder(
-                                  builder: (_) {
-                                    final actual = -t.pnl;
-                                    final delta = actual - t.plannedRisk!;
-                                    final pct = (delta / t.plannedRisk! * 100)
-                                        .round();
-                                    final overshoot = delta > 0;
-                                    return Text(
-                                      'Plan \$${t.plannedRisk!.toStringAsFixed(0)} · '
-                                      'Actual \$${actual.toStringAsFixed(0)} · '
-                                      '${overshoot ? "+" : ""}$pct%',
+                            if (t.htfImage != null && t.ltfImage != null)
+                              const SizedBox(width: 12),
+                            if (t.ltfImage != null)
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'LTF',
                                       style: TextStyle(
-                                        color: overshoot
-                                            ? AppTheme.red
-                                            : AppTheme.green,
+                                        color: context.c.textTertiary,
                                         fontSize: 11,
-                                        fontWeight: FontWeight.w600,
                                       ),
-                                    );
-                                  },
+                                    ),
+                                    const SizedBox(height: 4),
+                                    GestureDetector(
+                                      onTap: () => _openImageViewer(
+                                        t.ltfImage!,
+                                        heroTag: 'ltf-${t.id}',
+                                      ),
+                                      child: Hero(
+                                        tag: 'ltf-${t.id}',
+                                        child: Container(
+                                          height: 80,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                            border: Border.all(
+                                              color: context.c.border,
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                            child: Image.file(
+                                              File(t.ltfImage!),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) =>
+                                                  Icon(
+                                                    Icons.image_not_supported,
+                                                    color:
+                                                        context.c.textTertiary,
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        Text(
-                          _signed(t.pnl),
-                          style: TextStyle(
-                            color: tone,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          onPressed: () => _confirmDeleteTrade(t),
-                          icon: Icon(
-                            Icons.close,
-                            size: 16,
-                            color: context.c.textTertiary,
-                          ),
-                          visualDensity: VisualDensity.compact,
+                              ),
+                          ],
                         ),
                       ],
+                      if (t.note.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          t.note,
+                          style: TextStyle(
+                            color: context.c.textTertiary,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                      if (t.tags.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: t.tags.map((tag) {
+                            final active = selectedTag == tag;
+                            return GestureDetector(
+                              onTap: () => setState(
+                                () => selectedTag = active ? null : tag,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: active
+                                      ? AppTheme.accent.withValues(alpha: 0.18)
+                                      : AppTheme.accent.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: AppTheme.accent.withValues(
+                                      alpha: active ? 0.6 : 0.3,
+                                    ),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  '#$tag',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppTheme.accent,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ), // GestureDetector
+            );
+          }),
+        const SizedBox(height: 96),
+      ],
+    );
+  }
+
+  void _showTradeDetail(BuildContext ctx, TradingScreenViewModel c, Trade t) {
+    final tone = t.pnl >= 0 ? AppTheme.green : AppTheme.red;
+    showModalBottomSheet<void>(
+      context: ctx,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(sheetCtx).size.height * 0.85,
+        ),
+        decoration: BoxDecoration(
+          color: sheetCtx.c.bg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 4),
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: sheetCtx.c.border,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${t.sym.toUpperCase()} ${t.dir.toUpperCase()}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
                     ),
-                    // Show images if available
-                    if (t.htfImage != null || t.ltfImage != null) ...[
-                      const SizedBox(height: 12),
-                      Row(
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      Navigator.pop(sheetCtx);
+                      await openLogTradeSheet(
+                        prefill: WizardDraft(
+                          step: 0,
+                          instrument: t.sym,
+                          stopLoss: '',
+                          entries: '1',
+                          takeProfit: '',
+                        ),
+                      );
+                    },
+                    child: const Text('Edit'),
+                  ),
+                  IconButton(
+                    onPressed: () async {
+                      Navigator.pop(sheetCtx);
+                      await _confirmDeleteTrade(t);
+                    },
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: AppTheme.red,
+                      size: 20,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(sheetCtx),
+                    icon: const Icon(Icons.close, size: 20),
+                  ),
+                ],
+              ),
+            ),
+            // Detail
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // P&L
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: tone.withAlpha(15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: tone.withAlpha(50)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          if (t.htfImage != null)
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'HTF',
-                                    style: TextStyle(
-                                      color: context.c.textTertiary,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  GestureDetector(
-                                    onTap: () => _openImageViewer(
-                                      t.htfImage!,
-                                      heroTag: 'htf-${t.id}',
-                                    ),
-                                    child: Hero(
-                                      tag: 'htf-${t.id}',
-                                      child: Container(
-                                        height: 80,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                          border: Border.all(
-                                            color: context.c.border,
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                          child: Image.file(
-                                            File(t.htfImage!),
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => Icon(
-                                              Icons.image_not_supported,
-                                              color: context.c.textTertiary,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          Text(
+                            'P&L',
+                            style: TextStyle(color: sheetCtx.c.textSecondary),
+                          ),
+                          Text(
+                            '${t.pnl >= 0 ? '+' : ''}\$${t.pnl.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              color: tone,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 20,
                             ),
-                          if (t.htfImage != null && t.ltfImage != null)
-                            const SizedBox(width: 12),
-                          if (t.ltfImage != null)
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'LTF',
-                                    style: TextStyle(
-                                      color: context.c.textTertiary,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  GestureDetector(
-                                    onTap: () => _openImageViewer(
-                                      t.ltfImage!,
-                                      heroTag: 'ltf-${t.id}',
-                                    ),
-                                    child: Hero(
-                                      tag: 'ltf-${t.id}',
-                                      child: Container(
-                                        height: 80,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                          border: Border.all(
-                                            color: context.c.border,
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            4,
-                                          ),
-                                          child: Image.file(
-                                            File(t.ltfImage!),
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => Icon(
-                                              Icons.image_not_supported,
-                                              color: context.c.textTertiary,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                          ),
                         ],
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Fields
+                    _DetailRow('Date', t.date, sheetCtx),
+                    _DetailRow('Time', t.time ?? '-', sheetCtx),
+                    _DetailRow('Lots', t.lots.toString(), sheetCtx),
+                    if (t.openPrice != null)
+                      _DetailRow(
+                        'Open price',
+                        t.openPrice.toString(),
+                        sheetCtx,
+                      ),
+                    if (t.closePrice != null)
+                      _DetailRow(
+                        'Close price',
+                        t.closePrice.toString(),
+                        sheetCtx,
+                      ),
+                    if (t.stopLoss != null)
+                      _DetailRow('Stop loss', t.stopLoss.toString(), sheetCtx),
+                    if (t.takeProfit != null)
+                      _DetailRow(
+                        'Take profit',
+                        t.takeProfit.toString(),
+                        sheetCtx,
+                      ),
+                    if (t.plannedRisk != null)
+                      _DetailRow(
+                        'Planned risk',
+                        '\$${t.plannedRisk!.toStringAsFixed(0)}',
+                        sheetCtx,
+                      ),
+                    if (t.setupQuality != null)
+                      _DetailRow('Setup quality', t.setupQuality!, sheetCtx),
+                    if (t.trigger != null)
+                      _DetailRow('Trigger', t.trigger!, sheetCtx),
                     if (t.note.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Text(
+                        'Notes',
+                        style: TextStyle(
+                          color: sheetCtx.c.textTertiary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
                         t.note,
                         style: TextStyle(
-                          color: context.c.textTertiary,
-                          fontSize: 12,
+                          color: sheetCtx.c.textSecondary,
+                          fontSize: 13,
                         ),
                       ),
                     ],
                     if (t.tags.isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
-                        children: t.tags.map((tag) {
-                          final active = selectedTag == tag;
-                          return GestureDetector(
-                            onTap: () => setState(
-                              () => selectedTag = active ? null : tag,
-                            ),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: active
-                                    ? AppTheme.accent.withValues(alpha: 0.18)
-                                    : AppTheme.accent.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: AppTheme.accent.withValues(
-                                    alpha: active ? 0.6 : 0.3,
-                                  ),
-                                  width: 1,
+                        children: t.tags
+                            .map(
+                              (tag) => Chip(
+                                label: Text(
+                                  '#$tag',
+                                  style: const TextStyle(fontSize: 11),
                                 ),
+                                backgroundColor: AppTheme.accent.withAlpha(20),
+                                padding: EdgeInsets.zero,
+                                visualDensity: VisualDensity.compact,
                               ),
-                              child: Text(
-                                '#$tag',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.accent,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                            )
+                            .toList(),
                       ),
                     ],
                   ],
                 ),
               ),
-            );
-          }),
-        const SizedBox(height: 96),
-      ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _DetailRow(String label, String value, BuildContext ctx) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(color: ctx.c.textTertiary, fontSize: 13),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: ctx.c.text,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

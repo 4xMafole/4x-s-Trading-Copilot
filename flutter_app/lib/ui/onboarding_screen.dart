@@ -633,12 +633,19 @@ class _TimezonePage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 32),
-          Text('Your timezone',
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Your timezone',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             'Session times, trade timestamps, and notifications use this.',
-            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 14),
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withAlpha(150),
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 20),
           Expanded(
@@ -653,7 +660,10 @@ class _TimezonePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
@@ -668,32 +678,43 @@ class _TimezonePage extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.public,
-                            size: 18,
-                            color: selected
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurface.withAlpha(100)),
+                        Icon(
+                          Icons.public,
+                          size: 18,
+                          color: selected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface.withAlpha(100),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(tz.$2,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: theme.colorScheme.onSurface,
-                                  )),
-                              Text(tz.$3,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: theme.colorScheme.onSurface.withAlpha(120),
-                                  )),
+                              Text(
+                                tz.$2,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              Text(
+                                tz.$3,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: theme.colorScheme.onSurface.withAlpha(
+                                    120,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
                         if (selected)
-                          Icon(Icons.check_circle_rounded,
-                              color: theme.colorScheme.primary, size: 20),
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: theme.colorScheme.primary,
+                            size: 20,
+                          ),
                       ],
                     ),
                   ),
@@ -733,7 +754,16 @@ class _RiskSetupPage extends StatelessWidget {
   final ValueChanged<bool> onToggleRiskMode;
   final VoidCallback onChanged;
 
-  static const _currencies = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'ZAR', 'NGN', 'KES'];
+  static const _currencies = [
+    'USD',
+    'EUR',
+    'GBP',
+    'CAD',
+    'AUD',
+    'ZAR',
+    'NGN',
+    'KES',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -748,17 +778,27 @@ class _RiskSetupPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 32),
-          Text('Risk management',
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Risk management',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             'Your starting balance and per-trade risk limit. You can change these anytime in Settings.',
-            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 14),
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withAlpha(150),
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 28),
 
           // Balance + currency
-          Text('Account balance', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(
+            'Account balance',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -776,7 +816,10 @@ class _RiskSetupPage extends StatelessWidget {
                     items: _currencies
                         .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                         .toList(),
-                    onChanged: (v) { if (v != null) onCurrencyChanged(v); onChanged(); },
+                    onChanged: (v) {
+                      if (v != null) onCurrencyChanged(v);
+                      onChanged();
+                    },
                   ),
                 ),
               ),
@@ -784,12 +827,18 @@ class _RiskSetupPage extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: balanceCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                  ],
                   decoration: InputDecoration(
                     hintText: '10,000',
                     prefixText: _currencySymbol(currency),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                   onChanged: (_) => onChanged(),
                 ),
@@ -798,7 +847,10 @@ class _RiskSetupPage extends StatelessWidget {
           ),
 
           const SizedBox(height: 28),
-          Text('Risk per trade', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(
+            'Risk per trade',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           const SizedBox(height: 8),
 
           // Toggle % vs fixed
@@ -807,13 +859,19 @@ class _RiskSetupPage extends StatelessWidget {
               ChoiceChip(
                 label: const Text('% of balance'),
                 selected: useRiskPct,
-                onSelected: (_) { onToggleRiskMode(true); onChanged(); },
+                onSelected: (_) {
+                  onToggleRiskMode(true);
+                  onChanged();
+                },
               ),
               const SizedBox(width: 8),
               ChoiceChip(
                 label: Text('Fixed $currency'),
                 selected: !useRiskPct,
-                onSelected: (_) { onToggleRiskMode(false); onChanged(); },
+                onSelected: (_) {
+                  onToggleRiskMode(false);
+                  onChanged();
+                },
               ),
             ],
           ),
@@ -822,28 +880,40 @@ class _RiskSetupPage extends StatelessWidget {
           if (useRiskPct)
             TextField(
               controller: riskPctCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
               decoration: InputDecoration(
                 hintText: '1',
                 suffixText: '%',
                 helperText: balance > 0
                     ? 'Max risk per trade: ${_currencySymbol(currency)}${calculatedRisk.toStringAsFixed(0)}'
                     : null,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onChanged: (_) => onChanged(),
             )
           else
             TextField(
               controller: riskUsdCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              ],
               decoration: InputDecoration(
                 hintText: '100',
                 prefixText: _currencySymbol(currency),
                 helperText: 'Fixed amount lost max per trade',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onChanged: (_) => onChanged(),
             ),
@@ -856,11 +926,14 @@ class _RiskSetupPage extends StatelessWidget {
 
   String _currencySymbol(String c) {
     switch (c) {
-      case 'USD': return r'$';
-      case 'EUR': return '€';
-      case 'GBP': return '£';
-      default: return '$c ';
+      case 'USD':
+        return r'$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      default:
+        return '$c ';
     }
   }
 }
-

@@ -61,20 +61,20 @@ class AppColors extends ThemeExtension<AppColors> {
   );
 
   static const AppColors lightColors = AppColors(
-    bg: Color(0xFFF8F9FA),
-    surface: Color(0xFFFFFFFF),
-    surfaceRaised: Color(0xFFF1F3F6),
-    surfaceGlass: Color(0xCCF8F9FA),
-    border: Color(0xFFE2E7EF),
-    borderStrong: Color(0xFFCBD3DF),
-    divider: Color(0xFFEBEFF5),
-    text: Color(0xFF0E1422),
-    textSecondary: Color(0xFF55617A),
-    textTertiary: Color(0xFF8A95A8),
-    positive: Color(0xFF12A55F),
-    negative: Color(0xFFD9404C),
-    caution: Color(0xFFB37800),
-    info: Color(0xFF0086A8),
+    bg: Color(0xFFF5F0EB),
+    surface: Color(0xFFFBF8F4),
+    surfaceRaised: Color(0xFFEDE8E1),
+    surfaceGlass: Color(0xCCF5F0EB),
+    border: Color(0xFFDDD6CD),
+    borderStrong: Color(0xFFC9BFB4),
+    divider: Color(0xFFE8E2DA),
+    text: Color(0xFF1A1512),
+    textSecondary: Color(0xFF5C4F3E),
+    textTertiary: Color(0xFF8C7E6E),
+    positive: Color(0xFF2E7D52),
+    negative: Color(0xFFB03040),
+    caution: Color(0xFF8A6200),
+    info: Color(0xFF1565A6),
   );
 
   @override
@@ -147,10 +147,10 @@ class AppTheme {
   static const Color border = Color(0xFF1A2030);
 
   // ── Surfaces (light) ── off-white/cream, easier on the eyes ──
-  static const Color bgLight = Color(0xFFF8F9FA);
-  static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceRaisedLight = Color(0xFFF1F3F6);
-  static const Color borderLight = Color(0xFFE0E5EE);
+  static const Color bgLight = Color(0xFFF5F0EB);
+  static const Color surfaceLight = Color(0xFFFBF8F4);
+  static const Color surfaceRaisedLight = Color(0xFFEDE8E1);
+  static const Color borderLight = Color(0xFFDDD6CD);
 
   // ── Accents (theme-agnostic) ──
   static const Color accent = Color(0xFF00E5FF);
@@ -165,9 +165,9 @@ class AppTheme {
   static const Color textTertiary = Color(0xFF5C6B82);
 
   // ── Text (light) — navy for strong readability on cream ──
-  static const Color textLight = Color(0xFF0D1526);
-  static const Color textSecondaryLight = Color(0xFF3D4F6E);
-  static const Color textTertiaryLight = Color(0xFF7A8CAA);
+  static const Color textLight = Color(0xFF1A1512);
+  static const Color textSecondaryLight = Color(0xFF5C4F3E);
+  static const Color textTertiaryLight = Color(0xFF8C7E6E);
 
   static ThemeData dark() {
     final base = ThemeData(brightness: Brightness.dark, useMaterial3: true);
@@ -323,8 +323,10 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: accent,
         secondary: green,
-        surface: surfaceLight,
+        surface: Color(0xFFFBF8F4),
         error: red,
+        onSurface: Color(0xFF1A1512),
+        onSurfaceVariant: Color(0xFF5C4F3E),
       ),
       textTheme: tt.copyWith(
         headlineMedium: tt.headlineMedium?.copyWith(

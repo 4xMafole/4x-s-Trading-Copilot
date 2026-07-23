@@ -273,7 +273,8 @@ class IntelligenceEngine {
     }).length;
 
     if (session.ok) score += 30;
-    score += ((passed / total) * 50).round();
+    // Guard against division by zero when user has no gates configured
+    if (total > 0) score += ((passed / total) * 50).round();
     if (!c.state.lock) score += 10;
     if (c.getTodayTrades().length < c.state.dailyTradeCap) score += 10;
     return score.clamp(0, 100);

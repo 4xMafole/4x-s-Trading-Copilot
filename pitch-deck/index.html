@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LocoTrader — Investor Pitch Deck</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+  <style>
+    :root {
+      --r-background-color: #050508;
+      --r-main-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --r-heading-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --r-main-color: #e2e8f0;
+      --r-heading-color: #ffffff;
+      --r-link-color: #3b82f6;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.3);
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    .reveal {
+      font-family: var(--r-main-font);
+      font-weight: 400;
+    }
+
+    .reveal h1, .reveal h2, .reveal h3 {
+      font-weight: 800;
+      text-transform: none;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .reveal h1 { font-size: 2.8em; }
+    .reveal h2 { font-size: 2em; }
+    .reveal h3 { font-size: 1.4em; color: rgba(255,255,255,0.7); font-weight: 600; }
+
+    .reveal p {
+      font-size: 0.85em;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .reveal .slide-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* Utility classes */
+    .accent { color: var(--accent); }
+    .muted { color: rgba(255,255,255,0.35); }
+    .small { font-size: 0.7em; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .left { text-align: left; }
+    .bold { font-weight: 700; }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .stat-box {
+      padding: 1.5rem;
+      border-radius: 1rem;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .stat-box .number {
+      font-size: 2.5em;
+      font-weight: 900;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-box .label {
+      font-size: 0.75em;
+      color: rgba(255,255,255,0.5);
+      line-height: 1.4;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      text-align: left;
+      align-items: center;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.5rem;
+      text-align: left;
+    }
+
+    .card {
+      padding: 1.5rem;
+      border-radius: 1rem;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      text-align: left;
+    }
+
+    .card h4 {
+      color: var(--accent);
+      font-size: 0.9em;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .card p {
+      font-size: 0.7em;
+      margin: 0;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 0.3rem 0.8rem;
+      border-radius: 100px;
+      font-size: 0.6em;
+      font-weight: 600;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      margin-bottom: 1rem;
+    }
+
+    .competitor-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.65em;
+      margin: 1.5rem 0;
+    }
+
+    .competitor-table th {
+      padding: 0.8rem;
+      text-align: left;
+      color: rgba(255,255,255,0.4);
+      font-weight: 600;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.85em;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .competitor-table td {
+      padding: 0.8rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.7);
+    }
+
+    .competitor-table tr:last-child {
+      background: rgba(59, 130, 246, 0.05);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 0.5rem;
+    }
+
+    .competitor-table tr:last-child td {
+      color: white;
+      font-weight: 600;
+    }
+
+    .check { color: #22c55e; }
+    .cross { color: #ef4444; }
+    .partial { color: #eab308; }
+
+    .timeline {
+      display: flex;
+      gap: 0;
+      margin: 2rem 0;
+    }
+
+    .timeline-item {
+      flex: 1;
+      padding: 1.2rem;
+      position: relative;
+      border-top: 3px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .timeline-item.active {
+      border-top-color: var(--accent);
+    }
+
+    .timeline-item h4 {
+      font-size: 0.75em;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 0.3rem;
+    }
+
+    .timeline-item p {
+      font-size: 0.6em;
+      margin: 0;
+    }
+
+    .timeline-item .quarter {
+      font-size: 0.6em;
+      color: var(--accent);
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 0.3rem;
+    }
+
+    .use-of-funds {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .fund-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.2rem;
+      background: rgba(255,255,255,0.02);
+      border-radius: 0.75rem;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .fund-item .pct {
+      font-size: 1.5em;
+      font-weight: 900;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      min-width: 3rem;
+    }
+
+    .fund-item .desc {
+      font-size: 0.7em;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.3;
+    }
+
+    .quote-block {
+      padding: 2rem;
+      border-left: 4px solid var(--accent);
+      background: rgba(59, 130, 246, 0.05);
+      border-radius: 0 1rem 1rem 0;
+      text-align: left;
+      margin: 2rem 0;
+    }
+
+    .quote-block p {
+      font-size: 1.1em;
+      color: rgba(255,255,255,0.8);
+      font-style: italic;
+      margin: 0;
+    }
+
+    .logo-mark {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: white;
+      margin: 0 auto 1.5rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0;
+      text-align: left;
+    }
+
+    .feature-list li {
+      font-size: 0.75em;
+      padding: 0.5rem 0;
+      color: rgba(255,255,255,0.7);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+    }
+
+    .feature-list li::before {
+      content: "◆";
+      color: var(--accent);
+      font-size: 0.6em;
+    }
+
+    .reveal section img {
+      border: none;
+      box-shadow: none;
+    }
+
+    .glow-text {
+      text-shadow: 0 0 40px var(--accent-glow);
+    }
+
+    .market-size-visual {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 3rem;
+      margin: 2rem 0;
+    }
+
+    .market-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .market-bar .bar {
+      width: 80px;
+      background: linear-gradient(180deg, var(--accent), rgba(59,130,246,0.3));
+      border-radius: 8px 8px 0 0;
+      transition: height 0.5s ease;
+    }
+
+    .market-bar .year {
+      font-size: 0.7em;
+      color: rgba(255,255,255,0.5);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .market-bar .value {
+      font-size: 0.85em;
+      font-weight: 700;
+      color: white;
+    }
+
+    .ask-box {
+      padding: 2.5rem;
+      border-radius: 1.5rem;
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.02));
+      border: 2px solid rgba(59,130,246,0.3);
+      margin: 2rem auto;
+      max-width: 600px;
+    }
+
+    .ask-box .amount {
+      font-size: 3em;
+      font-weight: 900;
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .ask-box .stage {
+      font-size: 0.8em;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .footer-cta {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- SLIDE 1: COVER -->
+      <section>
+        <div class="logo-mark">LT</div>
+        <h1 style="font-size:2.5em;">Loco<span class="accent">Trader</span></h1>
+        <h3 style="font-weight:400; font-size:1.1em; color:rgba(255,255,255,0.5); margin-top:0.5rem;">
+          The operating system for disciplined trading
+        </h3>
+        <br>
+        <p style="font-size:0.7em; color:rgba(255,255,255,0.3);">
+          Pre-Seed Pitch · July 2026<br>
+          Erick Mafole — Founder & CEO
+        </p>
+      </section>
+
+      <!-- SLIDE 2: THE PROBLEM -->
+      <section>
+        <span class="pill">THE PROBLEM</span>
+        <h2>73% of retail traders<br><span class="muted">lose money consistently.</span></h2>
+        <br>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="number">73%</div>
+            <div class="label">of retail traders are net losers<br>(FCA, ESMA data)</div>
+          </div>
+          <div class="stat-box">
+            <div class="number">#1</div>
+            <div class="label">reason: no system, no rules,<br>no real-time accountability</div>
+          </div>
+          <div class="stat-box">
+            <div class="number">$0</div>
+            <div class="label">tools that ENFORCE discipline<br>before the trade happens</div>
+          </div>
+        </div>
+        <br>
+        <p style="font-size:0.8em; text-align:center;">
+          The problem isn't strategy — it's <strong style="color:white;">execution discipline</strong>.
+        </p>
+      </section>
+
+      <!-- SLIDE 3: DEEPER PROBLEM -->
+      <section>
+        <span class="pill">WHY TRADERS FAIL</span>
+        <h2>Existing tools are<br><span class="muted">passive autopsy reports.</span></h2>
+        <br>
+        <div class="quote-block">
+          <p>"Trading journals tell you what went wrong <em>after</em> you've already lost the money. That's like a seatbelt that only deploys after the crash."</p>
+        </div>
+        <br>
+        <div class="three-col">
+          <div class="card">
+            <h4>They Record</h4>
+            <p>Log trades retroactively. By then, the damage is done.</p>
+          </div>
+          <div class="card">
+            <h4>They Suggest</h4>
+            <p>Show analytics dashboards. Trader ignores them the next morning.</p>
+          </div>
+          <div class="card">
+            <h4>They Cost</h4>
+            <p>$35–$99/month recurring — for glorified spreadsheets with charts.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 4: THE SOLUTION -->
+      <section>
+        <span class="pill">THE SOLUTION</span>
+        <h2>LocoTrader doesn't journal.<br><span class="accent">It intervenes.</span></h2>
+        <br>
+        <div class="two-col">
+          <div>
+            <ul class="feature-list">
+              <li><strong>Gate System</strong> — 12 pre-trade rules that physically BLOCK entry until conditions are met</li>
+              <li><strong>Auto-Lock</strong> — consecutive losses trigger 24hr account freeze (no override)</li>
+              <li><strong>Risk Budget</strong> — weekly R-unit budget auto-stops you at 100% consumed</li>
+              <li><strong>Drawdown Engine</strong> — prop-firm-aware dashboard with real-time danger gauges</li>
+              <li><strong>Streak Psychology</strong> — warns before overconfidence or tilt destroys gains</li>
+              <li><strong>Personal Edge Map</strong> — AI learns YOUR patterns, not generic advice</li>
+            </ul>
+          </div>
+          <div style="text-align:center;">
+            <div style="width:220px;margin:0 auto;padding:8px;border-radius:2.5rem;border:6px solid rgba(255,255,255,0.08);background:#111;">
+              <div style="border-radius:2rem;overflow:hidden;aspect-ratio:9/19.5;background:#1a1a2e;display:flex;align-items:center;justify-content:center;">
+                <div style="text-align:center;padding:1rem;">
+                  <div style="font-size:3em;margin-bottom:0.5rem;">📱</div>
+                  <div style="font-size:0.6em;color:rgba(255,255,255,0.4);">Mobile-first<br>Trading OS</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 5: HOW IT WORKS -->
+      <section>
+        <span class="pill">PRODUCT</span>
+        <h2>The Trade Flow:<br><span class="muted">Plan → Size → Execute</span></h2>
+        <br>
+        <div class="three-col">
+          <div class="card" style="border-top:3px solid var(--accent);">
+            <h4>1. PLAN</h4>
+            <p>Select instrument → Gate checklist activates. Manual gates require proof (justification or screenshot). Auto-gates compute live (session window, lock status, cap). <strong style="color:white;">Cannot proceed until ALL pass.</strong></p>
+          </div>
+          <div class="card" style="border-top:3px solid var(--accent);">
+            <h4>2. SIZE</h4>
+            <p>Calculator auto-computes lot size from risk cap ($125 default). Validates R:R ≥ 1:2. Blocks oversized positions. Multi-entry stacking capped at combined risk limit.</p>
+          </div>
+          <div class="card" style="border-top:3px solid var(--accent);">
+            <h4>3. EXECUTE</h4>
+            <p>Final validation: lock status, session, daily cap. Trade logs → immediate 30-second reflection (plan adherence, exit type, emotional state 1-10). Data feeds Edge Map.</p>
+          </div>
+        </div>
+        <br>
+        <p style="text-align:center;font-size:0.75em;color:rgba(255,255,255,0.4);">
+          ⚡ At any step, if a rule is violated → <strong style="color:#ef4444;">haptic vibration + red banner + blocked</strong>
+        </p>
+      </section>
+
+      <!-- SLIDE 6: EDGE MAP (THE MOAT) -->
+      <section>
+        <span class="pill">UNFAIR ADVANTAGE</span>
+        <h2>The Personal Edge Map<br><span class="muted">Self-calibrating intelligence</span></h2>
+        <br>
+        <div class="two-col">
+          <div>
+            <p style="font-size:0.85em;color:rgba(255,255,255,0.7);">After 30+ trades, LocoTrader becomes a <strong style="color:white;">mirror of the trader's actual behavior</strong>:</p>
+            <ul class="feature-list">
+              <li>Per-symbol P/L matrix — which pairs actually make you money</li>
+              <li>2-hour timing heatmap — your personal best/worst windows</li>
+              <li>Setup quality correlation — A+ vs B vs C grade performance</li>
+              <li>Mood → P/L regression — emotional state impacts quantified</li>
+              <li>Streak detection — overconfidence/tilt patterns auto-surfaced</li>
+              <li>Weekly AI digest — 3-bullet actionable summary every Sunday</li>
+            </ul>
+          </div>
+          <div>
+            <div class="card" style="background:rgba(59,130,246,0.05);border-color:rgba(59,130,246,0.2);">
+              <h4 style="font-size:0.7em;letter-spacing:0.05em;">AI COACH OUTPUT EXAMPLE</h4>
+              <p style="font-size:0.65em;font-family:'JetBrains Mono',monospace;color:rgba(255,255,255,0.6);line-height:1.8;">
+                <span style="color:#22c55e;">✓ Strength:</span> "A+ setups: +$340 this week"<br>
+                <span style="color:#ef4444;">✗ Leak:</span> "EURUSD: -$180 across 6 trades"<br>
+                <span style="color:#eab308;">⚠ Timing:</span> "06:00-08:00 = 22% WR. Blackout."<br>
+                <span style="color:white;">◆ Truth:</span> "60% of trades are FOMO. Stop."
+              </p>
+            </div>
+            <br>
+            <p style="font-size:0.7em;color:rgba(255,255,255,0.4);text-align:center;">
+              Powered by Gemini AI + local rule-based fallback<br>
+              <strong style="color:rgba(255,255,255,0.6);">$0/month API cost</strong> (free tier)
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 7: MARKET OPPORTUNITY -->
+      <section>
+        <span class="pill">MARKET</span>
+        <h2>$12.57B market,<br><span class="muted">growing 7.66% CAGR</span></h2>
+        <br>
+        <div class="market-size-visual">
+          <div class="market-bar">
+            <div class="value">$11.6B</div>
+            <div class="bar" style="height:150px;"></div>
+            <div class="year">2025</div>
+          </div>
+          <div class="market-bar">
+            <div class="value">$12.6B</div>
+            <div class="bar" style="height:170px;"></div>
+            <div class="year">2026</div>
+          </div>
+          <div class="market-bar">
+            <div class="value">$18.2B</div>
+            <div class="bar" style="height:240px;"></div>
+            <div class="year">2031</div>
+          </div>
+        </div>
+        <div class="stat-grid" style="margin-top:1rem;">
+          <div class="stat-box">
+            <div class="number" style="font-size:1.8em;">69.6%</div>
+            <div class="label">Retail traders share<br>of total market</div>
+          </div>
+          <div class="stat-box">
+            <div class="number" style="font-size:1.8em;">8.43%</div>
+            <div class="label">Retail segment CAGR<br>(fastest growing)</div>
+          </div>
+          <div class="stat-box">
+            <div class="number" style="font-size:1.8em;">13.9M+</div>
+            <div class="label">Active retail forex<br>traders globally</div>
+          </div>
+        </div>
+        <p class="small muted" style="text-align:center;">Source: Mordor Intelligence, Online Trading Platform Market Report 2026</p>
+      </section>
+
+      <!-- SLIDE 8: TAM/SAM/SOM -->
+      <section>
+        <span class="pill">MARKET SIZING</span>
+        <h2>Bottom-up addressable market</h2>
+        <br>
+        <div class="stat-grid">
+          <div class="stat-box" style="border-color:rgba(59,130,246,0.3);">
+            <div class="number" style="font-size:1.8em;">$2.1B</div>
+            <div class="label"><strong style="color:white;">TAM</strong><br>13.9M retail traders × $150/yr avg spend on tools & analytics</div>
+          </div>
+          <div class="stat-box" style="border-color:rgba(59,130,246,0.4);">
+            <div class="number" style="font-size:1.8em;">$420M</div>
+            <div class="label"><strong style="color:white;">SAM</strong><br>~2.8M active forex/CFD/prop-firm traders willing to pay for discipline tools</div>
+          </div>
+          <div class="stat-box" style="border-color:rgba(59,130,246,0.6);">
+            <div class="number" style="font-size:1.8em;">$12M</div>
+            <div class="label"><strong style="color:white;">SOM (Yr 3)</strong><br>80K paid users × $150 avg annual revenue</div>
+          </div>
+        </div>
+        <br>
+        <p style="font-size:0.75em;text-align:center;color:rgba(255,255,255,0.5);">
+          Key drivers: Prop firm boom (FTMO, Apex, TopStep = millions of challengers), mobile-first Gen-Z traders, AI maturity enabling on-device behavioral coaching
+        </p>
+      </section>
+
+      <!-- SLIDE 9: COMPETITIVE LANDSCAPE -->
+      <section>
+        <span class="pill">COMPETITION</span>
+        <h2>Journals record history.<br><span class="accent">We change the future.</span></h2>
+        <br>
+        <table class="competitor-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>TradeZella</th>
+              <th>Edgewonk</th>
+              <th>Tradervue</th>
+              <th style="color:var(--accent);">LocoTrader</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Pre-trade rule enforcement</td>
+              <td class="cross">✗</td>
+              <td class="cross">✗</td>
+              <td class="cross">✗</td>
+              <td class="check">✓ (12 gates)</td>
+            </tr>
+            <tr>
+              <td>Auto-lock after tilt</td>
+              <td class="cross">✗</td>
+              <td class="cross">✗</td>
+              <td class="cross">✗</td>
+              <td class="check">✓ (24hr lock)</td>
+            </tr>
+            <tr>
+              <td>Real-time drawdown engine</td>
+              <td class="partial">~ (basic)</td>
+              <td class="partial">~ (post-hoc)</td>
+              <td class="cross">✗</td>
+              <td class="check">✓ (prop-firm aware)</td>
+            </tr>
+            <tr>
+              <td>Mood → P/L correlation</td>
+              <td class="cross">✗</td>
+              <td class="partial">~ (manual)</td>
+              <td class="cross">✗</td>
+              <td class="check">✓ (auto)</td>
+            </tr>
+            <tr>
+              <td>Weekly R-unit budget</td>
+              <td class="cross">✗</td>
+              <td class="cross">✗</td>
+              <td class="cross">✗</td>
+              <td class="check">✓</td>
+            </tr>
+            <tr>
+              <td>On-device AI (works offline)</td>
+              <td class="cross">✗</td>
+              <td class="cross">✗</td>
+              <td class="cross">✗</td>
+              <td class="check">✓</td>
+            </tr>
+            <tr>
+              <td>Price</td>
+              <td>$35–99/mo</td>
+              <td>$169 one-time</td>
+              <td>$30–50/mo</td>
+              <td style="color:var(--accent);">Freemium + $9.99/mo</td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="small muted" style="text-align:center;">
+          TradeZella: 100K+ users, $35-99/mo. Edgewonk: 10+ years, 8M trades logged. Neither PREVENTS bad trades.
+        </p>
+      </section>
+
+      <!-- SLIDE 10: WHY NOW -->
+      <section>
+        <span class="pill">TIMING</span>
+        <h2>Why <span class="accent">now</span>?</h2>
+        <br>
+        <div class="three-col">
+          <div class="card">
+            <h4>🤖 AI Maturity</h4>
+            <p>On-device ML (Google ML Kit) + free LLM APIs (Gemini) make personalized coaching possible at $0/user/month. This wasn't viable 2 years ago.</p>
+          </div>
+          <div class="card">
+            <h4>📈 Prop Firm Explosion</h4>
+            <p>FTMO, Apex, TopStep, MyFundedFX — millions of traders need to pass challenges. Drawdown rules are non-negotiable. Tools that enforce them = must-have.</p>
+          </div>
+          <div class="card">
+            <h4>📱 Mobile-First Generation</h4>
+            <p>62% of retail orders now placed via mobile (Schwab 2025). Gen-Z traders live on their phones. Competitors are desktop-first web apps.</p>
+          </div>
+        </div>
+        <br>
+        <div class="card" style="text-align:center; max-width:700px; margin:0 auto;">
+          <p style="font-size:0.85em;color:rgba(255,255,255,0.7);margin:0;">
+            <strong style="color:white;">Market validation:</strong> "On-Device ML Behavioral Nudges Reducing Churn" is cited as a <span class="accent">key market driver</span> by Mordor Intelligence in the 2026 Online Trading Platform Market Report.
+          </p>
+        </div>
+      </section>
+
+      <!-- SLIDE 11: BUSINESS MODEL -->
+      <section>
+        <span class="pill">BUSINESS MODEL</span>
+        <h2>Freemium + Pro</h2>
+        <br>
+        <div class="two-col">
+          <div>
+            <div class="card" style="margin-bottom:1rem;">
+              <h4>Free Tier (Forever)</h4>
+              <p>Basic journal, 3 gates, manual trade logging, daily P/L tracking. Enough to be useful — not enough to transform.</p>
+            </div>
+            <div class="card" style="border-color:rgba(59,130,246,0.3);background:rgba(59,130,246,0.05);">
+              <h4>Pro Tier ($9.99/mo or $99/yr)</h4>
+              <p>Full gate system, AI Edge Map, drawdown engine, risk budgets, auto-lock, mood tracking, weekly digest, multi-account, PDF tear sheets, encrypted backups.</p>
+            </div>
+          </div>
+          <div>
+            <div class="stat-box" style="margin-bottom:1rem;text-align:center;">
+              <div class="number" style="font-size:2em;">$49</div>
+              <div class="label">Early access lifetime (limited to first 500 users)<br>Creates urgency + validates demand</div>
+            </div>
+            <div class="stat-box" style="text-align:center;">
+              <div class="number" style="font-size:1.5em;">85%+</div>
+              <div class="label">Gross margin (near-zero COGS)<br>All AI runs on free tiers or on-device</div>
+            </div>
+            <br>
+            <p style="font-size:0.7em;color:rgba(255,255,255,0.4);">
+              <strong>Future revenue streams:</strong><br>
+              • B2B licensing to prop firms<br>
+              • Premium AI coaching (advanced models)<br>
+              • Data insights API for trading educators
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 12: TRACTION / CURRENT STATE -->
+      <section>
+        <span class="pill">TRACTION</span>
+        <h2>Pre-launch,<br><span class="muted">but the product is real.</span></h2>
+        <br>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="number" style="font-size:1.6em;">v2.0</div>
+            <div class="label">Production-ready app<br>(Android built, iOS scaffold)</div>
+          </div>
+          <div class="stat-box">
+            <div class="number" style="font-size:1.6em;">11mo</div>
+            <div class="label">Development time<br>(8mo internal + 3mo productization)</div>
+          </div>
+          <div class="stat-box">
+            <div class="number" style="font-size:1.6em;">$2K</div>
+            <div class="label">Founder investment<br>(bootstrapped to working product)</div>
+          </div>
+        </div>
+        <br>
+        <div class="card" style="max-width:700px;margin:0 auto;">
+          <h4>What's Built & Working Today</h4>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:0.5rem;">
+            <p style="font-size:0.7em;color:rgba(255,255,255,0.6);">✓ Landing page live (locotrader.app)</p>
+            <p style="font-size:0.7em;color:rgba(255,255,255,0.6);">✓ Paddle payments integrated</p>
+            <p style="font-size:0.7em;color:rgba(255,255,255,0.6);">✓ Full Flutter app (25+ screens)</p>
+            <p style="font-size:0.7em;color:rgba(255,255,255,0.6);">✓ Supabase backend (auth + DB)</p>
+            <p style="font-size:0.7em;color:rgba(255,255,255,0.6);">✓ AI coaching (Gemini + local)</p>
+            <p style="font-size:0.7em;color:rgba(255,255,255,0.6);">✓ All risk engines functional</p>
+            <p style="font-size:0.7em;color:rgba(255,255,255,0.6);">✓ Push notifications (10 categories)</p>
+            <p style="font-size:0.7em;color:rgba(255,255,255,0.6);">✓ Android home-screen widget</p>
+          </div>
+        </div>
+        <br>
+        <p style="font-size:0.75em;text-align:center;color:rgba(255,255,255,0.4);">
+          <strong style="color:rgba(255,255,255,0.6);">Founder dogfooding:</strong> Used internally for 8 months. Identified edge patterns (timing, symbols) that would have turned $500→$800 journey into net profitable within 3 months.
+        </p>
+      </section>
+
+      <!-- SLIDE 13: GO-TO-MARKET -->
+      <section>
+        <span class="pill">GO-TO-MARKET</span>
+        <h2>Reach traders where<br><span class="muted">they already spend attention</span></h2>
+        <br>
+        <div class="three-col">
+          <div class="card">
+            <h4>Phase 1: Community</h4>
+            <p><strong style="color:white;">YouTube traders</strong> as affiliates (20-30% rev share). Target mid-tier (10K-100K subs) forex/prop-firm creators. They need content; we provide a product worth demoing.</p>
+          </div>
+          <div class="card">
+            <h4>Phase 2: Paid Acquisition</h4>
+            <p><strong style="color:white;">TikTok + Instagram</strong> short-form content: "Watch this app BLOCK me from revenge-trading" — native, viral-ready format. Target CPA: $8-15.</p>
+          </div>
+          <div class="card">
+            <h4>Phase 3: Prop Firm Partnerships</h4>
+            <p><strong style="color:white;">B2B integration</strong> with prop firms as a recommended risk tool. Firms want traders to pass — we help them pass. Revenue share or white-label.</p>
+          </div>
+        </div>
+        <br>
+        <div class="card" style="max-width:650px;margin:0 auto;text-align:center;">
+          <p style="font-size:0.75em;color:rgba(255,255,255,0.6);margin:0;">
+            <strong style="color:white;">Viral loop:</strong> Tear sheet PDF exports include LocoTrader branding → traders share equity curves on social → organic acquisition flywheel.
+          </p>
+        </div>
+      </section>
+
+      <!-- SLIDE 14: ROADMAP -->
+      <section>
+        <span class="pill">ROADMAP</span>
+        <h2>18-month execution plan</h2>
+        <br>
+        <div class="timeline">
+          <div class="timeline-item active">
+            <div class="quarter">Q3 2026</div>
+            <h4>Launch</h4>
+            <p style="font-size:0.6em;">Android on Play Store. Early access campaign. First 500 lifetime users. YouTube affiliate program live.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="quarter">Q4 2026</div>
+            <h4>iOS + Growth</h4>
+            <p style="font-size:0.6em;">App Store launch. Paid ads (TikTok/IG). First 5K users. Subscription model live. Broker sync (MT5 CSV).</p>
+          </div>
+          <div class="timeline-item">
+            <div class="quarter">Q1 2027</div>
+            <h4>Intelligence</h4>
+            <p style="font-size:0.6em;">Screenshot OCR import. Advanced AI coaching. Prop firm templates (FTMO, Apex rules pre-loaded). 15K users.</p>
+          </div>
+          <div class="timeline-item">
+            <div class="quarter">Q2 2027</div>
+            <h4>B2B + Scale</h4>
+            <p style="font-size:0.6em;">Prop firm partnership API. White-label offering. Community features. Target: 50K users, $30K MRR.</p>
+          </div>
+        </div>
+        <br>
+        <p style="font-size:0.7em;text-align:center;color:rgba(255,255,255,0.4);">
+          Revenue target by Month 18: <strong style="color:white;">$30K MRR</strong> (3,000 Pro subscribers × $9.99/mo)
+        </p>
+      </section>
+
+      <!-- SLIDE 15: TEAM -->
+      <section>
+        <span class="pill">TEAM</span>
+        <h2>Built by a trader,<br><span class="muted">for traders.</span></h2>
+        <br>
+        <div class="two-col">
+          <div>
+            <div style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);margin-bottom:1rem;display:flex;align-items:center;justify-content:center;font-size:2em;font-weight:800;color:white;">EM</div>
+            <h3 style="color:white;font-size:1.2em;margin-bottom:0.3rem;">Erick Mafole</h3>
+            <p style="color:var(--accent);font-size:0.8em;margin-bottom:1rem;">Founder & CEO</p>
+            <ul class="feature-list">
+              <li>7+ years active forex/CFD trader</li>
+              <li>Full-stack developer (Flutter, React, TypeScript, Dart)</li>
+              <li>Built LocoTrader for personal use first — authentic pain point</li>
+              <li>Solo-shipped production app: landing page, payments, backend, mobile</li>
+              <li>Technical founder who understands both trading psychology & engineering</li>
+            </ul>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:1rem;">
+              <h4>Why This Founder</h4>
+              <p>Rare intersection: trader + developer. Most trading tools are built by engineers who don't trade, or traders who can't code. Erick is both — and built this to fix his own bleeding first.</p>
+            </div>
+            <div class="card">
+              <h4>Hiring Plan (Post-Funding)</h4>
+              <p>
+                • <strong style="color:white;">Mobile Engineer</strong> — iOS polish + broker sync integrations<br>
+                • <strong style="color:white;">Growth Marketer</strong> — affiliate program + paid acquisition<br>
+                • <strong style="color:white;">Part-time Designer</strong> — brand + App Store presence
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 16: THE ASK -->
+      <section>
+        <span class="pill">THE ASK</span>
+        <h2>Pre-Seed Round</h2>
+        <br>
+        <div class="ask-box">
+          <div class="stage">Raising</div>
+          <div class="amount">$150K</div>
+          <p style="font-size:0.8em;color:rgba(255,255,255,0.5);margin-top:0.5rem;">Pre-seed · SAFE note · 18-month runway</p>
+        </div>
+        <br>
+        <div class="use-of-funds">
+          <div class="fund-item">
+            <div class="pct">40%</div>
+            <div class="desc"><strong style="color:white;">Engineering</strong><br>iOS launch, broker integrations, hire mobile dev</div>
+          </div>
+          <div class="fund-item">
+            <div class="pct">30%</div>
+            <div class="desc"><strong style="color:white;">Marketing & Growth</strong><br>Paid ads, affiliate program, content creators</div>
+          </div>
+          <div class="fund-item">
+            <div class="pct">15%</div>
+            <div class="desc"><strong style="color:white;">Operations</strong><br>App Store fees, infrastructure, legal/compliance</div>
+          </div>
+          <div class="fund-item">
+            <div class="pct">15%</div>
+            <div class="desc"><strong style="color:white;">BD & Partnerships</strong><br>Prop firm integrations, white-label pilots</div>
+          </div>
+        </div>
+        <br>
+        <p style="font-size:0.75em;text-align:center;color:rgba(255,255,255,0.4);">
+          <strong style="color:rgba(255,255,255,0.6);">Milestone targets:</strong> 5K users in 6 months · $10K MRR in 12 months · Seed-ready in 18 months
+        </p>
+      </section>
+
+      <!-- SLIDE 17: VISION -->
+      <section>
+        <span class="pill">VISION</span>
+        <h2>The operating system<br><span class="accent">for every retail trader.</span></h2>
+        <br>
+        <div class="quote-block">
+          <p>"LocoTrader isn't a journal. It's the layer between your impulse and your execution — the systematic process that turns chaotic traders into consistent ones."</p>
+        </div>
+        <br>
+        <div class="three-col">
+          <div class="card" style="text-align:center;">
+            <h4>Year 1</h4>
+            <p>Launch & validate. First 5K paying users. Product-market fit.</p>
+          </div>
+          <div class="card" style="text-align:center;">
+            <h4>Year 3</h4>
+            <p>80K users. B2B prop-firm licensing. $12M ARR. Seed → Series A.</p>
+          </div>
+          <div class="card" style="text-align:center;">
+            <h4>Year 5</h4>
+            <p>The default risk/discipline layer for retail trading. Strategic acquisition target for brokers (MetaQuotes, cTrader, IBKR).</p>
+          </div>
+        </div>
+        <br>
+        <p style="font-size:0.75em;text-align:center;color:rgba(255,255,255,0.4);">
+          Comparable exit: TradeZella at 100K users commands premium valuation. Zerodha raised $250M at $3.5B (2025). Risk infrastructure is the most defensible moat in trading.
+        </p>
+      </section>
+
+      <!-- SLIDE 18: CLOSING -->
+      <section>
+        <div class="logo-mark">LT</div>
+        <h2>Loco<span class="accent">Trader</span></h2>
+        <h3 style="font-weight:400; color:rgba(255,255,255,0.5); margin-top:0.5rem; font-size:1em;">
+          Stop losing money to yourself.
+        </h3>
+        <br><br>
+        <div class="footer-cta">
+          <p style="font-size:0.9em;color:white;margin-bottom:0.5rem;"><strong>Erick Mafole</strong> — Founder</p>
+          <p style="font-size:0.75em;color:rgba(255,255,255,0.5);margin:0;">
+            🌐 locotrader.app &nbsp;·&nbsp; 
+            💼 linkedin.com/in/erick-mafole-724557176<br>
+            📧 [Your email here]
+          </p>
+        </div>
+        <br>
+        <p class="small muted">
+          Thank you for your time. Let's make trading disciplined by default.
+        </p>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      slideNumber: true,
+      transition: 'fade',
+      transitionSpeed: 'fast',
+      width: 1280,
+      height: 720,
+      margin: 0.08,
+      center: true,
+      controls: true,
+      progress: true,
+    });
+  </script>
+</body>
+</html>

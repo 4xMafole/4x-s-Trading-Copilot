@@ -31,7 +31,16 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
     _initialised = true;
     final draft = widget.controller.wizardDraft;
     step = draft?.step ?? 0;
-    instrument = draft?.instrument ?? 'XAUUSD';
+    // Default to user's first instrument, falling back to XAUUSD
+    final instruments = widget.controller.state.effectiveInstruments;
+    final defaultInstrument = instruments.keys.isNotEmpty
+        ? instruments.keys.first
+        : 'XAUUSD';
+    instrument = draft?.instrument ?? defaultInstrument;
+    // Ensure instrument is valid — reset if not in user's list
+    if (!instruments.containsKey(instrument)) {
+      instrument = defaultInstrument;
+    }
     slCtrl = TextEditingController(text: draft?.stopLoss ?? '7');
     entriesCtrl = TextEditingController(text: draft?.entries ?? '1');
     tpCtrl = TextEditingController(text: draft?.takeProfit ?? '');
@@ -120,7 +129,8 @@ class _TradeFlowTabState extends State<_TradeFlowTab> {
     final stopLoss = double.tryParse(slCtrl.text) ?? 0;
     final entries = int.tryParse(entriesCtrl.text) ?? 1;
     final takeProfit = double.tryParse(tpCtrl.text) ?? 0;
-    final meta = c.state.effectiveInstruments[instrument]!;
+    final meta = c.state.effectiveInstruments[instrument] ??
+        const Instrument(unit: 'pips', pipVal: 1, desc: '');;
     final cap = c.riskCapUsd;
     var lot = 0.0;
     if (stopLoss > 0 && meta.pipVal > 0 && entries > 0) {
@@ -765,7 +775,8 @@ class _SizeStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final meta = controller.state.effectiveInstruments[instrument]!;
+    final meta = controller.state.effectiveInstruments[instrument] ??
+        const Instrument(unit: 'pips', pipVal: 1, desc: '');
     final sl = double.tryParse(slCtrl.text) ?? 0;
     final minTp = sl * 2;
     final hasTp = takeProfit > 0;

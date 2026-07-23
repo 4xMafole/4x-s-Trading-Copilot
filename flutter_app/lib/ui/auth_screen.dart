@@ -282,15 +282,16 @@ class _AuthScreenState extends State<AuthScreen> {
 
                 const SizedBox(height: 24),
 
-                // ── Legal ──
-                Text(
-                  'By continuing, you agree to our Terms of Service and Privacy Policy.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withAlpha(100),
-                    fontSize: 11,
+                // ── Legal (sign-up only) ──
+                if (_isSignUp)
+                  Text(
+                    'By creating an account, you agree to our Terms of Service and Privacy Policy.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface.withAlpha(100),
+                      fontSize: 11,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

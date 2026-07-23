@@ -2265,42 +2265,45 @@ class _AccountsCard extends StatelessWidget {
     final nameCtrl = TextEditingController();
     final name = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New account'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Each account has its own trades, balance, lock, and drawdown '
-              'rules. Your current state will be preserved as "Personal" the '
-              'first time you create a second account.',
-              style: TextStyle(fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: nameCtrl,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Account name',
-                hintText: 'e.g. FTMO 100k',
-                border: OutlineInputBorder(),
+      builder: (ctx) {
+        final localCtrl = TextEditingController();
+        return AlertDialog(
+          title: const Text('New account'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Each account has its own trades, balance, lock, and drawdown '
+                'rules. Your current state will be preserved as "Personal" the '
+                'first time you create a second account.',
+                style: TextStyle(fontSize: 13),
               ),
-              maxLength: 30,
+              const SizedBox(height: 12),
+              TextField(
+                controller: localCtrl,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Account name',
+                  hintText: 'e.g. FTMO 100k',
+                  border: OutlineInputBorder(),
+                ),
+                maxLength: 30,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () { Navigator.pop(ctx, null); localCtrl.dispose(); },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () { final v = localCtrl.text.trim(); localCtrl.dispose(); Navigator.pop(ctx, v); },
+              child: const Text('Create'),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, null),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, nameCtrl.text.trim()),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+        );
+      },
     );
     nameCtrl.dispose();
     if (name == null || name.isEmpty) return;

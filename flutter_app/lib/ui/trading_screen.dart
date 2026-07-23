@@ -92,13 +92,42 @@ class _TradingScreenState extends State<TradingScreen> {
 
   Future<void> _autoWalkthrough() async {
     final prefs = await SharedPreferences.getInstance();
+    // Show welcome prompt for first-time users instead of the old walkthrough
     if (!(prefs.getBool(_walkthroughKey) ?? false) && mounted) {
-      await _showWalkthrough(markSeen: true);
+      await prefs.setBool(_walkthroughKey, true);
+      if (mounted) _showWelcomePrompt();
     }
-    // After walkthrough (or skipped), prompt for today's mood if missing.
+    // After prompt (or skipped), prompt for today's mood if missing.
     if (mounted) await _autoMoodCheckIn();
     // Then check whether last week's AI digest needs to be generated.
     if (mounted) await _autoWeeklyDigest();
+  }
+
+  void _showWelcomePrompt() {
+    final trades = _vm().getAllTradesDesc();
+    if (trades.isNotEmpty) return; // Already has trades, skip welcome
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Welcome to LocoTrader'),
+        content: const Text(
+          'Your system is ready.\n\nStart by logging your first trade using the Trade tab, or set up your pre-trade gates in Settings.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _vm().setActiveTab(1); // Go to Trade tab
+            },
+            child: const Text('Log first trade'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Explore'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Sprint 3.2: generates last-week digest if Sun/Mon and not already cached.

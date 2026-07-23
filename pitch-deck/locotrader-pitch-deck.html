@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LocoTrader — Investor Pitch Deck</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #060609;
+      --card: rgba(255,255,255,0.025);
+      --border: rgba(255,255,255,0.06);
+      --accent: #3b82f6;
+      --accent-soft: rgba(59,130,246,0.12);
+      --accent-border: rgba(59,130,246,0.3);
+      --text: #e2e8f0;
+      --muted: rgba(255,255,255,0.45);
+      --dim: rgba(255,255,255,0.25);
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #eab308;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ═══ SLIDE SYSTEM ═══ */
+    .slide {
+      width: 1280px;
+      height: 720px;
+      padding: 56px 72px;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+      page-break-inside: avoid;
+      background: var(--bg);
+    }
+
+    .slide:last-child { page-break-after: auto; }
+
+    /* Center slides on screen */
+    @media screen {
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        padding: 24px;
+        background: #1a1a2e;
+      }
+      .slide {
+        border-radius: 12px;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        flex-shrink: 0;
+      }
+    }
+
+    /* Print / PDF */
+    @media print {
+      @page {
+        size: 1280px 720px;
+        margin: 0;
+      }
+      body {
+        background: var(--bg);
+      }
+      .slide {
+        width: 100vw;
+        height: 100vh;
+      }
+    }
+
+    /* ═══ TYPOGRAPHY ═══ */
+    h1 { font-size: 52px; font-weight: 900; letter-spacing: -0.03em; line-height: 1.05; color: #fff; }
+    h2 { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; color: #fff; }
+    h3 { font-size: 22px; font-weight: 600; line-height: 1.3; color: rgba(255,255,255,0.7); }
+    h4 { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: 0.02em; margin-bottom: 6px; }
+    p  { font-size: 15px; line-height: 1.6; color: var(--muted); }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+
+    .accent { color: var(--accent); }
+    .muted { color: var(--muted); }
+    .dim { color: var(--dim); }
+    .white { color: #fff; }
+    .green { color: var(--green); }
+    .red { color: var(--red); }
+
+    /* ═══ LAYOUT ═══ */
+    .pill {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--accent-border);
+      margin-bottom: 16px;
+    }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+    .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+    .card {
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+
+    .stat-box {
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--card);
+      border: 1px solid var(--border);
+    }
+    .stat-box .num {
+      font-size: 42px;
+      font-weight: 900;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-box .lbl {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .feature-li {
+      font-size: 14px;
+      padding: 7px 0;
+      color: rgba(255,255,255,0.7);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .feature-li .dot { color: var(--accent); font-size: 10px; flex-shrink: 0; }
+
+    .quote-block {
+      padding: 24px 28px;
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      border-radius: 0 12px 12px 0;
+    }
+    .quote-block p {
+      font-size: 18px;
+      color: rgba(255,255,255,0.8);
+      font-style: italic;
+      line-height: 1.6;
+    }
+
+    /* ═══ LOGO ═══ */
+    .logo-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo-inline svg { flex-shrink: 0; }
+    .logo-inline .wordmark {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+
+    /* ═══ TABLE ═══ */
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .comp-table th {
+      padding: 10px 12px;
+      text-align: left;
+      color: var(--dim);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .comp-table td {
+      padding: 9px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: rgba(255,255,255,0.65);
+    }
+    .comp-table .highlight-row {
+      background: rgba(59,130,246,0.06);
+    }
+    .comp-table .highlight-row td {
+      color: #fff;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(59,130,246,0.2);
+    }
+
+    /* ═══ SCREENSHOT PHONE ═══ */
+    .phone-frame {
+      width: 180px;
+      border-radius: 28px;
+      border: 5px solid rgba(255,255,255,0.08);
+      background: #111;
+      padding: 4px;
+      position: relative;
+    }
+    .phone-frame .notch {
+      position: absolute;
+      top: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 14px;
+      background: var(--bg);
+      border-radius: 0 0 12px 12px;
+      z-index: 2;
+    }
+    .phone-frame img {
+      width: 100%;
+      border-radius: 22px;
+      display: block;
+    }
+
+    /* ═══ TIMELINE ═══ */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+    .tl-item {
+      padding: 16px 14px;
+      border-top: 3px solid rgba(59,130,246,0.25);
+    }
+    .tl-item.now { border-top-color: var(--accent); }
+    .tl-item .q { font-size: 11px; font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; margin-bottom: 4px; }
+    .tl-item h4 { font-size: 14px; color: #fff; margin-bottom: 4px; }
+    .tl-item p { font-size: 11px; line-height: 1.5; }
+
+    /* ═══ FUNDS ═══ */
+    .fund-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .fund-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--card);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .fund-item .pct {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      min-width: 52px;
+    }
+    .fund-item .desc { font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.4; }
+    .fund-item .desc strong { color: #fff; }
+
+    /* ═══ ASK BOX ═══ */
+    .ask-box {
+      padding: 36px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.02));
+      border: 2px solid var(--accent-border);
+      text-align: center;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .ask-box .amount {
+      font-size: 56px;
+      font-weight: 900;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+    }
+
+    /* ═══ FOOTER BADGE ═══ */
+    .slide-footer {
+      position: absolute;
+      bottom: 28px;
+      right: 72px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0.3;
+    }
+    .slide-footer .wordmark { font-size: 12px; font-weight: 700; color: #fff; }
+
+    .slide-num {
+      position: absolute;
+      bottom: 28px;
+      left: 72px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.15);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Phone group for product slide */
+    .phone-group {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .phone-group .phone-frame:nth-child(2) { margin-top: 20px; }
+
+    .founder-photo {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(59,130,246,0.3);
+    }
+
+    .cta-box {
+      margin-top: 24px;
+      padding: 20px;
+      border-radius: 14px;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 1 — COVER
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+  <div style="position:absolute; top:-15%; right:-8%; width:600px; height:600px; border-radius:50%; background:rgba(59,130,246,0.06); filter:blur(100px); pointer-events:none;"></div>
+
+  <!-- Logo -->
+  <div style="margin-bottom:28px;">
+    <svg width="72" height="72" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="64" height="64" rx="14" fill="#0a0a14"/>
+      <path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/>
+      <path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/>
+      <path d="M26 44 L28 12 L38 12 L36 44Z" fill="#60A5FA" opacity="0.25"/>
+    </svg>
+  </div>
+
+  <h1 style="font-size:60px; margin-bottom:8px;">Loco<span class="accent">Trader</span></h1>
+  <h3 style="font-weight:400; color:var(--muted); font-size:20px; margin-bottom:48px;">
+    The operating system for disciplined trading
+  </h3>
+
+  <p style="font-size:13px; color:var(--dim); line-height:2;">
+    Pre-Seed Investor Deck &nbsp;·&nbsp;2026<br>
+    Erick Mafole &nbsp;·&nbsp; Founder & CEO &nbsp;·&nbsp; Dar es Salaam, Tanzania
+  </p>
+
+  <div class="slide-num">1 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 2 — THE PROBLEM
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <span class="pill">THE PROBLEM</span>
+  <h2 style="margin-bottom:28px;">73% of retail traders lose money.<br><span class="muted">Not because of bad strategy.</span></h2>
+
+  <div class="stat-row" style="margin-bottom:28px;">
+    <div class="stat-box">
+      <div class="num">73%</div>
+      <div class="lbl">of retail traders are net losers¹<br><span style="font-size:10px;color:var(--dim);">¹ FCA Client Assets Report 2024; ESMA MiFID II CFD disclosures</span></div>
+    </div>
+    <div class="stat-box">
+      <div class="num">#1</div>
+      <div class="lbl">reason: no system, no rules,<br>no real-time accountability</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">0</div>
+      <div class="lbl">existing tools that ENFORCE discipline<br>before the trade happens</div>
+    </div>
+  </div>
+
+  <div class="quote-block">
+    <p>"Trading journals tell you what went wrong <em>after</em> you've lost the money. That's a seatbelt that only deploys after the crash."</p>
+  </div>
+
+  <p style="text-align:center; margin-top:20px; font-size:16px; color:rgba(255,255,255,0.6);">
+    The real problem isn't strategy — it's <strong style="color:#fff;">execution discipline</strong> and <strong style="color:#fff;">emotional control</strong>.
+  </p>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">2 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 3 — THE SOLUTION
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <span class="pill">THE SOLUTION</span>
+  <h2 style="margin-bottom:6px;">Every journal tells you what went wrong yesterday.<br><span class="accent">LocoTrader prevents the mistake today.</span></h2>
+  <p style="margin-bottom:24px; font-size:15px;">One core innovation: a <strong style="color:#fff;">self-learning Edge Map</strong> that studies your trades, finds the patterns bleeding you, and blocks the behaviors that cost you money — in real time.</p>
+
+  <div class="two-col">
+    <div>
+      <div class="card" style="background:var(--accent-soft); border-color:var(--accent-border); margin-bottom:16px; padding:16px 20px;">
+        <h4 style="font-size:13px;">THE CORE: PERSONAL EDGE MAP</h4>
+        <p style="font-size:13px; color:rgba(255,255,255,0.7);">After 30 trades, AI learns which symbols bleed you, which hours you lose, which emotional states destroy your edge — and actively warns you before the next mistake. Every trader gets different insights because it's calibrated to <em>their</em> data.</p>
+      </div>
+      <p style="font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:12px;">Supported by an enforcement layer that makes discipline automatic:</p>
+      <div class="feature-li" style="font-size:13px;"><span class="dot">◆</span><span><strong class="white">Gate System</strong> — strategy-specific pre-trade checklist that blocks entry until conditions are met</span></div>
+      <div class="feature-li" style="font-size:13px;"><span class="dot">◆</span><span><strong class="white">Auto-Lock</strong> — consecutive losses → 24-hour freeze. No override.</span></div>
+      <div class="feature-li" style="font-size:13px;"><span class="dot">◆</span><span><strong class="white">Risk Budget</strong> — weekly R-unit cap that forces paper-only at 100%</span></div>
+      <div class="feature-li" style="font-size:13px;"><span class="dot">◆</span><span><strong class="white">Drawdown Engine</strong> — prop-firm-aware real-time danger gauges</span></div>
+    </div>
+    <div style="display:flex; flex-direction:column; align-items:center; gap:16px;">
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <img src="../screenshots/photo_2026-07-13_15-11-50.jpg" alt="Dashboard">
+      </div>
+      <p style="font-size:11px; color:var(--dim); text-align:center;">Dashboard — Readiness Score, Equity, Discipline Streak</p>
+    </div>
+  </div>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">3 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 4 — PRODUCT: HOW IT WORKS
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <span class="pill">PRODUCT</span>
+  <h2 style="margin-bottom:6px;">The Trade Flow: <span class="muted">Plan → Size → Execute</span></h2>
+  <p style="margin-bottom:20px; font-size:13px;">Every trade passes through a 3-step wizard. At any step, if a rule is violated → <span class="red">haptic vibration + red banner + blocked</span>.</p>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr 180px; gap:20px; align-items:start;">
+    <div>
+      <div class="card" style="border-top:3px solid var(--accent); margin-bottom:14px;">
+        <h4>1. PLAN — Gate Checklist</h4>
+        <p style="font-size:12px;">Select instrument → gates activate. Manual gates require typed justification or chart screenshot. Auto-gates compute live (session windows, lock status, daily cap). <strong class="white">Cannot proceed until ALL pass.</strong></p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--accent); margin-bottom:14px;">
+        <h4>2. SIZE — Risk Calculator</h4>
+        <p style="font-size:12px;">Auto-computes lot size from risk cap. Validates R:R ≥ 1:2. Blocks oversized positions. Multi-entry stacking capped at combined risk limit. No mental math.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--accent);">
+        <h4>3. EXECUTE — Final Check + Reflection</h4>
+        <p style="font-size:12px;">Last validation: lock, session, cap. Trade logs → immediate 30-sec reflection (plan adherence, exit type, emotional state 1-10). Data feeds the Edge Map.</p>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="phone-frame">
+        <div class="notch"></div>
+        <img src="../screenshots/photo_2026-07-13_15-11-48.jpg" alt="Gate Checklist">
+      </div>
+      <p style="font-size:11px; color:var(--dim); text-align:center; margin-top:8px;">Gate System — Auto/Manual/Blocked states<br><span style="font-size:10px;">Formerly "4x Trades" — now LocoTrader</span></p>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="phone-frame" style="width:155px;">
+        <div class="notch" style="width:40px; height:11px;"></div>
+        <img src="../screenshots/photo_2026-07-13_15-11-47.jpg" alt="Calculator">
+      </div>
+      <p style="font-size:11px; color:var(--dim); text-align:center; margin-top:8px;">Risk Calculator</p>
+    </div>
+  </div>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">4 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 5 — EDGE MAP / MOAT
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <span class="pill">UNFAIR ADVANTAGE</span>
+  <h2 style="margin-bottom:6px;">The Personal Edge Map</h2>
+  <p style="margin-bottom:20px;">Self-calibrating intelligence that learns from each trader's own behavior. After 30+ trades, the app becomes a mirror — not a generic dashboard.</p>
+
+  <div style="display:grid; grid-template-columns: 1fr 200px; gap:28px; align-items:start;">
+    <div>
+      <div class="three-col" style="margin-bottom:16px;">
+        <div class="card">
+          <h4>SYMBOLS</h4>
+          <p style="font-size:12px;">Per-symbol P/L matrix. Which pairs actually make you money vs. which bleed. Auto-flags worst performers.</p>
+        </div>
+        <div class="card">
+          <h4>TIMING</h4>
+          <p style="font-size:12px;">2-hour heatmap. Your personal best/worst trading windows detected automatically. Dead zones surfaced.</p>
+        </div>
+        <div class="card">
+          <h4>BEHAVIOR</h4>
+          <p style="font-size:12px;">Mood → P/L correlation. Stacking analysis. Trigger detection (FOMO, Revenge, Plan). Streak patterns.</p>
+        </div>
+      </div>
+
+      <div class="card" style="background:var(--accent-soft); border-color:var(--accent-border);">
+        <h4 style="font-size:11px; letter-spacing:0.06em;">AI COACH OUTPUT — REAL EXAMPLE</h4>
+        <div style="font-size:13px; font-family:'JetBrains Mono',monospace; color:rgba(255,255,255,0.6); line-height:2; margin-top:6px;">
+          <span class="green">✓ Strength:</span> "A+ setups: +$340 this week. Only take A+."<br>
+          <span class="red">✗ Leak:</span> "EURUSD: -$180 across 6 trades. Cut it or fix the setup."<br>
+          <span class="yellow">⚠ Timing:</span> "06:00-08:00 EAT = 22% WR vs 55% overall. Blackout."<br>
+          <span class="white">◆ Truth:</span> "60% of your trades are FOMO. Stop revenge-trading."
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:var(--dim); margin-top:10px; text-align:center;">
+        Powered by Gemini AI (free tier) + local rule-based engine (offline). <strong style="color:var(--muted);">$0/user/month API cost.</strong>
+      </p>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="phone-frame" style="width:170px;">
+        <div class="notch" style="width:44px; height:12px;"></div>
+        <img src="../screenshots/photo_2026-07-13_15-11-40.jpg" alt="Edge Map Behavior">
+      </div>
+      <p style="font-size:11px; color:var(--dim); text-align:center; margin-top:8px;">Edge Map — Behavioral flags</p>
+    </div>
+  </div>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">5 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 6 — MARKET OPPORTUNITY
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <span class="pill">MARKET</span>
+  <h2 style="margin-bottom:24px;">$12.57B market growing at 7.66% CAGR</h2>
+
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <div style="display:flex; align-items:flex-end; justify-content:center; gap:28px; margin-bottom:24px;">
+        <div style="text-align:center;">
+          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:6px;">$11.6B</div>
+          <div style="width:70px; height:130px; background:linear-gradient(180deg, var(--accent), rgba(59,130,246,0.2)); border-radius:8px 8px 0 0;"></div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;" class="mono">2025</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:6px;">$12.6B</div>
+          <div style="width:70px; height:148px; background:linear-gradient(180deg, var(--accent), rgba(59,130,246,0.2)); border-radius:8px 8px 0 0;"></div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;" class="mono">2026</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:6px;">$18.2B</div>
+          <div style="width:70px; height:210px; background:linear-gradient(180deg, var(--accent), rgba(59,130,246,0.15)); border-radius:8px 8px 0 0;"></div>
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;" class="mono">2031</div>
+        </div>
+      </div>
+      <p style="font-size:11px; color:var(--dim); text-align:center;">Source: Mordor Intelligence, "Online Trading Platform Market Size & Share Analysis" (March 2026)</p>
+    </div>
+
+    <div>
+      <h3 style="font-size:16px; color:#fff; margin-bottom:14px;">Bottom-Up Addressable Market</h3>
+
+      <div class="stat-box" style="margin-bottom:10px; border-color:rgba(59,130,246,0.15);">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="font-size:13px; font-weight:700; color:#fff;">TAM</span>
+          <span style="font-size:28px; font-weight:900; color:var(--accent);" class="mono">$2.1B</span>
+        </div>
+        <div class="lbl">13.9M retail traders × $150/yr avg spend on tools & analytics</div>
+      </div>
+
+      <div class="stat-box" style="margin-bottom:10px; border-color:rgba(59,130,246,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="font-size:13px; font-weight:700; color:#fff;">SAM</span>
+          <span style="font-size:28px; font-weight:900; color:var(--accent);" class="mono">$420M</span>
+        </div>
+        <div class="lbl">~2.8M active forex/CFD/prop-firm traders willing to pay for discipline tools</div>
+      </div>
+
+      <div class="stat-box" style="border-color:rgba(59,130,246,0.4);">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="font-size:13px; font-weight:700; color:#fff;">SOM (Yr 3)</span>
+          <span style="font-size:28px; font-weight:900; color:var(--accent);" class="mono">$12M</span>
+        </div>
+        <div class="lbl">80K paid users × $150 avg annual revenue</div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <div style="flex:1; padding:8px 10px; background:var(--card); border-radius:8px; border:1px solid var(--border); text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:var(--accent);" class="mono">69.6%</div>
+          <div style="font-size:10px; color:var(--muted);">Retail share</div>
+        </div>
+        <div style="flex:1; padding:8px 10px; background:var(--card); border-radius:8px; border:1px solid var(--border); text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:var(--accent);" class="mono">8.43%</div>
+          <div style="font-size:10px; color:var(--muted);">Retail CAGR</div>
+        </div>
+        <div style="flex:1; padding:8px 10px; background:var(--card); border-radius:8px; border:1px solid var(--border); text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:var(--accent);" class="mono">13.9M+</div>
+          <div style="font-size:10px; color:var(--muted);">Active traders</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">6 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 7 — COMPETITION
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <span class="pill">COMPETITION</span>
+  <h2 style="margin-bottom:20px;">Journals record history. <span class="accent">We change the future.</span></h2>
+
+  <table class="comp-table">
+    <thead>
+      <tr>
+        <th style="width:32%;">Capability</th>
+        <th>TradeZella</th>
+        <th>Edgewonk</th>
+        <th>Tradervue</th>
+        <th style="color:var(--accent);">LocoTrader</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Pre-trade rule enforcement</td>
+        <td><span class="red">✗</span></td>
+        <td><span class="red">✗</span></td>
+        <td><span class="red">✗</span></td>
+        <td><span class="green">✓</span> 7-8 per template</td>
+      </tr>
+      <tr>
+        <td>Auto-lock after tilt (no override)</td>
+        <td><span class="red">✗</span></td>
+        <td><span class="red">✗</span></td>
+        <td><span class="red">✗</span></td>
+        <td><span class="green">✓</span> 24hr lock</td>
+      </tr>
+      <tr>
+        <td>Real-time drawdown engine (prop-firm aware)</td>
+        <td><span class="yellow">~</span> basic</td>
+        <td><span class="yellow">~</span> post-hoc</td>
+        <td><span class="red">✗</span></td>
+        <td><span class="green">✓</span> DD/trailing/daily</td>
+      </tr>
+      <tr>
+        <td>Weekly R-unit risk budget</td>
+        <td><span class="red">✗</span></td>
+        <td><span class="red">✗</span></td>
+        <td><span class="red">✗</span></td>
+        <td><span class="green">✓</span> auto-stop</td>
+      </tr>
+      <tr>
+        <td>Mood → P/L correlation tracking</td>
+        <td><span class="red">✗</span></td>
+        <td><span class="yellow">~</span> manual</td>
+        <td><span class="red">✗</span></td>
+        <td><span class="green">✓</span> auto</td>
+      </tr>
+      <tr>
+        <td>Works fully offline (on-device AI)</td>
+        <td><span class="red">✗</span></td>
+        <td><span class="red">✗</span></td>
+        <td><span class="red">✗</span></td>
+        <td><span class="green">✓</span></td>
+      </tr>
+      <tr>
+        <td>Mobile-native app</td>
+        <td><span class="yellow">~</span> web app</td>
+        <td><span class="yellow">~</span> web app</td>
+        <td><span class="yellow">~</span> web app</td>
+        <td><span class="green">✓</span> Flutter native</td>
+      </tr>
+      <tr class="highlight-row">
+        <td>Pricing</td>
+        <td>$35 – $99/mo</td>
+        <td>$169 one-time</td>
+        <td>$30 – $50/mo</td>
+        <td style="color:var(--accent);">Freemium + $9.99/mo</td>
+      </tr>
+      <tr class="highlight-row">
+        <td>Users / Traction</td>
+        <td>100K+ users</td>
+        <td>10+ years, 8M trades</td>
+        <td>Est. 20K+</td>
+        <td>Pre-launch (MVP complete)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="text-align:center; margin-top:16px; font-size:14px; color:rgba(255,255,255,0.5);">
+    <strong style="color:#fff;">Core insight:</strong> Every competitor is a <em>passive recorder</em>. None prevent bad trades. None enforce rules in real-time.
+  </p>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">7 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 8 — WHY NOW
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <span class="pill">TIMING</span>
+  <h2 style="margin-bottom:24px;">Three forces converging <span class="accent">right now</span></h2>
+
+  <div class="three-col" style="margin-bottom:24px;">
+    <div class="card" style="padding:24px;">
+      <div style="font-size:32px; margin-bottom:10px;">🤖</div>
+      <h4 style="font-size:16px; color:#fff;">AI Maturity</h4>
+      <p style="font-size:13px;">On-device ML (Google ML Kit) + free LLM APIs (Gemini 15 req/min) make personalized coaching possible at <strong class="white">$0/user/month</strong>. This wasn't viable 2 years ago.</p>
+    </div>
+    <div class="card" style="padding:24px;">
+      <div style="font-size:32px; margin-bottom:10px;">📈</div>
+      <h4 style="font-size:16px; color:#fff;">Prop Firm Explosion</h4>
+      <p style="font-size:13px;">FTMO, Apex, TopStep, MyFundedFX — millions of traders paying $100-$500 for challenges. They <strong class="white">must</strong> manage drawdown or fail. Tools that enforce rules = must-have.</p>
+    </div>
+    <div class="card" style="padding:24px;">
+      <div style="font-size:32px; margin-bottom:10px;">📱</div>
+      <h4 style="font-size:16px; color:#fff;">Mobile-First Gen</h4>
+      <p style="font-size:13px;">62% of retail orders now via mobile (Charles Schwab 2025 Annual Report). Gen-Z trades on phones. Every competitor is a <strong class="white">desktop web app</strong>. We're phone-native.</p>
+    </div>
+  </div>
+
+  <div class="card" style="text-align:center; max-width:800px; margin:0 auto; background:var(--accent-soft); border-color:var(--accent-border);">
+    <p style="font-size:14px; color:rgba(255,255,255,0.7); margin:0;">
+      <strong style="color:#fff;">Market validation:</strong> "On-Device ML Behavioral Nudges Reducing Churn" is cited as a <span class="accent">key market driver</span> in the 2026 Mordor Intelligence Online Trading Platform Market Report — confirming our core thesis.
+    </p>
+  </div>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">8 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 9 — BUSINESS MODEL
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <span class="pill">BUSINESS MODEL</span>
+  <h2 style="margin-bottom:24px;">Freemium + Pro subscription</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <h4>FREE TIER (Forever)</h4>
+        <p style="font-size:13px;">Basic journal, 3 gates, manual trade logging, daily P/L tracking, single account. Enough to be useful — not enough to transform.</p>
+      </div>
+      <div class="card" style="border-color:var(--accent-border); background:var(--accent-soft);">
+        <h4>PRO TIER — $9.99/mo or $99/yr</h4>
+        <p style="font-size:13px;">Full gate system (all templates), AI Edge Map, drawdown engine, risk budgets, auto-lock, mood tracking, weekly AI digest, multi-account, PDF tear sheets, encrypted backups, AI coaching.</p>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <h4>EARLY ACCESS — $49 Lifetime (limited)</h4>
+        <p style="font-size:13px;">First 500 users get permanent Pro. Creates urgency, validates demand, and builds founding community.</p>
+      </div>
+    </div>
+
+    <div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <div class="stat-box" style="text-align:center;">
+          <div class="num" style="font-size:32px;">85%+</div>
+          <div class="lbl">Gross margin<br>(near-zero COGS)</div>
+        </div>
+        <div class="stat-box" style="text-align:center;">
+          <div class="num" style="font-size:32px;">$0</div>
+          <div class="lbl">AI cost per user<br>(free tiers + on-device)</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h4>FUTURE REVENUE STREAMS</h4>
+        <div class="feature-li"><span class="dot">◆</span><span><strong class="white">B2B licensing</strong> to prop firms as recommended risk tool</span></div>
+        <div class="feature-li"><span class="dot">◆</span><span><strong class="white">White-label API</strong> — firms embed LocoTrader in their platforms</span></div>
+        <div class="feature-li"><span class="dot">◆</span><span><strong class="white">Premium AI coaching</strong> with advanced models</span></div>
+        <div class="feature-li"><span class="dot">◆</span><span><strong class="white">Data insights</strong> for trading educators and mentors</span></div>
+      </div>
+
+      <p style="font-size:12px; margin-top:12px; color:var(--dim); text-align:center;">
+        Unit economics: CAC target $8-15 · LTV $120+ (12mo avg retention) · LTV:CAC > 8x
+      </p>
+    </div>
+  </div>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">9 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 10 — TRACTION + GO-TO-MARKET
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <span class="pill">TRACTION & GTM</span>
+  <h2 style="margin-bottom:20px;">Pre-launch — but the product is real.</h2>
+
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <h3 style="font-size:15px; color:#fff; margin-bottom:12px;">What's Built & Working Today</h3>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+        <div class="feature-li" style="font-size:12px; padding:5px 0;"><span class="dot">◆</span><span>Landing page live (locotrader.app)</span></div>
+        <div class="feature-li" style="font-size:12px; padding:5px 0;"><span class="dot">◆</span><span>Paddle payments integrated</span></div>
+        <div class="feature-li" style="font-size:12px; padding:5px 0;"><span class="dot">◆</span><span>Full Flutter app (25+ screens)</span></div>
+        <div class="feature-li" style="font-size:12px; padding:5px 0;"><span class="dot">◆</span><span>Supabase backend (auth + DB)</span></div>
+        <div class="feature-li" style="font-size:12px; padding:5px 0;"><span class="dot">◆</span><span>AI coaching (cloud + local)</span></div>
+        <div class="feature-li" style="font-size:12px; padding:5px 0;"><span class="dot">◆</span><span>All risk engines functional</span></div>
+        <div class="feature-li" style="font-size:12px; padding:5px 0;"><span class="dot">◆</span><span>10 notification categories</span></div>
+        <div class="feature-li" style="font-size:12px; padding:5px 0;"><span class="dot">◆</span><span>Android home-screen widget</span></div>
+      </div>
+
+      <div class="stat-row" style="margin-top:14px;">
+        <div class="stat-box" style="text-align:center; padding:14px;">
+          <div class="num" style="font-size:24px;">v2.0</div>
+          <div class="lbl">Production-ready</div>
+        </div>
+        <div class="stat-box" style="text-align:center; padding:14px;">
+          <div class="num" style="font-size:24px;">11mo</div>
+          <div class="lbl">Development time</div>
+        </div>
+        <div class="stat-box" style="text-align:center; padding:14px;">
+          <div class="num" style="font-size:24px;">$2K</div>
+          <div class="lbl">Bootstrapped</div>
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:var(--dim); margin-top:10px;">
+        <strong style="color:var(--muted);">Founder dogfooding:</strong> Used internally for 8 months. Edge Map surfaced patterns that manual journaling missed — validating the core thesis.
+      </p>
+    </div>
+
+    <div>
+      <h3 style="font-size:15px; color:#fff; margin-bottom:12px;">Go-to-Market (3 Phases)</h3>
+
+      <div class="card" style="margin-bottom:10px; border-left:3px solid var(--accent);">
+        <h4>PHASE 1 — Community & Affiliates</h4>
+        <p style="font-size:12px;">YouTube traders (10K-100K subs) as affiliates at 20-30% rev share. They need content; we provide a product worth demoing. Target: 100 partners in 6 months.</p>
+      </div>
+      <div class="card" style="margin-bottom:10px; border-left:3px solid var(--accent);">
+        <h4>PHASE 2 — Paid Acquisition</h4>
+        <p style="font-size:12px;">TikTok + Instagram short-form: "Watch this app BLOCK me from revenge-trading." Viral-ready format. Target CPA: $8-15.</p>
+      </div>
+      <div class="card" style="margin-bottom:10px; border-left:3px solid var(--accent);">
+        <h4>PHASE 3 — Prop Firm Partnerships</h4>
+        <p style="font-size:12px;">B2B integration as a recommended risk tool. Firms want traders to pass — we help them pass. Revenue share or white-label.</p>
+      </div>
+
+      <div class="card" style="text-align:center; background:var(--accent-soft); border-color:var(--accent-border);">
+        <p style="font-size:12px; color:rgba(255,255,255,0.7); margin:0;">
+          <strong class="white">Viral loop:</strong> PDF tear sheets include LocoTrader branding → traders share equity curves on social → organic acquisition.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">10 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 11 — ROADMAP
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <span class="pill">ROADMAP</span>
+  <h2 style="margin-bottom:24px;">18-month execution plan</h2>
+
+  <div class="timeline" style="margin-bottom:24px;">
+    <div class="tl-item now">
+      <div class="q">Q3 2026</div>
+      <h4>Launch</h4>
+      <p>Android Play Store. Early access campaign. First 500 lifetime users. YouTube affiliate program live. Press outreach.</p>
+    </div>
+    <div class="tl-item">
+      <div class="q">Q4 2026</div>
+      <h4>iOS + Growth</h4>
+      <p>App Store launch. Paid ads (TikTok/IG). First 5K users. Subscription model live. MT5 CSV import.</p>
+    </div>
+    <div class="tl-item">
+      <div class="q">Q1 2027</div>
+      <h4>Intelligence</h4>
+      <p>Screenshot OCR import. Advanced AI coaching. Prop firm templates (FTMO/Apex rules pre-loaded). 15K users target.</p>
+    </div>
+    <div class="tl-item">
+      <div class="q">Q2-Q4 2027</div>
+      <h4>B2B + Scale</h4>
+      <p>Prop firm partnership API. White-label offering. Community features. Seed round. 10K users, $20K MRR.</p>
+    </div>
+  </div>
+
+  <h3 style="font-size:15px; color:#fff; margin-bottom:14px;">Key Milestones (Conservative)</h3>
+  <div style="display:grid; grid-template-columns:repeat(5,1fr); gap:12px;">
+    <div class="stat-box" style="text-align:center; padding:14px;">
+      <div class="num" style="font-size:20px;">200</div>
+      <div class="lbl">Beta users<br>Month 3</div>
+    </div>
+    <div class="stat-box" style="text-align:center; padding:14px;">
+      <div class="num" style="font-size:20px;">2K</div>
+      <div class="lbl">Users<br>Month 6</div>
+    </div>
+    <div class="stat-box" style="text-align:center; padding:14px;">
+      <div class="num" style="font-size:20px;">$5K</div>
+      <div class="lbl">MRR<br>Month 12</div>
+    </div>
+    <div class="stat-box" style="text-align:center; padding:14px;">
+      <div class="num" style="font-size:20px;">10K</div>
+      <div class="lbl">Users<br>Month 18</div>
+    </div>
+    <div class="stat-box" style="text-align:center; padding:14px;">
+      <div class="num" style="font-size:20px;">$20K</div>
+      <div class="lbl">MRR<br>Month 18</div>
+    </div>
+  </div>
+
+  <p style="font-size:13px; text-align:center; margin-top:16px; color:var(--muted);">
+    Path to seed-readiness in 18 months: 10K users, $240K ARR, clear PMF metrics.
+  </p>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">11 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 12 — TEAM + ASK
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="two-col" style="align-items:start;">
+    <div>
+      <span class="pill">TEAM</span>
+      <h2 style="margin-bottom:20px;">Built by a trader, for traders.</h2>
+
+      <div style="display:flex; gap:20px; align-items:center; margin-bottom:20px;">
+        <img src="-5870521906636114138_121.jpg" alt="Erick Mafole" class="founder-photo">
+        <div>
+          <h3 style="color:#fff; font-size:22px; margin-bottom:2px;">Erick Mafole</h3>
+          <p style="color:var(--accent); font-size:14px; font-weight:600; margin-bottom:8px;">Founder & CEO</p>
+          <p style="font-size:12px; color:var(--dim);">Dar es Salaam, Tanzania</p>
+        </div>
+      </div>
+
+      <div class="feature-li" style="font-size:13px;"><span class="dot">◆</span><span><strong class="white">7+ years</strong> active forex/CFD day trader</span></div>
+      <div class="feature-li" style="font-size:13px;"><span class="dot">◆</span><span><strong class="white">Full-stack developer</strong> — Flutter, React, TypeScript, Dart, Node.js</span></div>
+      <div class="feature-li" style="font-size:13px;"><span class="dot">◆</span><span><strong class="white">Built LocoTrader for himself first</strong> — genuine pain point, not market research</span></div>
+      <div class="feature-li" style="font-size:13px;"><span class="dot">◆</span><span><strong class="white">Solo-shipped entire stack:</strong> landing page, payments, backend, mobile app, AI</span></div>
+      <div class="feature-li" style="font-size:13px;"><span class="dot">◆</span><span><strong class="white">Rare intersection:</strong> trader who can code — most tools are built by engineers who don't trade</span></div>
+
+      <div class="card" style="margin-top:16px;">
+        <h4>Hiring Plan (Post-Funding)</h4>
+        <p style="font-size:12px;">
+          <strong class="white">Mobile Engineer</strong> — iOS polish + broker integrations<br>
+          <strong class="white">Growth Marketer</strong> — affiliate program + paid acquisition<br>
+          <strong class="white">Part-time Designer</strong> — brand + App Store optimization
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <span class="pill">THE ASK</span>
+      <h2 style="margin-bottom:20px;">Pre-Seed Round</h2>
+
+      <div class="ask-box" style="margin-bottom:20px;">
+        <div style="font-size:13px; color:var(--accent); font-weight:600; margin-bottom:4px;">Raising</div>
+        <div class="amount">$250K</div>
+        <p style="font-size:14px; color:var(--muted); margin-top:8px;">SAFE note &nbsp;·&nbsp; 18-month runway</p>
+      </div>
+
+      <div class="fund-grid">
+        <div class="fund-item">
+          <div class="pct">40%</div>
+          <div class="desc"><strong>Engineering</strong><br>iOS launch, hire dev, broker sync</div>
+        </div>
+        <div class="fund-item">
+          <div class="pct">30%</div>
+          <div class="desc"><strong>Growth</strong><br>Paid ads, affiliates, creators</div>
+        </div>
+        <div class="fund-item">
+          <div class="pct">15%</div>
+          <div class="desc"><strong>Operations</strong><br>App Stores, infra, legal</div>
+        </div>
+        <div class="fund-item">
+          <div class="pct">15%</div>
+          <div class="desc"><strong>Partnerships</strong><br>Prop firm BD, white-label</div>
+        </div>
+      </div>
+
+      <p style="font-size:12px; text-align:center; margin-top:14px; color:var(--dim);">
+        <strong style="color:var(--muted);">Milestones for the round:</strong><br>
+        2K users in 6mo · $5K MRR in 12mo · Seed-ready in 18mo
+      </p>
+    </div>
+  </div>
+
+  <div class="slide-footer"><svg width="16" height="16" viewBox="0 0 64 64" fill="none"><rect width="64" height="64" rx="14" fill="#0a0a14"/><path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/><path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/></svg><span class="wordmark">LocoTrader</span></div>
+  <div class="slide-num">12 / 13</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SLIDE 13 — CLOSING
+     ═══════════════════════════════════════════════════════════ -->
+<div class="slide" style="display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+  <div style="position:absolute; top:-15%; right:-8%; width:600px; height:600px; border-radius:50%; background:rgba(59,130,246,0.06); filter:blur(100px); pointer-events:none;"></div>
+
+  <div style="margin-bottom:20px;">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="64" height="64" rx="14" fill="#0a0a14"/>
+      <path d="M10 44 L28 12 L38 12 L20 44Z" fill="#3B82F6" opacity="0.35"/>
+      <path d="M26 52 L44 20 L54 20 L36 52Z" fill="#3B82F6"/>
+      <path d="M26 44 L28 12 L38 12 L36 44Z" fill="#60A5FA" opacity="0.25"/>
+    </svg>
+  </div>
+
+  <h1 style="font-size:48px; margin-bottom:8px;">Loco<span class="accent">Trader</span></h1>
+  <h3 style="font-weight:400; color:var(--muted); font-size:18px; margin-bottom:8px;">
+    Stop losing money to yourself.
+  </h3>
+  <p style="font-size:14px; color:var(--dim); margin-bottom:36px;">
+    The only mobile app that turns chaotic trading into a systematic, rule-enforced process.
+  </p>
+
+  <div class="cta-box" style="max-width:500px; width:100%;">
+    <div style="display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:12px;">
+      <img src="-5870521906636114138_121.jpg" alt="Erick" style="width:48px; height:48px; border-radius:50%; object-fit:cover; border:2px solid rgba(59,130,246,0.3);">
+      <div style="text-align:left;">
+        <p style="font-size:16px; color:#fff; font-weight:700; margin:0;">Erick Mafole</p>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Founder & CEO</p>
+      </div>
+    </div>
+    <div style="display:flex; gap:24px; justify-content:center; flex-wrap:wrap;">
+      <p style="font-size:13px; color:rgba(255,255,255,0.6); margin:0;">
+        📧 &nbsp;erick.e.mafole@gmail.com
+      </p>
+      <p style="font-size:13px; color:rgba(255,255,255,0.6); margin:0;">
+        🌐 &nbsp;locotrader.app
+      </p>
+    </div>
+    <div style="margin-top:8px;">
+      <p style="font-size:12px; color:var(--dim); margin:0;">
+        💼 &nbsp;linkedin.com/in/erick-mafole-724557176
+      </p>
+    </div>
+  </div>
+
+  <p style="font-size:12px; color:var(--dim); margin-top:24px;">
+    Thank you for your time. Let's make disciplined trading the default.
+  </p>
+
+  <div class="slide-num">13 / 13</div>
+</div>
+
+</body>
+</html>

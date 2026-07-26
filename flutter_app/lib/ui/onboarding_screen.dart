@@ -634,7 +634,9 @@ class _TimezonePageState extends State<_TimezonePage> {
   @override
   void initState() {
     super.initState();
-    final idx = _TimezonePage._timezones.indexWhere((t) => t.$1 == widget.timezone);
+    final idx = _TimezonePage._timezones.indexWhere(
+      (t) => t.$1 == widget.timezone,
+    );
     _scrollCtrl = FixedExtentScrollController(initialItem: idx < 0 ? 0 : idx);
   }
 
@@ -655,12 +657,17 @@ class _TimezonePageState extends State<_TimezonePage> {
           const SizedBox(height: 32),
           Text(
             'Your timezone',
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             'Trade timestamps and notifications use this.',
-            style: TextStyle(color: theme.colorScheme.onSurface.withAlpha(150), fontSize: 14),
+            style: TextStyle(
+              color: theme.colorScheme.onSurface.withAlpha(150),
+              fontSize: 14,
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -732,7 +739,9 @@ class _TimezonePageState extends State<_TimezonePage> {
                     widget.onChanged(_TimezonePage._timezones[i].$1);
                   },
                   childDelegate: ListWheelChildListDelegate(
-                    children: _TimezonePage._timezones.asMap().entries.map((entry) {
+                    children: _TimezonePage._timezones.asMap().entries.map((
+                      entry,
+                    ) {
                       final i = entry.key;
                       final tz = entry.value;
                       final isSelected = widget.timezone == tz.$1;
@@ -741,7 +750,9 @@ class _TimezonePageState extends State<_TimezonePage> {
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: isSelected ? 17 : 14,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w400,
                           color: isSelected
                               ? theme.colorScheme.primary
                               : theme.colorScheme.onSurface.withAlpha(120),
@@ -852,7 +863,15 @@ class _RiskSetupPage extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              for (final amount in ['500', '1000', '5000', '10000', '25000', '50000', '100000'])
+              for (final amount in [
+                '500',
+                '1000',
+                '5000',
+                '10000',
+                '25000',
+                '50000',
+                '100000',
+              ])
                 _BalanceChip(
                   label: _formatBalanceChip(amount, currency),
                   selected: balanceCtrl.text == amount,
@@ -893,7 +912,9 @@ class _RiskSetupPage extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: balanceCtrl,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
                   ],
@@ -990,10 +1011,14 @@ class _RiskSetupPage extends StatelessWidget {
 
   String _currencySymbol(String c) {
     switch (c) {
-      case 'USD': return r'$';
-      case 'EUR': return '€';
-      case 'GBP': return '£';
-      default: return '$c ';
+      case 'USD':
+        return r'$';
+      case 'EUR':
+        return '€';
+      case 'GBP':
+        return '£';
+      default:
+        return '$c ';
     }
   }
 
@@ -1008,7 +1033,11 @@ class _RiskSetupPage extends StatelessWidget {
 // ── Balance quick-pick chip ───────────────────────────────────────────
 
 class _BalanceChip extends StatelessWidget {
-  const _BalanceChip({required this.label, required this.selected, required this.onTap});
+  const _BalanceChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -1033,7 +1062,9 @@ class _BalanceChip extends StatelessWidget {
           label,
           style: TextStyle(
             fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+            color: selected
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface,
             fontSize: 13,
           ),
         ),

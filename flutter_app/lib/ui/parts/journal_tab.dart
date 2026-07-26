@@ -578,7 +578,9 @@ class _JournalTabState extends State<_JournalTab> {
                                         ),
                                     decoration: InputDecoration(
                                       labelText: 'Lots',
-                                      suffixIcon: _TooltipIcon('Position size in lots. 1 lot = 100,000 units. A micro lot = 0.01 lots.'),
+                                      suffixIcon: _TooltipIcon(
+                                        'Position size in lots. 1 lot = 100,000 units. A micro lot = 0.01 lots.',
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -587,21 +589,31 @@ class _JournalTabState extends State<_JournalTab> {
                             const SizedBox(height: 12),
                             TextField(
                               controller: sheetPnlCtrl,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                               decoration: InputDecoration(
                                 labelText: 'P&L (USD)',
-                                suffixIcon: _TooltipIcon('Your realized profit or loss. Negative = loss (e.g. -200), positive = win (e.g. +150).'),
+                                suffixIcon: _TooltipIcon(
+                                  'Your realized profit or loss. Negative = loss (e.g. -200), positive = win (e.g. +150).',
+                                ),
                               ),
                             ),
                             const SizedBox(height: 12),
                             TextField(
                               controller: sheetPlannedRiskCtrl,
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                               decoration: InputDecoration(
                                 labelText: 'Planned risk (USD)',
                                 hintText: 'From your calculator',
                                 prefixText: r'$ ',
-                                suffixIcon: _TooltipIcon('The max USD you intended to lose on this trade. Used to measure slippage vs plan.'),
+                                suffixIcon: _TooltipIcon(
+                                  'The max USD you intended to lose on this trade. Used to measure slippage vs plan.',
+                                ),
                               ),
                             ),
                             const SizedBox(height: 12),

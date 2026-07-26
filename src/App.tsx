@@ -1,53 +1,71 @@
 import { useEffect, useRef, useState } from 'react';
 import { Logo, LogoIcon } from './components/Logo';
 
-// ── Paddle Config ──
-// Replace with your real IDs from Paddle Dashboard
-const PADDLE_ENV = 'production'; // 'sandbox' or 'production'
-const PADDLE_TOKEN = 'live_d979fa11bd518d23d0ece24d6e0'; // Dashboard > Developer Tools > Authentication
-const PADDLE_LIFETIME_PRICE_ID = 'pri_01kxevvp3cb1ww5xxve1nawbp5'; // $49 one-time
+// ── Creem Config ──
+const SUPABASE_URL = 'https://fistibmbmtcgqdtnwolq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpc3RpYm1ibXRjZ3FkdG53b2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxNjQsImV4cCI6MjA5OTI4OTE2NH0.qnFUUFms4693I9FG2X6CnwaUtZHHwllALYYME-GD1_A';
 
-// Feature request boost prices — create these in Paddle under your "Feature Request" product
-const PADDLE_FEATURE_PRICES: Record<number, string> = {
-  5: 'pri_01kxevxmrv2hcv86eefe42s8c3',   // $5
-  10: 'pri_01kxf3cy3ry682sjfyqs33n3bm',      // $10
-  25: 'pri_01kxf3dpdcns0zgz505h1k7rar',      // $25
-  50: 'pri_01kxf3efy541gwymsktx3c4n1f',      // $50
+const CREEM_PRODUCTS = {
+  lifetime: 'prod_5R4PpzBdaDFHwFvSW9jv1g',
+  feature_5:  'prod_1NsK8Ikic5DG4RVhuwB2jK',
+  feature_10: 'prod_6q9OOudc8yP4dDTAUv9eox',
+  feature_25: 'prod_3BakpvuvhE6AIL8aTKyuD7',
+  feature_50: 'prod_73MmlD2bHWkWh6JlDbv4BL',
+} as const;
+
+// Feature amount → product id
+const FEATURE_AMOUNT_MAP: Record<number, string> = {
+  5:  CREEM_PRODUCTS.feature_5,
+  10: CREEM_PRODUCTS.feature_10,
+  25: CREEM_PRODUCTS.feature_25,
+  50: CREEM_PRODUCTS.feature_50,
 };
 
-// Initialize Paddle on load
-declare global { interface Window { Paddle: any; } }
-function initPaddle() {
-  if (window.Paddle) {
-    if (PADDLE_ENV === 'sandbox') {
-      window.Paddle.Environment.set('sandbox');
-    }
-    window.Paddle.Initialize({ token: PADDLE_TOKEN });
-  }
-}
+// Create a Creem checkout session via Supabase Edge Function and redirect
+async function openCheckout(
+  productId: string,
+  successPath: string,
+  metadata?: Record<string, string>
+): Promise<void> {
+  const btn = document.activeElement as HTMLButtonElement | null;
+  if (btn) btn.disabled = true;
 
-function openCheckout(priceId: string, customData?: Record<string, string>) {
-  if (!window.Paddle) {
-    alert('Payment system loading... please try again.');
-    return;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/creem-checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        product_id: productId,
+        success_url: window.location.origin + successPath,
+        metadata,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.checkout_url) {
+      console.error('Checkout error:', data);
+      alert('Could not start checkout. Please try again.');
+      return;
+    }
+
+    window.location.href = data.checkout_url;
+  } catch (e) {
+    console.error('openCheckout error:', e);
+    alert('Network error. Please try again.');
+  } finally {
+    if (btn) btn.disabled = false;
   }
-  const isLifetime = priceId === PADDLE_LIFETIME_PRICE_ID;
-  window.Paddle.Checkout.open({
-    items: [{ priceId, quantity: 1 }],
-    ...(customData ? { customData } : {}),
-    settings: {
-      successUrl: isLifetime
-        ? window.location.origin + '/thank-you-lifetime'
-        : window.location.origin + '/thank-you-feature',
-    },
-  });
 }
 
 export default function App() {
   const [page, setPage] = useState(getPage());
 
   useEffect(() => {
-    initPaddle();
     const onNav = () => setPage(getPage());
     window.addEventListener('popstate', onNav);
     return () => window.removeEventListener('popstate', onNav);
@@ -177,7 +195,7 @@ function Hero() {
 
           <div className="flex flex-wrap items-center gap-4 opacity-0 animate-[fadeUp_0.6s_0.5s_forwards]">
             <button
-              onClick={() => openCheckout(PADDLE_LIFETIME_PRICE_ID)}
+              onClick={() => openCheckout(CREEM_PRODUCTS.lifetime, '/thank-you-lifetime')}
               className="inline-flex items-center px-7 py-4 bg-blue-500 text-white font-bold rounded-xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:shadow-[0_0_60px_rgba(59,130,246,0.5)] cursor-pointer"
             >
               Get Lifetime Access — $49
@@ -233,9 +251,9 @@ function FeatureRequest() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || amount < 5) return;
-    const priceId = PADDLE_FEATURE_PRICES[amount];
-    if (!priceId) { alert('Invalid amount selected'); return; }
-    openCheckout(priceId, {
+    const productId = FEATURE_AMOUNT_MAP[amount];
+    if (!productId) { alert('Invalid amount selected'); return; }
+    openCheckout(productId, '/thank-you-feature', {
       feature_title: title.trim(),
       feature_description: desc.trim(),
     });
@@ -468,7 +486,7 @@ function Offer() {
         </p>
 
         <button
-          onClick={() => openCheckout(PADDLE_LIFETIME_PRICE_ID)}
+          onClick={() => openCheckout(CREEM_PRODUCTS.lifetime, '/thank-you-lifetime')}
           className="inline-flex items-center px-10 py-5 bg-blue-500 text-white text-lg font-bold rounded-2xl hover:bg-blue-400 transition-all duration-200 shadow-[0_0_50px_rgba(59,130,246,0.3)] hover:shadow-[0_0_80px_rgba(59,130,246,0.5)] hover:scale-[1.02] cursor-pointer"
         >
           Get Lifetime Access — $49
@@ -477,7 +495,7 @@ function Offer() {
         <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-white/30">
           <span>✓ Lifetime Pro access</span>
           <span>✓ All future features</span>
-          <span>✓ Secure payment via Paddle</span>
+          <span>✓ Secure payment via Creem</span>
         </div>
       </div>
     </section>

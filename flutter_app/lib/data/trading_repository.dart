@@ -232,17 +232,24 @@ class TradingRepository {
 
   /// Sync a post-trade reflection to Supabase.
   /// Uses ticket_id as the lookup key since local IDs differ from cloud IDs.
-  Future<void> saveReflection(String tradeId, TradeReflection reflection) async {
+  Future<void> saveReflection(
+    String tradeId,
+    TradeReflection reflection,
+  ) async {
     try {
       final client = Supabase.instance.client;
       final userId = client.auth.currentUser?.id;
       if (userId == null) return;
       // Try matching by ticket_id first, then by local id
-      await client.from('trades').update({
-        'reflection_followed_plan': reflection.followedPlan,
-        'reflection_exit_reason': reflection.exitReason,
-        'reflection_emotional_state': reflection.emotionalState,
-      }).eq('user_id', userId).or('ticket_id.eq.$tradeId,id.eq.$tradeId');
+      await client
+          .from('trades')
+          .update({
+            'reflection_followed_plan': reflection.followedPlan,
+            'reflection_exit_reason': reflection.exitReason,
+            'reflection_emotional_state': reflection.emotionalState,
+          })
+          .eq('user_id', userId)
+          .or('ticket_id.eq.$tradeId,id.eq.$tradeId');
     } catch (e) {
       debugPrint('saveReflection error: $e');
     }

@@ -481,8 +481,8 @@ function Offer() {
         </h2>
 
         <p className="text-white/40 mb-10 text-sm sm:text-base leading-relaxed max-w-lg mx-auto">
-          Join the traders who decided to stop guessing. One payment gives you 
-          <strong className="text-white">lifetime Pro access</strong> — the full system, forever. No subscription.
+          Join the traders who decided to stop guessing. One payment gives you
+          <strong className="text-white"> lifetime Pro access</strong> — the full system, forever. No subscription.
         </p>
 
         <button
@@ -557,7 +557,7 @@ const termsContent = `
 <p>You must provide accurate information when creating an account. You are responsible for maintaining the security of your account credentials. You must be at least 18 years old to use this service.</p>
 
 <h2>4. Payments and Subscriptions</h2>
-<p>Payments are processed securely by Paddle (our Merchant of Record). By purchasing, you agree to Paddle's terms. Prices are displayed inclusive of applicable taxes. Lifetime access means access for the lifetime of the product.</p>
+<p>Payments are processed securely by Creem (our Merchant of Record). By purchasing, you agree to Creem's terms. Prices are displayed inclusive of applicable taxes. Lifetime access means access for the lifetime of the product.</p>
 
 <h2>5. Acceptable Use</h2>
 <p>You agree not to:</p>
@@ -590,7 +590,7 @@ const privacyContent = `
 <h2>1. Information We Collect</h2>
 <p><strong>Account information:</strong> Email address, display name (when you sign up).</p>
 <p><strong>Trading data:</strong> Trades you log, journal entries, checklist responses, and analytics. This data is yours and stored securely.</p>
-<p><strong>Payment information:</strong> Handled entirely by Paddle (our payment processor). We do not store your credit card details.</p>
+<p><strong>Payment information:</strong> Handled entirely by Creem (our payment processor). We do not store your credit card details.</p>
 <p><strong>Usage data:</strong> Anonymous analytics about how you use the app (no personal trading data is shared).</p>
 
 <h2>2. How We Use Your Information</h2>
@@ -606,7 +606,7 @@ const privacyContent = `
 
 <h2>4. Third-Party Services</h2>
 <ul>
-<li><strong>Paddle:</strong> Payment processing (Merchant of Record)</li>
+<li><strong>Creem:</strong> Payment processing (Merchant of Record)</li>
 <li><strong>Supabase:</strong> Database and authentication</li>
 <li><strong>Resend:</strong> Transactional emails</li>
 <li><strong>Vercel:</strong> Website hosting</li>
@@ -653,7 +653,7 @@ const refundContent = `
 <p>Feature request payments ($5-$50) are non-refundable once the feature has been marked as "planned" or "building." If the feature has not yet been started, you may request a refund within 14 days.</p>
 
 <h2>Processing</h2>
-<p>Refunds are processed by Paddle (our payment processor) and will appear on your statement within 5-10 business days depending on your bank.</p>
+<p>Refunds are processed by Creem (our payment processor) and will appear on your statement within 5-10 business days depending on your bank.</p>
 
 <h2>Contact</h2>
 <p>For refund requests or questions, email support@locotrader.app.</p>

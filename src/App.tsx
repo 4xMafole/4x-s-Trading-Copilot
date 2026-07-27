@@ -6,11 +6,11 @@ const SUPABASE_URL = 'https://fistibmbmtcgqdtnwolq.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpc3RpYm1ibXRjZ3FkdG53b2xxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTMxNjQsImV4cCI6MjA5OTI4OTE2NH0.qnFUUFms4693I9FG2X6CnwaUtZHHwllALYYME-GD1_A';
 
 const CREEM_PRODUCTS = {
-  lifetime: 'prod_5R4PpzBdaDFHwFvSW9jv1g',
-  feature_5:  'prod_1NsK8Ikic5DG4RVhuwB2jK',
-  feature_10: 'prod_6q9OOudc8yP4dDTAUv9eox',
-  feature_25: 'prod_3BakpvuvhE6AIL8aTKyuD7',
-  feature_50: 'prod_73MmlD2bHWkWh6JlDbv4BL',
+  lifetime: 'prod_6DRj3dTOTnesgbAnnplHkt',
+  feature_5:  'prod_2c5wrSFkJvylHXCNDMcdn1',
+  feature_10: 'prod_2h1behZ5jhUWgwqywWYmP0',
+  feature_25: 'prod_5BP07t5qwm7mYC0lMBwNva',
+  feature_50: 'prod_6782yHgLmemPdZzwxCvtPw',
 } as const;
 
 // Feature amount → product id

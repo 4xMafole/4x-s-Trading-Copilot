@@ -13,7 +13,13 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "
 
 // ── Creem Webhook Product IDs ──────────────────────────────────────────
 // These must match what you have in Creem Dashboard → Products
-const PRODUCT_LIFETIME = "prod_5R4PpzBdaDFHwFvSW9jv1g";
+const PRODUCT_LIFETIME = "prod_6DRj3dTOTnesgbAnnplHkt";
+const FEATURE_PRODUCTS = new Set([
+  "prod_2c5wrSFkJvylHXCNDMcdn1", // $5
+  "prod_2h1behZ5jhUWgwqywWYmP0", // $10
+  "prod_5BP07t5qwm7mYC0lMBwNva", // $25
+  "prod_6782yHgLmemPdZzwxCvtPw", // $50
+]);
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -142,7 +148,7 @@ serve(async (req) => {
   console.log("email:", email, "productId:", productId, "txnId:", txnId);
 
   const isLifetime = productId === PRODUCT_LIFETIME;
-  const isFeature = !isLifetime && productId.startsWith("prod_");
+  const isFeature = FEATURE_PRODUCTS.has(productId);
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 

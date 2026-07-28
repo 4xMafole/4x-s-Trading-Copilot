@@ -16,6 +16,7 @@ import '../data/models.dart';
 import '../services/screenshot_ocr_service.dart';
 import '../services/trade_extractor.dart';
 import '../services/notification_center.dart';
+import '../services/trading_guard_bridge.dart';
 import '../services/weekly_digest_service.dart';
 import '../services/economic_calendar_service.dart';
 import '../services/cloud_backup_service.dart';

@@ -609,6 +609,16 @@ class _SettingsHub extends StatelessWidget {
           ),
         ),
         _SettingsGroup(
+          icon: Icons.security_outlined,
+          title: 'Trading Guard (Pro)',
+          subtitle: 'Overlay checklist on broker apps',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => _TradingGuardSubPage(controller: controller),
+            ),
+          ),
+        ),
+        _SettingsGroup(
           icon: Icons.account_balance_wallet_outlined,
           title: 'Accounts',
           subtitle: 'Multi-account management',
@@ -2699,6 +2709,239 @@ class _NotificationToggle extends StatelessWidget {
         style: TextStyle(color: context.c.textSecondary, fontSize: 12),
       ),
       dense: true,
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  TRADING GUARD SUB-PAGE
+// ═══════════════════════════════════════════════════════════════════════
+
+class _TradingGuardSubPage extends StatefulWidget {
+  const _TradingGuardSubPage({required this.controller});
+  final TradingScreenViewModel controller;
+
+  @override
+  State<_TradingGuardSubPage> createState() => _TradingGuardSubPageState();
+}
+
+class _TradingGuardSubPageState extends State<_TradingGuardSubPage> {
+  bool _hasOverlay = false;
+  bool _hasAccessibility = false;
+  bool _checking = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPermissions();
+  }
+
+  Future<void> _checkPermissions() async {
+    final overlay = await TradingGuardBridge.instance.hasOverlayPermission();
+    final accessibility = await TradingGuardBridge.instance
+        .isAccessibilityServiceEnabled();
+    if (mounted) {
+      setState(() {
+        _hasOverlay = overlay;
+        _hasAccessibility = accessibility;
+        _checking = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final allGranted = _hasOverlay && _hasAccessibility;
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Trading Guard')),
+      body: _checking
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // ── Status banner ──
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: allGranted
+                        ? AppTheme.green.withAlpha(20)
+                        : theme.colorScheme.error.withAlpha(20),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: allGranted
+                          ? AppTheme.green.withAlpha(80)
+                          : theme.colorScheme.error.withAlpha(80),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        allGranted ? Icons.check_circle : Icons.warning_amber,
+                        color: allGranted
+                            ? AppTheme.green
+                            : theme.colorScheme.error,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          allGranted
+                              ? 'Trading Guard is active. Your checklist will appear when you open MT4, MT5, TradingView and other broker apps.'
+                              : 'Two permissions required to activate Trading Guard.',
+                          style: TextStyle(fontSize: 13, height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // ── What it does ──
+                Text(
+                  'How it works',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'When you open a trading app (MT4, MT5, TradingView, cTrader, Binance, Bybit), '
+                  'LocoTrader shows your pre-trade checklist on top. '
+                  'You must wait 3 seconds before dismissing — creating a forced pause before every trade.',
+                  style: TextStyle(fontSize: 13, height: 1.5),
+                ),
+                const SizedBox(height: 20),
+
+                // ── Permission 1: Overlay ──
+                _PermissionTile(
+                  icon: Icons.layers_outlined,
+                  title: 'Display over other apps',
+                  subtitle:
+                      'Required to show the checklist on top of trading apps.',
+                  isGranted: _hasOverlay,
+                  onGrant: () async {
+                    await TradingGuardBridge.instance
+                        .requestOverlayPermission();
+                    await Future.delayed(const Duration(seconds: 1));
+                    await _checkPermissions();
+                  },
+                ),
+                const SizedBox(height: 10),
+
+                // ── Permission 2: Accessibility ──
+                _PermissionTile(
+                  icon: Icons.accessibility_new_outlined,
+                  title: 'Accessibility Service',
+                  subtitle:
+                      'Detects when you open a trading app. No keylogging — only app names are read.',
+                  isGranted: _hasAccessibility,
+                  onGrant: () async {
+                    await TradingGuardBridge.instance
+                        .openAccessibilitySettings();
+                    await Future.delayed(const Duration(seconds: 2));
+                    await _checkPermissions();
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // ── Refresh button ──
+                OutlinedButton.icon(
+                  onPressed: _checkPermissions,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Refresh permission status'),
+                ),
+
+                const SizedBox(height: 20),
+
+                // ── Privacy note ──
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.lock_outline,
+                        size: 16,
+                        color: context.c.textTertiary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Privacy: The Accessibility Service only reads which app is in the foreground. '
+                          'It cannot see what you type, tap, or do inside other apps.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: context.c.textTertiary,
+                            height: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+}
+
+class _PermissionTile extends StatelessWidget {
+  const _PermissionTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.isGranted,
+    required this.onGrant,
+  });
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final bool isGranted;
+  final VoidCallback onGrant;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Card(
+      child: ListTile(
+        leading: Icon(
+          isGranted ? Icons.check_circle : icon,
+          color: isGranted ? AppTheme.green : context.c.textSecondary,
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(color: context.c.textTertiary, fontSize: 12),
+        ),
+        trailing: isGranted
+            ? const Text(
+                'Granted',
+                style: TextStyle(
+                  color: AppTheme.green,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              )
+            : FilledButton(
+                onPressed: onGrant,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                ),
+                child: const Text('Enable', style: TextStyle(fontSize: 12)),
+              ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
     );
   }
 }

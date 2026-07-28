@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_name">4x Trades Status</string>
-    <string name="widget_title">4X TRADES</string>
+    <string name="widget_name">LocoTrader Status</string>
+    <string name="widget_title">LOCOTRADER</string>
     <string name="widget_default_badge">STANDBY</string>
-    <string name="widget_default_day_date">Africa/Nairobi</string>
+    <string name="widget_default_day_date">UTC</string>
     <string name="widget_session_caption">SESSION WINDOW</string>
     <string name="widget_default_session">Session status</string>
     <string name="widget_default_trades">Trades remaining today</string>
     <string name="widget_default_updated">Updated now</string>
+    <string name="trading_guard_description">LocoTrader Trading Guard shows your pre-trade checklist when you open a trading app, helping you stick to your system before every trade.</string>
 </resources>

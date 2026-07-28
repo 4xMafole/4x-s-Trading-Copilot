@@ -13,6 +13,7 @@ import '../../services/device_widget_bridge.dart';
 import '../../services/live_activity_bridge.dart';
 import '../../services/mt5_parser.dart';
 import '../../services/notification_center.dart';
+import '../../services/trading_guard_bridge.dart';
 import '../../services/weekly_digest_service.dart';
 import '../drawdown_engine.dart';
 import '../intelligence_engine.dart';
@@ -130,6 +131,7 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
     : super(TradingCoreState(appState: AppState.defaults(), nowEAT: _getEAT()));
 
   final TradingRepository _repository;
+  final _tradingGuardBridge = TradingGuardBridge.instance;
   static int _idSequence = 0;
   Timer? _ticker;
 
@@ -180,6 +182,38 @@ class TradingCoreCubit extends Cubit<TradingCoreState> {
     emit(state.copyWith(appState: newAppState));
     unawaited(DeviceWidgetBridge.refresh());
     unawaited(_syncLiveActivitySnapshot());
+    // Push overlay state for Trading Guard (Android accessibility service)
+    if (Platform.isAndroid) unawaited(_pushOverlayState(newAppState));
+  }
+
+  Future<void> _pushOverlayState(AppState s) async {
+    try {
+      final gates = s.effectiveGates;
+      final auto = computeAutoGates();
+      final incompleteGates = gates
+          .where(
+            (g) => g.auto ? !(auto[g.id] ?? false) : !(s.checks[g.id] ?? false),
+          )
+          .map((g) => g.label)
+          .toList();
+      // Compute score inline (same formula as IntelligenceEngine.readinessScore)
+      final session = getSessionInfo();
+      final total = gates.length;
+      final passed = total - incompleteGates.length;
+      int score = 0;
+      if (session.ok) score += 30;
+      if (total > 0) score += ((passed / total) * 50).round();
+      if (!s.lock) score += 10;
+      if (getTodayTrades().length < s.dailyTradeCap) score += 10;
+      score = score.clamp(0, 100);
+
+      await _tradingGuardBridge.pushOverlayState(
+        enabled: s.notificationPrefs.master,
+        readinessScore: score,
+        incompleteGates: incompleteGates,
+        isLocked: s.lock,
+      );
+    } catch (_) {}
   }
 
   Future<void> _syncLiveActivitySnapshot() async {

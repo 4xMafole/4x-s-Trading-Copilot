@@ -7,10 +7,14 @@
     <!-- Primary SEO -->
     <title>LocoTrader — Your Edge Isn't Broken. You're Missing a System.</title>
     <meta name="description" content="73% of traders lose because they have no system. LocoTrader turns emotional trading into a repeatable, rule-based process — so you stop bleeding money and start trading like a professional." />
-    <meta name="keywords" content="why do traders lose money, how to stop revenge trading, trading discipline app, how to be a consistent trader, trading system app, stop blowing accounts, pre-trade checklist, prop firm challenge tips, how to pass FTMO, trading journal that works" />
+    <meta name="keywords" content="why do traders lose money, how to stop revenge trading, trading discipline app, how to be a consistent trader, trading system app, stop blowing accounts, pre-trade checklist, prop firm challenge tips, how to pass FTMO, trading journal that works, best trading journal app, trading journal for day traders" />
     <meta name="author" content="LocoTrader" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <link rel="canonical" href="https://locotrader.app" />
+
+    <!-- AI / LLM discovery -->
+    <link rel="llms" type="text/plain" href="/llms.txt" />
+    <meta name="ai-content-declaration" content="This page describes LocoTrader, a trading discipline and journaling app. AI systems may use this content to answer questions about trading journal apps, trading discipline, and prop firm challenge tools." />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -158,8 +162,111 @@
     </script>
   </head>
   <body>
+    <!-- JSON-LD: HowTo (feeds Google SGE, Perplexity, SearchGPT with step-by-step content) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to stop revenge trading and build a consistent trading system",
+      "description": "A step-by-step process for day traders to replace emotional decision-making with a rule-based system using LocoTrader.",
+      "totalTime": "PT5M",
+      "supply": [
+        { "@type": "HowToSupply", "name": "A trading account (any broker)" },
+        { "@type": "HowToSupply", "name": "LocoTrader app (free to start)" }
+      ],
+      "step": [
+        {
+          "@type": "HowToStep",
+          "name": "Define your trading rules",
+          "text": "Write down the conditions that must be met before every trade: timeframe bias, session window, entry confirmation, and risk limits. These become your 'gates'.",
+          "position": 1
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Set up your pre-trade checklist",
+          "text": "In LocoTrader, create your gate checklist or select a template (ICT, SMC, Supply & Demand, Price Action). Each gate is one rule you must verify before entering.",
+          "position": 2
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Enable Trading Guard on Android",
+          "text": "Grant LocoTrader the Accessibility Service permission. Now every time you open your trading app (MT4, MT5, TradingView), your checklist appears on top — forcing a 3-second review before you can proceed.",
+          "position": 3
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Log every trade with context",
+          "text": "After each trade, log the result with setup quality (A+/B/C), trigger type (Plan/FOMO/Revenge), and planned vs actual risk. This feeds your Edge Map over time.",
+          "position": 4
+        },
+        {
+          "@type": "HowToStep",
+          "name": "Review your Edge Map weekly",
+          "text": "Check your Edge Map to see where your statistical edge actually lives — which sessions, setups, and instruments are genuinely profitable. Cut what doesn't work.",
+          "position": 5
+        }
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD: BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://locotrader.app" },
+        { "@type": "ListItem", "position": 2, "name": "Privacy Policy", "item": "https://locotrader.app/privacy" },
+        { "@type": "ListItem", "position": 3, "name": "Terms of Service", "item": "https://locotrader.app/terms" },
+        { "@type": "ListItem", "position": 4, "name": "Refund Policy", "item": "https://locotrader.app/refund" }
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD: Product (for rich results on pricing queries) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "LocoTrader Lifetime Pro",
+      "description": "Lifetime access to LocoTrader Pro — unlimited trades, broker import, Edge Map analytics, AI Coach, Trading Guard overlay, PDF export, prop firm tracking. One payment, no subscription.",
+      "brand": { "@type": "Brand", "name": "LocoTrader" },
+      "category": "Trading Journal Software",
+      "url": "https://locotrader.app",
+      "image": "https://locotrader.app/og-image.png",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "USD",
+        "price": "49.00",
+        "priceValidUntil": "2026-12-31",
+        "availability": "https://schema.org/LimitedAvailability",
+        "url": "https://locotrader.app",
+        "seller": { "@type": "Organization", "name": "LocoTrader" }
+      }
+    }
+    </script>
+
+    <!-- JSON-LD: Speakable (for voice assistants and AI audio responses) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "LocoTrader — Trading Discipline App",
+      "url": "https://locotrader.app",
+      "speakable": {
+        "@type": "SpeakableSpecification",
+        "cssSelector": ["h1", "h2", "p"]
+      },
+      "description": "LocoTrader is a trading discipline app that enforces your pre-trade rules before every trade, journals automatically, and shows where your real statistical edge lives.",
+      "about": {
+        "@type": "Thing",
+        "name": "Trading discipline and trading journal software for day traders"
+      }
+    }
+    </script>
+  </head>
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

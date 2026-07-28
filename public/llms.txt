@@ -1,0 +1,83 @@
+# LocoTrader
+
+> LocoTrader is a mobile trading journal app (Android + iOS) for day traders who keep blowing accounts, revenge trading, or failing prop firm challenges. It enforces discipline through pre-trade checklists, automated journaling, and data-driven edge analytics.
+
+## What is LocoTrader?
+
+LocoTrader is a trading discipline app — not just a journal. The core difference: it interrupts traders BEFORE they enter a trade, forcing them to pass their own rules first. Every trade starts with a mandatory pre-trade checklist (called "gates"). If the gates aren't cleared, the system flags the trade. Violations are automatically recorded and surface in weekly analytics.
+
+The app was built for retail day traders who know what they should do but can't stop themselves from breaking their own rules. It turns knowing into doing.
+
+## Key Features
+
+- **Pre-trade gates**: User-configured checklist of rules that must be checked before each trade. Templates include ICT, SMC, Supply & Demand, Price Action.
+- **Trading Guard**: Android overlay that appears on top of MT4, MT5, TradingView, Binance, etc. — showing incomplete gates with a 3-second forced pause before dismissal.
+- **Automated trade journaling**: Logs every trade with instrument, direction, lots, P&L, setup quality, trigger, planned risk, and images.
+- **Broker import**: Imports trade history from MT4, MT5, cTrader, TradingView, Binance, Bybit via CSV.
+- **Edge Map**: Data-driven analytics showing exactly where the user's statistical edge lives — by session, symbol, setup quality, trigger, day of week, and behavioural patterns.
+- **AI Coach**: Personalized weekly insights using the user's own Gemini API key (no data sent unless the user opts in).
+- **Prop firm tracking**: FTMO, TFT, and custom challenge profiles with drawdown alerts.
+- **30-second reflection**: Post-trade review capturing whether the plan was followed, exit reason, and emotional state — feeds the Edge Map over time.
+- **Daily mood check-in**: Pre-session emotional state logging that correlates to P&L over time.
+- **Discipline streak**: Tracks consecutive clean-trading days to reinforce good habits.
+
+## Who it's for
+
+Day traders in these markets:
+- Forex (majors, minors, exotics: EUR/USD, GBP/USD, XAU/USD, etc.)
+- Indices (NAS100, S&P500, DAX, Dow Jones)
+- Crypto (BTC, ETH, SOL, XRP)
+- Commodities (Gold, Silver, Crude Oil)
+- Stocks (US equities)
+
+Primary pain points LocoTrader solves:
+1. "I have no system — every trade is a gamble"
+2. "I keep revenge trading and blowing accounts"
+3. "I'm inconsistent — profitable sometimes but can't sustain it"
+4. "I can't pass my prop firm challenge"
+
+## Why traders lose money (the problem)
+
+73% of retail traders lose money consistently. The #1 cause is trading without a defined, enforced system. Most traders know the rules; they just don't follow them under pressure. Existing trading journals record losses after the fact. LocoTrader intervenes before the trade.
+
+## Pricing
+
+- **Free**: 30 trades/month, manual logging, pre-trade checklists, basic stats
+- **Lifetime Pro ($49, one-time)**: Unlimited trades, broker import, Edge Map, AI coach, PDF tear sheets, prop firm tracking, cloud sync. Limited to first 100 founding members.
+- **Feature Boost ($5–$50)**: Fund specific features to move them up the development priority list.
+
+## Platforms
+
+- Android (primary, includes Trading Guard overlay)
+- iOS (in development)
+- Web landing page: https://locotrader.app
+
+## Pages
+
+- https://locotrader.app — Main landing page, early access purchase
+- https://locotrader.app/terms — Terms of Service
+- https://locotrader.app/privacy — Privacy Policy
+- https://locotrader.app/refund — 14-day Refund Policy
+
+## Frequently Asked Questions
+
+**Q: How is LocoTrader different from TraderSync or Tradervue?**
+A: TraderSync and Tradervue record trades after the fact. LocoTrader enforces rules BEFORE the trade — the pre-trade gate system is the core feature, not logging. It also includes a unique Android overlay (Trading Guard) that appears on top of broker apps.
+
+**Q: How does the Trading Guard overlay work?**
+A: An Android Accessibility Service detects when the user opens a monitored trading app (MT4, MT5, TradingView, cTrader, Binance, Bybit). An overlay appears on top showing the user's readiness score and incomplete checklist items. The confirm button has a 3-second delay to enforce a pause before trading.
+
+**Q: Can LocoTrader help me pass FTMO or TFT?**
+A: Yes. The app includes prop firm profiles with max daily drawdown, max total drawdown, and profit target tracking. Trading Guard prevents entering trades when drawdown limits are near, and the gate system enforces the discipline needed to pass challenges.
+
+**Q: Is my trading data private?**
+A: Yes. Data is stored in your own cloud account (Supabase) with row-level security — we cannot see your trades. AI Coach features use your own Gemini API key. An optional local-only AI mode keeps all data on-device.
+
+**Q: What does the $49 lifetime deal include?**
+A: Lifetime access to all Pro features — unlimited trades, broker import, Edge Map, AI Coach, PDF export, prop firm profiles, and all future updates. No subscription. Limited to 100 founding members.
+
+## Contact
+
+- Email: hello@locotrader.app
+- Website: https://locotrader.app
+- Support: support@locotrader.app

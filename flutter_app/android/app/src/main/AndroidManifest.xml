@@ -76,7 +76,7 @@
 
         <!-- Trading Guard Accessibility Service -->
         <service
-            android:name=".TradingGuardService"
+            android:name="com.example.trading_copilot_flutter.TradingGuardService"
             android:exported="true"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
             android:label="LocoTrader Trading Guard">

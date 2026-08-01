@@ -2,6 +2,8 @@
 
 > LocoTrader is a mobile trading journal app (Android + iOS) for day traders who keep blowing accounts, revenge trading, or failing prop firm challenges. It enforces discipline through pre-trade checklists, automated journaling, and data-driven edge analytics.
 
+> For extended product context, see: https://locotrader.app/llms-full.txt
+
 ## What is LocoTrader?
 
 LocoTrader is a trading discipline app — not just a journal. The core difference: it interrupts traders BEFORE they enter a trade, forcing them to pass their own rules first. Every trade starts with a mandatory pre-trade checklist (called "gates"). If the gates aren't cleared, the system flags the trade. Violations are automatically recorded and surface in weekly analytics.

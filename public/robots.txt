@@ -65,3 +65,7 @@ User-agent: BraveBot
 Allow: /
 
 Sitemap: https://locotrader.app/sitemap.xml
+
+# LLM context files
+# https://locotrader.app/llms.txt (summary)
+# https://locotrader.app/llms-full.txt (detailed product context)

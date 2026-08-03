@@ -1,0 +1,299 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// HTC v0.1 — Gold Research Assistant
+// Run on 15M or 5M chart (Gold / XAUUSD)
+//
+// Protocol: Monthly → Weekly → Daily → 4H/1H → 15M/5M BAG → 2R entry
+// Session:  NY Open 08:00–12:00 New York time
+//
+// USAGE
+//  1. Add to 15M chart on XAUUSD
+//  2. Use Replay mode to backtest chronologically (no look-ahead bias)
+//  3. Screenshot every setup — take the trade BEFORE revealing outcome
+// ─────────────────────────────────────────────────────────────────────────────
+//@version=5
+indicator("HTC v0.1 — Gold Research", overlay=true,
+     max_boxes_count=200, max_labels_count=200, max_lines_count=200)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INPUTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+var g1 = "Session"
+show_session  = input.bool(true,  "Highlight NY Session",    group=g1)
+entry_window  = input.session("0800-1200", "Entry Window",   group=g1)
+
+var g2 = "HTF Bias"
+ema_fast      = input.int(20,  "EMA Fast",  minval=5,   group=g2)
+ema_slow      = input.int(50,  "EMA Slow",  minval=10,  group=g2)
+show_bias     = input.bool(true, "Show Bias Dashboard",     group=g2)
+
+var g3 = "Fair Value Gaps"
+show_fvg_4h   = input.bool(true,  "4H FVGs (HTF POI)",      group=g3)
+show_fvg_1h   = input.bool(true,  "1H FVGs (HTF POI)",      group=g3)
+show_fvg_curr = input.bool(false, "Current TF FVGs",        group=g3)
+fvg_extend    = input.int(20, "Extend FVG boxes (bars)",    group=g3)
+
+var g4 = "Order Blocks"
+show_ob_4h    = input.bool(true,  "4H Order Blocks",        group=g4)
+show_ob_1h    = input.bool(false, "1H Order Blocks",        group=g4)
+
+var g5 = "BAG Detector (Execution TF)"
+bos_lookback  = input.int(8,  "Structure Lookback (bars)",  group=g5)
+show_bos      = input.bool(true, "Show Break of Structure", group=g5)
+
+var g6 = "R:R Levels"
+risk_r        = input.float(1.0, "Risk in R",               group=g6)
+show_rr       = input.bool(true, "Draw 2R TP / 1R SL",      group=g6)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NY SESSION
+// ═══════════════════════════════════════════════════════════════════════════
+
+in_session = not na(time(timeframe.period, entry_window, "America/New_York"))
+bgcolor(show_session and in_session ? color.new(#3B82F6, 92) : na, title="NY Window")
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MTF TREND (EMA-based)
+// 1 = Bullish, -1 = Bearish, 0 = Neutral
+// ═══════════════════════════════════════════════════════════════════════════
+
+f_bias(tf) =>
+    ef = request.security(syminfo.tickerid, tf, ta.ema(close, ema_fast), lookahead=barmerge.lookahead_off)
+    es = request.security(syminfo.tickerid, tf, ta.ema(close, ema_slow), lookahead=barmerge.lookahead_off)
+    c  = request.security(syminfo.tickerid, tf, close,                   lookahead=barmerge.lookahead_off)
+    c > ef and ef > es ? 1 : c < ef and ef < es ? -1 : 0
+
+bias_m  = f_bias("M")
+bias_w  = f_bias("W")
+bias_d  = f_bias("D")
+bias_4h = f_bias("240")
+bias_1h = f_bias("60")
+
+htf_bull = bias_m == 1  and bias_w == 1  and bias_d == 1
+htf_bear = bias_m == -1 and bias_w == -1 and bias_d == -1
+htf_ok   = htf_bull or htf_bear
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FVG DETECTION (using request.security on 4H and 1H)
+// Bullish FVG: high[2] < low[0]  → gap between candle-2 high and candle-0 low
+// Bearish FVG: low[2]  > high[0] → gap between candle-2 low  and candle-0 high
+// ═══════════════════════════════════════════════════════════════════════════
+
+f_fvgs(tf) =>
+    h0 = request.security(syminfo.tickerid, tf, high,   lookahead=barmerge.lookahead_off)
+    l0 = request.security(syminfo.tickerid, tf, low,    lookahead=barmerge.lookahead_off)
+    h2 = request.security(syminfo.tickerid, tf, high[2],lookahead=barmerge.lookahead_off)
+    l2 = request.security(syminfo.tickerid, tf, low[2], lookahead=barmerge.lookahead_off)
+    bull = l0 > h2
+    bear = h0 < l2
+    // FVG zone boundaries
+    bull_top = l0
+    bull_bot = h2
+    bear_top = l2
+    bear_bot = h0
+    [bull, bear, bull_top, bull_bot, bear_top, bear_bot]
+
+[fvg4h_bull, fvg4h_bear, f4h_bt, f4h_bb, f4h_set, f4h_seb] = f_fvgs("240")
+[fvg1h_bull, fvg1h_bear, f1h_bt, f1h_bb, f1h_set, f1h_seb] = f_fvgs("60")
+[fvg_c_bull, fvg_c_bear, fc_bt,  fc_bb,  fc_set,  fc_seb]  = f_fvgs(timeframe.period)
+
+// Draw FVG boxes
+var box[] fvg_boxes = array.new_box()
+
+if show_fvg_4h and barstate.isconfirmed
+    if fvg4h_bull
+        b = box.new(bar_index, f4h_bt, bar_index + fvg_extend, f4h_bb,
+             border_color=color.new(color.teal, 60), bgcolor=color.new(color.teal, 88),
+             border_width=1)
+        array.push(fvg_boxes, b)
+    if fvg4h_bear
+        b = box.new(bar_index, f4h_set, bar_index + fvg_extend, f4h_seb,
+             border_color=color.new(color.red, 60), bgcolor=color.new(color.red, 88),
+             border_width=1)
+        array.push(fvg_boxes, b)
+
+if show_fvg_1h and barstate.isconfirmed
+    if fvg1h_bull
+        b = box.new(bar_index, f1h_bt, bar_index + fvg_extend, f1h_bb,
+             border_color=color.new(color.teal, 70), bgcolor=color.new(color.teal, 92),
+             border_width=1, border_style=line.style_dotted)
+        array.push(fvg_boxes, b)
+    if fvg1h_bear
+        b = box.new(bar_index, f1h_set, bar_index + fvg_extend, f1h_seb,
+             border_color=color.new(color.red, 70), bgcolor=color.new(color.red, 92),
+             border_width=1, border_style=line.style_dotted)
+        array.push(fvg_boxes, b)
+
+if show_fvg_curr and barstate.isconfirmed
+    if fvg_c_bull
+        box.new(bar_index, fc_bt, bar_index + fvg_extend, fc_bb,
+             border_color=color.new(#00E5FF, 60), bgcolor=color.new(#00E5FF, 90))
+    if fvg_c_bear
+        box.new(bar_index, fc_set, bar_index + fvg_extend, fc_seb,
+             border_color=color.new(#FF9800, 60), bgcolor=color.new(#FF9800, 90))
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ORDER BLOCK DETECTION (last bearish candle before bullish impulse, vice versa)
+// ═══════════════════════════════════════════════════════════════════════════
+
+f_ob_bull(tf) =>
+    o  = request.security(syminfo.tickerid, tf, open[1],  lookahead=barmerge.lookahead_off)
+    c0 = request.security(syminfo.tickerid, tf, close,    lookahead=barmerge.lookahead_off)
+    c1 = request.security(syminfo.tickerid, tf, close[1], lookahead=barmerge.lookahead_off)
+    h1 = request.security(syminfo.tickerid, tf, high[1],  lookahead=barmerge.lookahead_off)
+    l1 = request.security(syminfo.tickerid, tf, low[1],   lookahead=barmerge.lookahead_off)
+    // Bullish OB: bearish candle[1] followed by strong bullish close[0]
+    c1 < o and c0 > h1 ? [true, h1, l1] : [false, h1, l1]
+
+f_ob_bear(tf) =>
+    o  = request.security(syminfo.tickerid, tf, open[1],  lookahead=barmerge.lookahead_off)
+    c0 = request.security(syminfo.tickerid, tf, close,    lookahead=barmerge.lookahead_off)
+    c1 = request.security(syminfo.tickerid, tf, close[1], lookahead=barmerge.lookahead_off)
+    h1 = request.security(syminfo.tickerid, tf, high[1],  lookahead=barmerge.lookahead_off)
+    l1 = request.security(syminfo.tickerid, tf, low[1],   lookahead=barmerge.lookahead_off)
+    // Bearish OB: bullish candle[1] followed by strong bearish close[0]
+    c1 > o and c0 < l1 ? [true, h1, l1] : [false, h1, l1]
+
+[ob4h_b, ob4h_bh, ob4h_bl] = f_ob_bull("240")
+[ob4h_s, ob4h_sh, ob4h_sl] = f_ob_bear("240")
+
+if show_ob_4h and barstate.isconfirmed
+    if ob4h_b
+        box.new(bar_index, ob4h_bh, bar_index + fvg_extend, ob4h_bl,
+             border_color=color.new(color.teal, 40), bgcolor=color.new(color.teal, 84),
+             border_width=2, text="4H OB", text_color=color.new(color.teal,20))
+    if ob4h_s
+        box.new(bar_index, ob4h_sh, bar_index + fvg_extend, ob4h_sl,
+             border_color=color.new(color.red, 40), bgcolor=color.new(color.red, 84),
+             border_width=2, text="4H OB", text_color=color.new(color.red,20))
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BAG DETECTOR — Break of Structure on execution TF (15M/5M)
+// BAG = price closes through recent swing high/low (Market Structure Shift)
+// ═══════════════════════════════════════════════════════════════════════════
+
+swing_high = ta.highest(high, bos_lookback)[1]
+swing_low  = ta.lowest(low,  bos_lookback)[1]
+
+bag_bull = close > swing_high and close[1] <= swing_high  // Bullish BAG/BOS
+bag_bear = close < swing_low  and close[1] >= swing_low   // Bearish BAG/BOS
+
+if show_bos
+    if bag_bull
+        line.new(bar_index - bos_lookback, swing_high, bar_index, swing_high,
+             color=color.new(color.teal, 40), width=1, style=line.style_dashed)
+    if bag_bear
+        line.new(bar_index - bos_lookback, swing_low, bar_index, swing_low,
+             color=color.new(color.red, 40), width=1, style=line.style_dashed)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HTC SIGNAL — Full stack aligned
+// Long:  HTF Bull + Session + Bullish BAG
+// Short: HTF Bear + Session + Bearish BAG
+// ═══════════════════════════════════════════════════════════════════════════
+
+htc_long  = htf_bull and in_session and bag_bull
+htc_short = htf_bear and in_session and bag_bear
+
+plotshape(htc_long,  "HTC Long",  shape.triangleup,   location.belowbar,
+     color=color.new(color.teal, 0), size=size.normal, text="HTC\nLONG")
+plotshape(htc_short, "HTC Short", shape.triangledown, location.abovebar,
+     color=color.new(color.red, 0),  size=size.normal, text="HTC\nSHORT")
+
+// ═══════════════════════════════════════════════════════════════════════════
+// R:R LEVELS — 2R TP / 1R SL drawn on signal
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ATR-based SL distance (14-period)
+atr14 = ta.atr(14)
+
+if show_rr and htc_long and barstate.isconfirmed
+    sl_price = close - atr14 * risk_r
+    tp_price = close + atr14 * risk_r * 2
+    box.new(bar_index, tp_price, bar_index + 30, close,
+         border_color=color.new(color.teal, 50), bgcolor=color.new(color.teal, 90),
+         text="TP +2R", text_color=color.teal, text_size=size.tiny)
+    box.new(bar_index, close, bar_index + 30, sl_price,
+         border_color=color.new(color.red, 50), bgcolor=color.new(color.red, 90),
+         text="SL -1R", text_color=color.red, text_size=size.tiny)
+
+if show_rr and htc_short and barstate.isconfirmed
+    sl_price = close + atr14 * risk_r
+    tp_price = close - atr14 * risk_r * 2
+    box.new(bar_index, sl_price, bar_index + 30, close,
+         border_color=color.new(color.red, 50), bgcolor=color.new(color.red, 90),
+         text="SL -1R", text_color=color.red, text_size=size.tiny)
+    box.new(bar_index, close, bar_index + 30, tp_price,
+         border_color=color.new(color.teal, 50), bgcolor=color.new(color.teal, 90),
+         text="TP +2R", text_color=color.teal, text_size=size.tiny)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MTF BIAS DASHBOARD TABLE
+// ═══════════════════════════════════════════════════════════════════════════
+
+f_col(v)   => v ==  1 ? color.new(color.teal, 30) : v == -1 ? color.new(color.red, 30) : color.new(color.gray, 60)
+f_sym(v)   => v ==  1 ? "▲ BULL" : v == -1 ? "▼ BEAR" : "── NEUT"
+f_chk(ok)  => ok ? "✓" : "✗"
+f_chkcol(ok) => ok ? color.new(color.teal, 40) : color.new(color.red, 50)
+
+if show_bias and barstate.islast
+    var table dash = table.new(position.top_right, 3, 10,
+         frame_color=color.new(color.white, 60), frame_width=1,
+         border_color=color.new(color.white, 80), border_width=1)
+
+    hdr = color.new(#090912, 0)
+    row = color.new(#0D0D18, 0)
+
+    table.cell(dash, 0, 0, " TF ",      bgcolor=hdr, text_color=color.new(color.white,20), text_size=size.small)
+    table.cell(dash, 1, 0, "TREND",     bgcolor=hdr, text_color=color.new(color.white,20), text_size=size.small)
+    table.cell(dash, 2, 0, "STATUS",    bgcolor=hdr, text_color=color.new(color.white,20), text_size=size.small)
+
+    tfs  = array.from("Monthly","Weekly","Daily","4H","1H")
+    vals = array.from(bias_m, bias_w, bias_d, bias_4h, bias_1h)
+    for i = 0 to 4
+        v = array.get(vals, i)
+        table.cell(dash, 0, i+1, array.get(tfs, i), bgcolor=row, text_color=color.white, text_size=size.small)
+        table.cell(dash, 1, i+1, f_sym(v),          bgcolor=f_col(v), text_color=color.white, text_size=size.small)
+        chk_needed = i <= 2  // Monthly/Weekly/Daily must align
+        ok = chk_needed ? (htf_ok and array.get(vals,i) == (htf_bull ? 1 : -1)) : true
+        table.cell(dash, 2, i+1, f_chk(ok), bgcolor=f_chkcol(ok), text_color=color.white, text_size=size.small)
+
+    // Session row
+    table.cell(dash, 0, 6, "Session",   bgcolor=row, text_color=color.white, text_size=size.small)
+    table.cell(dash, 1, 6, in_session ? "NY OPEN" : "CLOSED",
+         bgcolor=in_session ? color.new(#3B82F6, 40) : color.new(color.gray,60),
+         text_color=color.white, text_size=size.small)
+    table.cell(dash, 2, 6, f_chk(in_session), bgcolor=f_chkcol(in_session), text_color=color.white, text_size=size.small)
+
+    // BAG row
+    bag_any = bag_bull or bag_bear
+    table.cell(dash, 0, 7, "BAG/BOS",  bgcolor=row, text_color=color.white, text_size=size.small)
+    table.cell(dash, 1, 7, bag_bull ? "BULL BAG" : bag_bear ? "BEAR BAG" : "WAITING",
+         bgcolor=bag_any ? f_col(bag_bull ? 1 : -1) : color.new(color.gray,60),
+         text_color=color.white, text_size=size.small)
+    table.cell(dash, 2, 7, f_chk(bag_any), bgcolor=f_chkcol(bag_any), text_color=color.white, text_size=size.small)
+
+    // HTF align row
+    table.cell(dash, 0, 8, "HTF ALIGN", bgcolor=row, text_color=color.white, text_size=size.small)
+    table.cell(dash, 1, 8, htf_ok ? (htf_bull ? "BULL ▲" : "BEAR ▼") : "MIXED",
+         bgcolor=htf_ok ? f_col(htf_bull ? 1 : -1) : color.new(color.orange,50),
+         text_color=color.white, text_size=size.small)
+    table.cell(dash, 2, 8, f_chk(htf_ok), bgcolor=f_chkcol(htf_ok), text_color=color.white, text_size=size.small)
+
+    // Signal row
+    sig_active = htc_long or htc_short
+    table.cell(dash, 0, 9, "HTC SIG",  bgcolor=row, text_color=color.white, text_size=size.small)
+    table.cell(dash, 1, 9, htc_long ? "🟢 LONG" : htc_short ? "🔴 SHORT" : "─ NONE",
+         bgcolor=sig_active ? f_col(htc_long ? 1 : -1) : color.new(color.gray,60),
+         text_color=color.white, text_size=size.small)
+    table.cell(dash, 2, 9, f_chk(sig_active), bgcolor=f_chkcol(sig_active), text_color=color.white, text_size=size.small)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ALERTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+alertcondition(htc_long,  "HTC Long",  "HTC v0.1 ▲ LONG — All conditions met on {{ticker}}")
+alertcondition(htc_short, "HTC Short", "HTC v0.1 ▼ SHORT — All conditions met on {{ticker}}")
+alertcondition(in_session and not in_session[1] and htf_ok, "NY Open + Aligned", "HTC: NY session opened — HTF aligned {{ticker}}")
+alertcondition(bag_bull and htf_bull, "BAG Bull (HTF aligned)", "HTC: Bullish BAG with HTF alignment")
+alertcondition(bag_bear and htf_bear, "BAG Bear (HTF aligned)", "HTC: Bearish BAG with HTF alignment")

@@ -142,8 +142,8 @@ f_ob_bull(tf) =>
     c1 = request.security(syminfo.tickerid, tf, close[1], lookahead=barmerge.lookahead_off)
     h1 = request.security(syminfo.tickerid, tf, high[1],  lookahead=barmerge.lookahead_off)
     l1 = request.security(syminfo.tickerid, tf, low[1],   lookahead=barmerge.lookahead_off)
-    // Bullish OB: bearish candle[1] followed by strong bullish close[0]
-    c1 < o and c0 > h1 ? [true, h1, l1] : [false, h1, l1]
+    is_ob = c1 < o and c0 > h1
+    [is_ob, h1, l1]
 
 f_ob_bear(tf) =>
     o  = request.security(syminfo.tickerid, tf, open[1],  lookahead=barmerge.lookahead_off)
@@ -151,8 +151,8 @@ f_ob_bear(tf) =>
     c1 = request.security(syminfo.tickerid, tf, close[1], lookahead=barmerge.lookahead_off)
     h1 = request.security(syminfo.tickerid, tf, high[1],  lookahead=barmerge.lookahead_off)
     l1 = request.security(syminfo.tickerid, tf, low[1],   lookahead=barmerge.lookahead_off)
-    // Bearish OB: bullish candle[1] followed by strong bearish close[0]
-    c1 > o and c0 < l1 ? [true, h1, l1] : [false, h1, l1]
+    is_ob = c1 > o and c0 < l1
+    [is_ob, h1, l1]
 
 [ob4h_b, ob4h_bh, ob4h_bl] = f_ob_bull("240")
 [ob4h_s, ob4h_sh, ob4h_sl] = f_ob_bear("240")
